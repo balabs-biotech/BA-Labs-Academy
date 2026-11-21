@@ -18,7 +18,7 @@ test("content editor is a role-gated atomic RPC", () => {
 test("resource classification requires one primary department and matching domains", () => {
   assert.match(editorialSql, /Exactly one primary department is required/);
   assert.match(editorialSql, /Domain must belong to one of the selected departments/);
-  assert.match(editorialSql, /relation_type,'USES'/);
+  assert.match(editorialSql, /relation_type='USES'/);
 });
 
 test("editorial reads remain private to active editorial members", () => {
