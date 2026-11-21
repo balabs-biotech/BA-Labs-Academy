@@ -7,6 +7,7 @@ import { enrollInPath, saveResourceProgress, savePathItemProgress } from "./data
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
 import { saveLearningPath, publishLearningPath } from "./data.js";
+import { buildPathwayItems } from "./features/editorial/pathways.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
@@ -479,19 +480,9 @@ function render() {
     try {
       const values = new FormData(form);
       const contentIds = values.getAll("content_ids");
-      const selectedIds = new Set(contentIds);
       const currentItems = data.pathItems.filter((item) => item.path_id === (form.dataset.pathId || ""));
-      const itemById = new Map(currentItems.map((item) => [item.id, item]));
-      const items = contentIds.map((contentId) => {
-        const current = currentItems.find((item) => item.content_id === contentId);
-        const prerequisites = current
-          ? data.pathPrerequisites
-              .filter((link) => link.item_id === current.id)
-              .map((link) => itemById.get(link.prerequisite_item_id)?.content_id)
-              .filter((id) => id && selectedIds.has(id))
-          : [];
-        return { content_id: contentId, is_required: current?.is_required ?? true, prerequisites };
-      });
+      const currentPrerequisites = data.pathPrerequisites.filter((link) => link.path_id === (form.dataset.pathId || ""));
+      const items = buildPathwayItems(contentIds, currentItems, currentPrerequisites);
       const pathId = await saveLearningPath({
         id: form.dataset.pathId || null, code: values.get("code"), slug: values.get("slug"),
         title: values.get("title"), summary: values.get("summary"),
