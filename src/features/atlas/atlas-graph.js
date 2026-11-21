@@ -117,9 +117,11 @@ export function buildAcademyGraph(departments, pathways) {
       item.kind === "pathway" ? "PATHWAY" : "DEPARTMENT"
     ));
     if (item.kind === "department") {
+      root.data.route = "#/departements/" + item.code.toLowerCase();
       departmentNodes.set(item.code, root);
       const children = item.sections.map((section) => ({
         ...section,
+        route: "#/domaines/" + section.code.toLowerCase(),
         id: "domain:" + section.code,
         kind: "domain",
         children: section.modules.map((module, moduleIndex) => ({
