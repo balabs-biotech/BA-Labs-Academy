@@ -35,7 +35,7 @@ function resolveAtlasTitles(nodes, departments, domains, content) {
 }
 
 export async function loadAcademyData() {
-  const [departments, domains, content, departmentLinks, domainLinks, rawNodes, edges] = await Promise.all([
+  const [departments, domains, content, departmentLinks, domainLinks, learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies, rawNodes, edges] = await Promise.all([
     readTable("departments", {
       select: "code,slug,title,summary,color_token,sort_order",
       status: "eq.PUBLISHED",
@@ -61,6 +61,28 @@ export async function loadAcademyData() {
     readTable("content_domain_links", {
       select: "content_id,domain_code"
     }),
+    readTable("academy_learning_paths", {
+      select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,published_at",
+      status: "eq.PUBLISHED",
+      visibility: "eq.PUBLIC",
+      order: "title.asc"
+    }),
+    readTable("academy_learning_path_items", {
+      select: "id,path_id,content_id,sort_order,is_required",
+      order: "sort_order.asc"
+    }),
+    readTable("academy_path_item_prerequisites", {
+      select: "path_id,item_id,prerequisite_item_id"
+    }),
+    readTable("academy_competencies", {
+      select: "id,code,title,description,competency_level",
+      status: "eq.PUBLISHED",
+      visibility: "eq.PUBLIC",
+      order: "title.asc"
+    }),
+    readTable("academy_content_competencies", {
+      select: "content_id,competency_id,expected_level,assessment_hint"
+    }),
     readTable("atlas_nodes", {
       select: "id,node_key,entity_type,entity_key,title_override,position_x,position_y,layout_version",
       status: "eq.PUBLISHED",
@@ -72,5 +94,9 @@ export async function loadAcademyData() {
     })
   ]);
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content);
-  return { departments, domains, content, departmentLinks, domainLinks, nodes, edges };
+  return {
+    departments, domains, content, departmentLinks, domainLinks,
+    learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies,
+    nodes, edges
+  };
 }
