@@ -25,7 +25,6 @@ try {
       failedRequests.push(request.url() + " — " + (request.failure()?.errorText || "unknown"));
     });
 
-    // Keep this visual test deterministic: the graph is local editorial data.
     await page.route("**/rest/v1/**", (route) => route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -53,16 +52,18 @@ try {
     assert.ok(surface.width > 0 && surface.height > 0, "PixiJS must create a real drawing surface");
     assert.ok(surface.rect.width >= surface.stage.width * 0.98, "Canvas must fill the Atlas stage width");
     assert.ok(surface.rect.height >= surface.stage.height * 0.98, "Canvas must fill the Atlas stage height");
-    assert.ok(surface.visibleNodes >= 20, "All department and pathway roots must be visible in the overview");
+    assert.ok(surface.visibleNodes >= 20, "All department, axis and pathway roots must be visible in the overview");
 
     const stats = await page.locator(".atlas-topline-copy strong").innerText();
     assert.match(stats, /7 départements/);
+    assert.match(stats, /3 axes transversaux/);
     assert.match(stats, /10 parcours/);
     assert.match(stats, /47 sections/);
     assert.match(stats, /264 modules/);
 
     const accessibleCount = await page.locator("#academy-atlas-accessible button").count();
-    assert.equal(accessibleCount, 331, "All 330 mapped nodes must be keyboard-accessible");
+    assert.equal(accessibleCount, 331, "All 331 mapped nodes must be keyboard-accessible");
+    assert.equal(await page.locator(".atlas-root-chip").count(), 20, "All 20 roots must have direct navigation");
 
     const pathway = page.locator("#academy-atlas-accessible button").filter({
       hasText: "Production mycologique, du laboratoire à la fructification"
@@ -72,6 +73,9 @@ try {
       () => document.querySelector("#academy-atlas-selection")?.textContent.includes("Production mycologique, du laboratoire à la fructification")
     );
     assert.match(await page.locator("#academy-atlas-selection").innerText(), /séquence et ressources à construire/);
+    await page.locator("#academy-atlas-selection .atlas-selection-link").click();
+    await page.waitForURL("**/#/parcours/production-mycologique-laboratoire-fructification");
+    assert.equal(await page.locator(".page-intro h1").innerText(), "Production mycologique, du laboratoire à la fructification");
 
     await page.goto(base.replace("#/atlas", "#/departements"), { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".department-card");
@@ -79,16 +83,6 @@ try {
     await page.goto(base.replace("#/atlas", "#/axes"), { waitUntil: "domcontentloaded" });
     await page.waitForSelector(".axis-card");
     assert.equal(await page.locator(".axis-card").count(), 3, "Transversal axes must not be counted as departments");
-
-    await page.goto(base, { waitUntil: "domcontentloaded" });
-    await page.waitForFunction(
-      () => document.querySelector("#atlas-engine-state")?.textContent.includes("Moteur actif"),
-      undefined,
-      { timeout: 30000 }
-    );
-    await page.locator("#academy-atlas-selection .atlas-selection-link").click();
-    await page.waitForURL("**/#/parcours/production-mycologique-laboratoire-fructification");
-    assert.equal(await page.locator(".page-intro h1").innerText(), "Production mycologique, du laboratoire à la fructification");
 
     await page.goto(base, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(
