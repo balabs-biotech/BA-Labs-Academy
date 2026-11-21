@@ -1,4 +1,4 @@
-import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
@@ -333,6 +333,24 @@ function administrationView() {
       <div class="section-heading"><div><span class="eyebrow">GESTION DES PARCOURS</span><h2>Parcours pédagogiques</h2></div><a class="button button-primary" href="#/administration/parcours/nouveau">Créer un parcours ↗</a></div>
       <div class="editorial-path-list">${(data.editorialPaths || []).filter((path) => path.status === "DRAFT").map((path) => `<a class="editorial-path-row" href="#/administration/parcours/${encodeURIComponent(path.id)}"><div><span class="eyebrow">${escapeHtml(path.code)} · ${escapeHtml(path.status)}</span><h3>${escapeHtml(path.title)}</h3><p>${escapeHtml(path.summary || "Aucun résumé.")}</p></div><b>Modifier ↗</b></a>`).join("") || emptyState("Aucun parcours", "Crée le premier brouillon pédagogique.")}</div>
     </section>` : ""}
+
+    <section class="section-block taxonomy-editorial">
+      <div class="section-heading"><div><span class="eyebrow">STRUCTURE ACADÉMIQUE</span><h2>Départements et domaines</h2></div><span class="resource-level">${(data.editorialDepartments || []).length} départements · ${(data.editorialDomains || []).length} domaines</span></div>
+      <p class="taxonomy-intro">Référentiel disciplinaire préconfiguré. Les brouillons restent internes ; chaque publication synchronise les nœuds et relations déjà préparés dans l’Atlas.</p>
+      <div class="taxonomy-queue">
+        <h3>Départements</h3>
+        ${(data.editorialDepartments || []).map((item) => `<article class="taxonomy-row"><div><span class="eyebrow">${escapeHtml(item.code)} · ${escapeHtml(item.status)}</span><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.slug)}</small></div>${item.status === "DRAFT" && ["OWNER","ADMIN"].includes(membership.role) ? `<button class="button button-outline" data-taxonomy-publish="department" data-code="${escapeHtml(item.code)}">Publier</button>` : `<span class="taxonomy-state">${escapeHtml(item.visibility)}</span>`}</article>`).join("") || emptyState("Aucun département", "Le référentiel ne contient pas de département.")}
+      </div>
+      <div class="taxonomy-queue">
+        <h3>Domaines</h3>
+        ${(data.editorialDomains || []).map((item) => {
+          const parent = (data.editorialDepartments || []).find((department) => department.code === item.department_code);
+          const ready = parent?.status === "PUBLISHED";
+          const canPublish = ["OWNER","ADMIN"].includes(membership.role) && item.status === "DRAFT" && ready;
+          return `<article class="taxonomy-row"><div><span class="eyebrow">${escapeHtml(item.code)} · ${escapeHtml(item.status)} · ${escapeHtml(item.department_code)}</span><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.slug)}</small></div>${canPublish ? `<button class="button button-outline" data-taxonomy-publish="domain" data-code="${escapeHtml(item.code)}">Publier</button>` : `<span class="taxonomy-state">${item.status === "DRAFT" && !ready ? "Département parent requis" : escapeHtml(item.visibility)}</span>`}</article>`;
+        }).join("") || emptyState("Aucun domaine", "Le référentiel ne contient pas de domaine.")}
+      </div>
+    </section>
     <p class="progress-note">Le contrôle d’accès de cette interface est indicatif. Chaque opération éditoriale reste protégée par les contrôles de rôle des fonctions PostgreSQL ; aucun droit n’est accordé par le frontend seul.</p>`;
 }
 
@@ -566,6 +584,21 @@ function render() {
       renderPathwaySequence(sequencePanel, resources, sequence);
     });
   }
+  document.querySelectorAll("[data-taxonomy-publish]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      button.textContent = "Publication…";
+      try {
+        if (button.dataset.taxonomyPublish === "department") await publishDepartment(button.dataset.code);
+        else await publishDomain(button.dataset.code);
+        await refresh();
+      } catch (error) {
+        window.alert(error.message || "Publication impossible.");
+        button.disabled = false;
+        button.textContent = "Publier";
+      }
+    });
+  });
   document.querySelector("#pathway-editor-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
