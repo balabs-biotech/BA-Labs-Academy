@@ -131,10 +131,16 @@ export async function loadAcademyData() {
     memberData
   ]);
   const { enrollments, progress, pathItemProgress, membership, error: memberError } = memberRecords;
+  const editorialPaths = accessToken
+    ? await readTable("academy_learning_paths", {
+        select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
+        order: "updated_at.desc"
+      }, accessToken).catch(() => [])
+    : [];
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
-    learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies,
+    learningPaths, editorialPaths, pathItems, pathPrerequisites, competencies, contentCompetencies,
     enrollments, progress, pathItemProgress, membership, memberError, nodes, edges
   };
 }
@@ -206,4 +212,37 @@ export async function savePathItemProgress(pathItemId, completed = true) {
     throw new Error(`Validation de l’étape impossible (HTTP ${response.status})${detail ? `: ${detail.slice(0, 180)}` : ""}`);
   }
   return response.json();
+}
+
+
+async function callEditorialRpc(name, payload, errorLabel) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) throw new Error("Connecte-toi pour accéder à l’espace éditorial.");
+  const response = await fetch(`${API}/rpc/${name}`, {
+    method: "POST",
+    headers: { ...headers, Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`${errorLabel} (HTTP ${response.status})${detail ? `: ${detail.slice(0, 220)}` : ""}`);
+  }
+  return response.json();
+}
+export function saveLearningPathDraft(path) {
+  return callEditorialRpc("academy_save_learning_path_draft", {
+    p_path_id: path.id || null, p_code: path.code, p_slug: path.slug, p_title: path.title,
+    p_summary: path.summary || "", p_target_audience: path.targetAudience || "",
+    p_difficulty_level: path.difficultyLevel || "FOUNDATION",
+    p_estimated_duration_minutes: path.durationMinutes ? Number(path.durationMinutes) : null,
+    p_version_label: path.versionLabel || "0.1"
+  }, "Enregistrement du parcours impossible");
+}
+export function saveLearningPathItems(pathId, items) {
+  return callEditorialRpc("academy_save_learning_path_items", { p_path_id: pathId, p_items: items },
+    "Enregistrement de la séquence impossible");
+}
+export function publishLearningPath(pathId, note = "") {
+  return callEditorialRpc("academy_publish_learning_path", { p_path_id: pathId, p_note: note },
+    "Publication du parcours impossible");
 }
