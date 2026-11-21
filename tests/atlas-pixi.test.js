@@ -353,3 +353,9 @@ test("Atlas selection panel has a dedicated rendering module", async () => {
   assert.ok(source.includes("renderAtlasSelectionPanel({"));
   assert.ok(source.includes('selected: navigation.selected'));
 });
+
+
+test("Atlas view preserves cursor-centered wheel zoom", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.match(source, /const onWheel = \(event\) => \{[\s\S]*?event\.preventDefault\(\)[\s\S]*?zoom\(event\.deltaY < 0 \? 1\.16 : 0\.86, event\.clientX - rect\.left, event\.clientY - rect\.top\)/);
+});
