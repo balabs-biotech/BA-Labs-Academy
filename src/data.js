@@ -145,7 +145,7 @@ export async function loadAcademyData() {
   ]);
   const { enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, error: memberError } = memberRecords;
   const editorialMembers = accessToken && ['OWNER','ADMIN'].includes(membership?.role) ? await callEditorialRpc('academy_list_members', {}, 'Chargement des membres impossible').catch(() => []) : [];
-  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialCompetencyDomains, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialContentAssets, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys, editorialAssessmentCompetencies, editorialCompetencyPrerequisites, editorialPrograms, editorialProgramDepartments, editorialProgramDomains, editorialProgramNodes] = accessToken
+  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialCompetencyDomains, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialContentAssets, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys, editorialAssessmentCompetencies, editorialCompetencyPrerequisites, editorialPrograms, editorialProgramDepartments, editorialProgramDomains, editorialProgramNodes, editorialProgramNodeCompetencies, editorialProgramNodeResources, editorialProgramNodeAssessments, editorialProgramNodeCompetencies, editorialProgramNodeResources, editorialProgramNodeAssessments] = accessToken
     ? await Promise.all([
         readTable("academy_learning_paths", {
           select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
@@ -181,9 +181,12 @@ export async function loadAcademyData() {
         readTable("academy_programs", { select: "id,code,slug,title,summary,objectives,program_type,target_audience,difficulty_level,estimated_duration_hours,version_label,status,visibility,published_at,updated_at", order: "updated_at.desc" }, accessToken).catch(() => []),
         readTable("academy_program_departments", { select: "program_id,department_code,is_primary" }, accessToken).catch(() => []),
         readTable("academy_program_domains", { select: "program_id,domain_code" }, accessToken).catch(() => []),
-        readTable("academy_program_nodes", { select: "id,program_id,parent_node_id,code,node_type,title,summary,sort_order,is_required,estimated_minutes", order: "sort_order.asc" }, accessToken).catch(() => [])
+        readTable("academy_program_nodes", { select: "id,program_id,parent_node_id,code,node_type,title,summary,sort_order,is_required,estimated_minutes", order: "sort_order.asc" }, accessToken).catch(() => []),
+        readTable("academy_program_node_competencies", { select: "program_id,program_node_id,competency_id,expected_level,minimum_score,is_core" }, accessToken).catch(() => []),
+        readTable("academy_program_node_resources", { select: "program_id,program_node_id,content_id,resource_role,sort_order,is_required" }, accessToken).catch(() => []),
+        readTable("academy_program_node_assessments", { select: "program_id,program_node_id,assessment_id,assessment_role,sort_order,is_required" }, accessToken).catch(() => [])
       ])
-    : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
+    : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
   const [trainingPartners, trainingAgreements, trainingOfferings, trainingSessions, trainingEnrollments, trainingAttendance, trainingDocuments, trainingBilling] = accessToken
     ? await Promise.all([
         readTable("academy_training_partners", { select: "id,partner_code,legal_name,approval_number,approval_authority,approval_valid_from,approval_valid_until,approved_specialties,approved_delivery_modes,status", order: "legal_name.asc" }, accessToken).catch(() => []),
