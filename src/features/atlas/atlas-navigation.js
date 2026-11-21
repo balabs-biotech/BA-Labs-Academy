@@ -23,3 +23,15 @@ export function createAtlasNavigation(nodes, maxHistory = 80) {
     reset() { selected = null; history.length = 0; }
   };
 }
+
+export function getAtlasBreadcrumbPath(node, nodesById) {
+  const path = [];
+  const visited = new Set();
+  let current = node;
+  while (current && !visited.has(current.id)) {
+    visited.add(current.id);
+    path.unshift(current.title);
+    current = current.parent ? nodesById.get(current.parent) || null : null;
+  }
+  return path;
+}

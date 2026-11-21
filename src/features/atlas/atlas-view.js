@@ -1,5 +1,5 @@
 import { createPixiRenderer } from "./pixi-renderer.js";
-import { createAtlasNavigation } from "./atlas-navigation.js";
+import { createAtlasNavigation, getAtlasBreadcrumbPath } from "./atlas-navigation.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -164,12 +164,7 @@ export function mountAcademyAtlas(container, graph) {
       breadcrumbs.textContent = "BA Labs Academy / Vue générale";
       return;
     }
-    const path = [];
-    let current = navigation.selected;
-    while (current) {
-      path.unshift(current.title);
-      current = current.parent ? byId.get(current.parent) : null;
-    }
+    const path = getAtlasBreadcrumbPath(navigation.selected, byId);
     breadcrumbs.textContent = "BA Labs Academy / " + path.join(" / ");
   };
 

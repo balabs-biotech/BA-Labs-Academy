@@ -165,3 +165,24 @@ test("Atlas view delegates selection and history to the navigation model", () =>
   assert.ok(source.includes("navigation.back()"));
   assert.ok(source.includes("navigation.reset()"));
 });
+
+
+test("Atlas breadcrumb paths follow parents and safely stop at missing parents or cycles", async () => {
+  const { getAtlasBreadcrumbPath } = await import("../src/features/atlas/atlas-navigation.js");
+  const root = { id: "root", title: "Biologie", parent: null };
+  const section = { id: "section", title: "Mycologie", parent: "root" };
+  const module = { id: "module", title: "Culture", parent: "section" };
+  const byId = new Map([[root.id, root], [section.id, section], [module.id, module]]);
+  assert.deepEqual(getAtlasBreadcrumbPath(module, byId), ["Biologie", "Mycologie", "Culture"]);
+  assert.deepEqual(getAtlasBreadcrumbPath(null, byId), []);
+  assert.deepEqual(getAtlasBreadcrumbPath({ id: "orphan", title: "Orphelin", parent: "missing" }, byId), ["Orphelin"]);
+  const cyclicA = { id: "a", title: "A", parent: "b" };
+  const cyclicB = { id: "b", title: "B", parent: "a" };
+  const cyclic = new Map([["a", cyclicA], ["b", cyclicB]]);
+  assert.deepEqual(getAtlasBreadcrumbPath(cyclicA, cyclic), ["B", "A"]);
+});
+
+test("Atlas view delegates breadcrumb construction to the navigation model", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(source.includes("getAtlasBreadcrumbPath(navigation.selected, byId)"));
+});
