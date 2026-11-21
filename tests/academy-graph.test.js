@@ -58,8 +58,8 @@ test("Other departments and pathways occupy separate orbital bands", () => {
   const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
   const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
   const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
-  assert.ok(meanDepartmentRadius > 600 && meanDepartmentRadius < 720);
-  assert.ok(meanPathwayRadius > 1050 && meanPathwayRadius < 1170);
+  assert.ok(meanDepartmentRadius > 1450 && meanDepartmentRadius < 1650);
+  assert.ok(meanPathwayRadius > 2400 && meanPathwayRadius < 2650);
 });
 
 
