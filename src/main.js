@@ -1,4 +1,4 @@
-import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, publishCompetency } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
@@ -10,7 +10,7 @@ const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
 let data = {
   departments: [], domains: [], content: [], departmentLinks: [], domainLinks: [],
-  learningPaths: [], editorialPaths: [], editorialCompetencies: [], editorialContentCompetencies: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
+  learningPaths: [], editorialPaths: [], editorialCompetencies: [], editorialContentCompetencies: [], editorialContent: [], editorialDepartmentLinks: [], editorialDomainLinks: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
   enrollments: [], progress: [], pathItemProgress: [], nodes: [], edges: []
 };
 let loadError = null;
@@ -334,6 +334,22 @@ function administrationView() {
       <div class="editorial-path-list">${(data.editorialPaths || []).filter((path) => path.status === "DRAFT").map((path) => `<a class="editorial-path-row" href="#/administration/parcours/${encodeURIComponent(path.id)}"><div><span class="eyebrow">${escapeHtml(path.code)} · ${escapeHtml(path.status)}</span><h3>${escapeHtml(path.title)}</h3><p>${escapeHtml(path.summary || "Aucun résumé.")}</p></div><b>Modifier ↗</b></a>`).join("") || emptyState("Aucun parcours", "Crée le premier brouillon pédagogique.")}</div>
     </section>` : ""}
 
+
+    <section class="section-block resource-editorial">
+      <div class="section-heading"><div><span class="eyebrow">CATALOGUE ÉDITORIAL</span><h2>Ressources pédagogiques</h2></div><a class="button button-primary" href="#/administration/ressources/nouveau">Créer une ressource ↗</a></div>
+      <p class="taxonomy-intro">Cycle : brouillon, revue, approbation, publication. La classification disciplinaire alimente l’Atlas.</p>
+      <div class="resource-editorial-queue">
+        ${(data.editorialContent || []).map((item) => {
+          const canEdit = ["OWNER","ADMIN","EDITOR"].includes(membership.role) && item.status === "DRAFT" && ["PLANNED","OUTLINE","DRAFT"].includes(item.editorial_status);
+          const canReview = ["OWNER","ADMIN","REVIEWER"].includes(membership.role) && item.status === "DRAFT" && item.editorial_status === "REVIEW";
+          const canPublish = ["OWNER","ADMIN"].includes(membership.role) && item.status === "DRAFT" && item.editorial_status === "APPROVED";
+          return '<article class="resource-editorial-row"><div class="resource-editorial-info"><span class="eyebrow">' + escapeHtml(item.business_id) + ' · ' + escapeHtml(item.editorial_status) + '</span><b>' + escapeHtml(item.title) + '</b><small>' + escapeHtml(item.resource_type) + ' · ' + escapeHtml(item.language_code) + '</small></div><div class="resource-editorial-actions">' +
+            (canEdit ? '<a class="button button-outline" href="#/administration/ressources/' + encodeURIComponent(item.id) + '">Modifier</a><button class="button button-outline" data-content-submit="' + escapeHtml(item.id) + '">Soumettre</button>' : '') +
+            (canReview ? '<button class="button button-outline" data-content-review="APPROVE" data-content-id="' + escapeHtml(item.id) + '">Approuver</button><button class="button button-outline" data-content-review="REQUEST_CHANGES" data-content-id="' + escapeHtml(item.id) + '">À corriger</button>' : '') +
+            (canPublish ? '<button class="button button-primary" data-content-publish="' + escapeHtml(item.id) + '">Publier</button>' : '') + '</div></article>';
+        }).join("") || emptyState("Aucune ressource éditoriale", "Le circuit de création est prêt. Les contenus pourront être ajoutés progressivement.")}
+      </div>
+    </section>
     <section class="section-block competency-editorial">
       <div class="section-heading"><div><span class="eyebrow">RÉFÉRENTIEL DES COMPÉTENCES</span><h2>Compétences et acquis visés</h2></div>${["OWNER","ADMIN","EDITOR"].includes(membership.role) ? `<a class="button button-primary" href="#/administration/competences/nouveau">Créer une compétence ↗</a>` : ""}</div>
       <p class="taxonomy-intro">Chaque compétence est une entité du référentiel. Ses liens aux ressources alimentent l’Atlas ; la publication reste réservée aux rôles Owner et Admin.</p>
@@ -366,7 +382,34 @@ function administrationView() {
     <p class="progress-note">Le contrôle d’accès de cette interface est indicatif. Chaque opération éditoriale reste protégée par les contrôles de rôle des fonctions PostgreSQL ; aucun droit n’est accordé par le frontend seul.</p>`;
 }
 
-function competencyEditorView(competencyId = "nouveau") {
+
+function contentEditorView(contentId = "nouveau") {
+ if (!currentSession?.user) return loginView();
+ const membership=data.membership;
+ if (!["OWNER","ADMIN","EDITOR"].includes(membership?.role) || membership.membership_status!=="ACTIVE") return notFound("Édition non autorisée","La création de ressources exige un rôle éditorial actif.");
+ const isNew=!contentId || contentId==="nouveau";
+ const item=isNew?null:(data.editorialContent||[]).find((entry)=>entry.id===contentId);
+ if (!isNew && (!item || item.status!=="DRAFT" || !["PLANNED","OUTLINE","DRAFT"].includes(item.editorial_status))) return notFound("Brouillon indisponible","Cette ressource n’est pas modifiable.");
+ const deps=(data.editorialDepartmentLinks||[]).filter((x)=>x.content_id===item?.id);
+ const doms=(data.editorialDomainLinks||[]).filter((x)=>x.content_id===item?.id).map((x)=>x.domain_code);
+ const types=["ARTICLE","COURSE","VIDEO","DOCUMENT","PODCAST","INTERACTIVE","EXERCISE","LAB_PROTOCOL","EXTERNAL_RESOURCE"];
+ const levels=["INTRODUCTORY","FOUNDATION","INTERMEDIATE","ADVANCED","EXPERT"];
+ return '<section class="page-intro"><span class="eyebrow"><a href="#/administration">ESPACE ÉDITORIAL</a> / RESSOURCES</span><h1>'+(isNew?"Nouvelle ressource":escapeHtml(item.title))+'</h1><p>Fiche de référence et classification disciplinaire.</p></section>' +
+ '<form class="content-editor-form" id="content-editor-form" data-content-id="'+escapeHtml(item?.id||'')+'"><div class="editor-form-grid">' +
+ '<label>Identifiant métier<input name="business_id" required maxlength="80" value="'+escapeHtml(item?.business_id||'')+'"></label>' +
+ '<label>Slug<input name="slug" required pattern="[a-z0-9]+(-[a-z0-9]+)*" value="'+escapeHtml(item?.slug||'')+'"></label>' +
+ '<label class="wide">Titre<input name="title" required maxlength="200" value="'+escapeHtml(item?.title||'')+'"></label>' +
+ '<label>Type<select name="resource_type">'+types.map((v)=>'<option value="'+v+'" '+((item?.resource_type||"ARTICLE")===v?"selected":"")+'>'+v+'</option>').join('')+'</select></label>' +
+ '<label>Langue<input name="language_code" required maxlength="8" value="'+escapeHtml(item?.language_code||'fr')+'"></label>' +
+ '<label>Niveau<select name="learning_level"><option value="">Non défini</option>'+levels.map((v)=>'<option value="'+v+'" '+(item?.learning_level===v?"selected":"")+'>'+v+'</option>').join('')+'</select></label>' +
+ '<label class="wide">Résumé<textarea name="summary" rows="3">'+escapeHtml(item?.summary||'')+'</textarea></label></div>' +
+ '<section class="content-classification"><span class="eyebrow">CLASSIFICATION DISCIPLINAIRE</span><h2>Départements</h2><p>Un seul département principal est requis pour publier.</p><div class="content-taxonomy-list">' +
+ (data.editorialDepartments||[]).map((dep)=>{const selected=deps.find((x)=>x.department_code===dep.code);return '<label class="content-taxonomy-option"><input type="checkbox" data-content-department value="'+escapeHtml(dep.code)+'" '+(selected?'checked':'')+'><span>'+escapeHtml(dep.title)+' <small>'+escapeHtml(dep.code)+'</small></span><span class="primary-choice"><input type="radio" name="primary_department" value="'+escapeHtml(dep.code)+'" '+(selected?.is_primary?'checked':'')+'> Principal</span></label>';}).join('') +
+ '</div><h2>Domaines</h2><p>Les domaines sont filtrés selon les départements sélectionnés.</p><div class="content-taxonomy-list" id="content-domain-list">' +
+ (data.editorialDomains||[]).map((dom)=>'<label class="content-taxonomy-option" data-domain-parent="'+escapeHtml(dom.department_code)+'"><input type="checkbox" data-content-domain value="'+escapeHtml(dom.code)+'" '+(doms.includes(dom.code)?'checked':'')+'><span>'+escapeHtml(dom.title)+' <small>'+escapeHtml(dom.code)+'</small></span></label>').join('') +
+ '</div></section><div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div><p id="content-editor-feedback" class="auth-feedback" role="status"></p></form>';
+}
+\nfunction competencyEditorView(competencyId = "nouveau") {
   if (!currentSession?.user) return loginView();
   const membership = data.membership;
   if (!["OWNER","ADMIN","EDITOR"].includes(membership?.role) || membership.membership_status !== "ACTIVE") return notFound("Édition non autorisée", "La gestion des compétences est réservée aux rôles Owner, Admin et Editor.");
@@ -535,7 +578,7 @@ function render() {
     "ressource": () => resourceDetail(slug, pathItemId),
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "espace": learnerView,
-    "administration": () => subroute === "parcours" ? learningPathEditorView(subId) : subroute === "competences" ? competencyEditorView(subId) : administrationView(),
+    "administration": () => subroute === "parcours" ? learningPathEditorView(subId) : subroute === "competences" ? competencyEditorView(subId) : subroute === "ressources" ? contentEditorView(subId) : administrationView(),
     "atlas": atlasView,
     "apropos": aboutView
   };
@@ -626,6 +669,23 @@ function render() {
       renderPathwaySequence(sequencePanel, resources, sequence);
     });
   }
+
+  const contentForm=document.querySelector("#content-editor-form");
+  if(contentForm){
+    const syncDomains=()=>{const selected=new Set([...contentForm.querySelectorAll("[data-content-department]:checked")].map((x)=>x.value));contentForm.querySelectorAll("[data-domain-parent]").forEach((row)=>{row.hidden=!selected.has(row.dataset.domainParent);if(row.hidden)row.querySelector("input").checked=false;});};
+    contentForm.querySelectorAll("[data-content-department]").forEach((x)=>x.addEventListener("change",syncDomains));
+    contentForm.addEventListener("change",(event)=>{if(event.target.name==="primary_department"){contentForm.querySelectorAll("[data-content-department]").forEach((x)=>{if(x.value===event.target.value)x.checked=true;});syncDomains();}});
+    syncDomains();
+    contentForm.addEventListener("submit",async(event)=>{event.preventDefault();const button=contentForm.querySelector('button[type="submit"]');const feedback=document.querySelector("#content-editor-feedback");button.disabled=true;feedback.textContent="Enregistrement et synchronisation de l’Atlas…";
+      try{const values=new FormData(contentForm);const departments=[...contentForm.querySelectorAll("[data-content-department]:checked")].map((x)=>({code:x.value,is_primary:values.get("primary_department")===x.value}));const domains=[...contentForm.querySelectorAll("[data-content-domain]:checked")].map((x)=>({code:x.value}));
+        const id=await saveContentEditorial({id:contentForm.dataset.contentId||null,businessId:values.get("business_id").trim(),slug:values.get("slug").trim(),title:values.get("title").trim(),summary:values.get("summary"),resourceType:values.get("resource_type"),languageCode:values.get("language_code").trim(),learningLevel:values.get("learning_level")||null,departments,domains});
+        location.hash="#/administration/ressources/"+encodeURIComponent(id);await refresh();
+      }catch(error){feedback.textContent=error.message||"Enregistrement impossible.";button.disabled=false;}
+    });
+  }
+  document.querySelectorAll("[data-content-submit]").forEach((button)=>button.addEventListener("click",async()=>{button.disabled=true;try{await submitContentForReview(button.dataset.contentSubmit);await refresh();}catch(error){window.alert(error.message||"Soumission impossible.");button.disabled=false;}}));
+  document.querySelectorAll("[data-content-review]").forEach((button)=>button.addEventListener("click",async()=>{button.disabled=true;try{await reviewContent(button.dataset.contentId,button.dataset.contentReview);await refresh();}catch(error){window.alert(error.message||"Revue impossible.");button.disabled=false;}}));
+  document.querySelectorAll("[data-content-publish]").forEach((button)=>button.addEventListener("click",async()=>{button.disabled=true;try{await publishContent(button.dataset.contentPublish);await refresh();}catch(error){window.alert(error.message||"Publication impossible.");button.disabled=false;}}));
   document.querySelectorAll("[data-taxonomy-publish]").forEach((button) => {
     button.addEventListener("click", async () => {
       button.disabled = true;
