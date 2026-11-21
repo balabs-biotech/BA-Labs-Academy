@@ -710,3 +710,14 @@
 .atlas-relation-filters button:hover{border-color:rgba(232,201,157,.55);color:#eee8d9}
 .atlas-relation-filters button[aria-pressed="true"]{border-color:rgba(232,201,157,.7);background:rgba(232,201,157,.12);color:#f0d9b4}
 @media(max-width:640px){.atlas-relation-filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:14px}.atlas-relation-filters>span{flex:0 0 auto}.atlas-relation-filters button{flex:0 0 auto}}
+
+
+/* Hierarchical drill-down controls in the Atlas inspector */
+.atlas-branch-navigation{display:grid;gap:7px;margin-top:12px;padding-top:10px;border-top:1px solid #ffffff18}
+.atlas-branch-navigation>strong{color:#aebfb3;font-size:9px;letter-spacing:.06em}
+.atlas-branch-parent,.atlas-branch-child{max-width:100%;padding:7px 9px;border:1px solid #8da49435;border-radius:4px;background:#172522;color:#cbd7cd;text-align:left;font:inherit;font-size:10px;cursor:pointer}
+.atlas-branch-parent{color:#d8b49e;border-color:#b96b4d55}
+.atlas-branch-parent:hover,.atlas-branch-child:hover{border-color:#b96b4d;background:#243630}
+.atlas-branch-children{display:flex;flex-wrap:wrap;gap:5px;max-height:132px;overflow:auto}
+.atlas-branch-child{font-size:9px}
+.atlas-branch-parent:focus-visible,.atlas-branch-child:focus-visible{outline:2px solid #d6a18a;outline-offset:2px}
