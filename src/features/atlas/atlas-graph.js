@@ -82,7 +82,7 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
   };
 
   const addEdge = (source, target, options = {}) => {
-    edges.push({
+    const edge = {
       id: options.id || source.id + "->" + target.id,
       a: source,
       b: target,
@@ -93,7 +93,9 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
       verified: Boolean(options.verified),
       basis: options.basis || "hierarchy",
       label: options.label || ""
-    });
+    };
+    edges.push(edge);
+    return edge;
   };
 
   const walk = (items, parent, rootId, depth, branchAngle) => {
