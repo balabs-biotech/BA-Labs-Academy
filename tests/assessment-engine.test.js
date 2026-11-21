@@ -47,3 +47,25 @@ test("learner and editorial UIs manage assessments and certificates",()=>{
  assert.match(data,/export function submitAssessment/);
  assert.match(data,/academy_assessment_answer_keys/);
 });
+
+const competencyGraph=await readFile(new URL("../supabase/migrations/20261122010000_academy_competency_evidence_graph_v1.sql",import.meta.url),"utf8");
+test("competencies can be anchored to multiple domains and assessments",()=>{
+ assert.match(competencyGraph,/academy_competency_domains/);
+ assert.match(competencyGraph,/academy_save_competency_domains/);
+ assert.match(competencyGraph,/academy_assessment_competencies/);
+ assert.match(competencyGraph,/academy_save_assessment_competencies/);
+});
+test("assessment submission creates append-only learner competency evidence",()=>{
+ assert.match(competencyGraph,/academy_competency_evidence/);
+ assert.match(competencyGraph,/evidence_status/);
+ assert.match(competencyGraph,/insert into public\.academy_competency_evidence/);
+ assert.match(competencyGraph,/security_invoker=true/);
+});
+test("editorial UI configures disciplinary anchors and assessment competency thresholds",()=>{
+ assert.match(main,/data-competency-domain/);
+ assert.match(main,/saveCompetencyDomains\(id, domainCodes\)/);
+ assert.match(main,/data-assessment-competency/);
+ assert.match(main,/saveAssessmentCompetencies\(id,competencyMappings\)/);
+ assert.match(data,/export function saveCompetencyDomains/);
+ assert.match(data,/export function saveAssessmentCompetencies/);
+});
