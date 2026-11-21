@@ -46,6 +46,16 @@ export function renderAcademyAtlas(graph) {
         ${rootNavigation(departmentRoots, "departments", "DÉPARTEMENTS")}
         ${rootNavigation(pathwayRoots, "pathways", "PARCOURS PRATIQUES")}
       </nav>
+      <div class="atlas-relation-filters" role="group" aria-label="Filtres des connexions pédagogiques">
+        <span>FLUX PÉDAGOGIQUES</span>
+        <button type="button" data-atlas-relation="all" aria-pressed="true">Tous</button>
+        <button type="button" data-atlas-relation="PREREQUISITE" aria-pressed="false">Prérequis</button>
+        <button type="button" data-atlas-relation="COMPLEMENTARY" aria-pressed="false">Complémentarité</button>
+        <button type="button" data-atlas-relation="METHOD_TRANSFER" aria-pressed="false">Transfert</button>
+        <button type="button" data-atlas-relation="TECHNICAL_DEPENDENCY" aria-pressed="false">Dépendance</button>
+        <button type="button" data-atlas-relation="APPLIED_IN" aria-pressed="false">Application</button>
+        <button type="button" data-atlas-relation="INTERDISCIPLINARY" aria-pressed="false">Interdisciplinaire</button>
+      </div>
       <div class="atlas-stage" id="academy-atlas-stage">
         <canvas id="academy-atlas-canvas" aria-label="Réseau de connaissances interactif BA Labs Academy"></canvas>
         <div class="atlas-stage-heading">
@@ -105,6 +115,7 @@ export function mountAcademyAtlas(container, graph) {
   let dragged = false;
   let lastPinchDistance = 0;
   let lastClick = null;
+  let relationFilter = "all";
 
   const screen = (node) => ({
     x: width / 2 + offset.x + node.x * scale,
@@ -122,6 +133,7 @@ export function mountAcademyAtlas(container, graph) {
       width,
       height,
       reduced,
+      relationFilter,
       lang: "fr",
       time: performance.now()
     });
@@ -432,6 +444,16 @@ export function mountAcademyAtlas(container, graph) {
     if (node) focusNode(node);
   };
 
+  const onRelationFilter = (event) => {
+    const button = event.target.closest("[data-atlas-relation]");
+    if (!button) return;
+    relationFilter = button.dataset.atlasRelation;
+    container.querySelectorAll("[data-atlas-relation]").forEach((item) => {
+      item.setAttribute("aria-pressed", String(item === button));
+    });
+    draw();
+  };
+
   const onControls = (event) => {
     const button = event.target.closest("[data-atlas-action]");
     if (!button) return;
@@ -470,6 +492,7 @@ export function mountAcademyAtlas(container, graph) {
   canvas.addEventListener("pointercancel", onPointerUp);
   canvas.addEventListener("wheel", onWheel, { passive: false });
   container.addEventListener("click", onControls);
+  container.addEventListener("click", onRelationFilter);
   container.addEventListener("click", onRootNavigation);
   window.addEventListener("resize", resize, { passive: true });
 
@@ -512,6 +535,7 @@ export function mountAcademyAtlas(container, graph) {
     canvas.removeEventListener("pointercancel", onPointerUp);
     canvas.removeEventListener("wheel", onWheel);
     container.removeEventListener("click", onControls);
+  container.removeEventListener("click", onRelationFilter);
     container.removeEventListener("click", onRootNavigation);
     window.removeEventListener("resize", resize);
     renderer?.destroy();

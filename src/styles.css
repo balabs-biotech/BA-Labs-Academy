@@ -701,3 +701,12 @@
 .atlas-knowledge-connection:hover{border-color:rgba(232,201,157,.65);background:rgba(232,201,157,.07)}
 .atlas-knowledge-connection small{color:#c9aa7c;font-size:9px;letter-spacing:.05em}
 .atlas-knowledge-connection span{color:#d7e1d9;font-size:11px}
+
+
+/* Atlas relation filter rail */
+.atlas-relation-filters{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 2px 12px}
+.atlas-relation-filters>span{margin-right:7px;color:#9baea4;font-size:9px;font-weight:700;letter-spacing:.12em}
+.atlas-relation-filters button{border:1px solid rgba(143,170,155,.22);border-radius:999px;padding:6px 10px;background:rgba(16,29,26,.72);color:#aebdb3;font:inherit;font-size:10px;cursor:pointer;transition:background .18s,border-color .18s,color .18s}
+.atlas-relation-filters button:hover{border-color:rgba(232,201,157,.55);color:#eee8d9}
+.atlas-relation-filters button[aria-pressed="true"]{border-color:rgba(232,201,157,.7);background:rgba(232,201,157,.12);color:#f0d9b4}
+@media(max-width:640px){.atlas-relation-filters{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:14px}.atlas-relation-filters>span{flex:0 0 auto}.atlas-relation-filters button{flex:0 0 auto}}
