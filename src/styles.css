@@ -126,3 +126,26 @@
 .membership-table-row small{color:var(--muted);overflow-wrap:anywhere;font-size:9px}.membership-status{font-size:9px;letter-spacing:.08em}
 .membership-status.is-active{color:#61c89b}.membership-status.is-suspended{color:#d6a15f}
 @media(max-width:680px){.membership-form{grid-template-columns:1fr}.membership-form .wide{grid-column:auto}.membership-table-head,.membership-table-row{grid-template-columns:minmax(0,1fr) .7fr .8fr;gap:7px}}
+.assessment-start,.assessment-result,.certificate-ready,.certificate-issued,.certificate-verification{margin:28px 0;padding:22px;border:1px solid var(--line);background:var(--panel)}
+.assessment-start>p{max-width:680px;color:var(--muted);font-size:12px;line-height:1.7}
+.assessment-form{display:grid;gap:18px;max-width:860px;margin:24px auto}
+.assessment-question{min-width:0;margin:0;padding:20px;border:1px solid var(--line);background:var(--panel)}
+.assessment-question legend{display:grid;gap:10px;width:100%;padding:0 0 16px;color:var(--text);font-size:15px;line-height:1.5}
+.assessment-options{display:grid;gap:8px}
+.assessment-options label{display:flex;align-items:flex-start;gap:11px;padding:12px;border:1px solid var(--line);cursor:pointer;font-size:12px;line-height:1.5}
+.assessment-options label:has(input:checked){border-color:var(--accent);background:var(--surface)}
+.assessment-options input{margin-top:3px;accent-color:var(--accent)}
+.assessment-result strong{display:block;margin:10px 0;font-size:48px;font-variant-numeric:tabular-nums}
+.assessment-result.is-passed{border-color:#368b68}.assessment-result.is-failed{border-color:#a66a50}
+.assessment-result p{color:var(--muted);font-size:12px}
+.assessment-path-list{display:grid;border-top:1px solid var(--line)}
+.assessment-path-row{display:grid;grid-template-columns:minmax(0,2fr) 1fr auto;gap:14px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line);font-size:11px}
+.assessment-path-row>div{display:grid;gap:5px}.assessment-path-row small{color:var(--muted);font-size:9px;letter-spacing:.08em}
+.assessment-path-row>span{color:var(--muted)}
+.certificate-ready,.certificate-issued{display:grid;gap:10px}.certificate-ready h2,.certificate-issued b{margin:0;font-size:18px}
+.certificate-verify-form{display:flex;flex-wrap:wrap;gap:10px;align-items:end;padding:18px;border:1px solid var(--line);background:var(--panel)}
+.certificate-verify-form label{display:grid;flex-basis:100%;font-size:10px;color:var(--muted)}
+.certificate-verify-form input{flex:1;min-width:180px;padding:12px;background:#111a16;border:1px solid var(--line);color:var(--text);font:inherit;font-size:12px}
+.certificate-verification h2{margin:10px 0;font-size:20px}.certificate-verification p{font-size:11px;color:var(--muted)}
+.certificate-verification.is-valid{border:1px solid #368b68}.certificate-verification.is-revoked{border:1px solid #a66a50}
+@media(max-width:640px){.assessment-path-row{grid-template-columns:1fr auto}.assessment-path-row>span{grid-column:1}.assessment-path-row>a{grid-column:2;grid-row:1/3}.assessment-result strong{font-size:40px}}
