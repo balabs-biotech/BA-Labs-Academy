@@ -342,3 +342,12 @@ test("Atlas accessible node index is rendered by its own view adapter", async ()
   assert.ok(source.includes("renderAtlasAccessibleNodes({"));
   assert.ok(source.includes('nav: container.querySelector("#academy-atlas-accessible")'));
 });
+
+
+test("Atlas selection panel has a dedicated rendering module", async () => {
+  const { renderAtlasSelectionPanel } = await import("../src/features/atlas/atlas-selection.js");
+  assert.equal(typeof renderAtlasSelectionPanel, "function");
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(source.includes("renderAtlasSelectionPanel({"));
+  assert.ok(source.includes('selected: navigation.selected'));
+});

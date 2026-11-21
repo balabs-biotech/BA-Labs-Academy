@@ -31,7 +31,17 @@ try {
     }));
 
     await page.goto(routeUrl("atlas"), { waitUntil: "domcontentloaded" });
-    await page.waitForSelector("#academy-atlas-canvas", { state: "visible", timeout: 30000 });
+    try {
+      await page.waitForSelector("#academy-atlas-canvas", { state: "visible", timeout: 30000 });
+    } catch (error) {
+      const diagnostic = await page.evaluate(() => ({
+        url: location.href,
+        title: document.title,
+        appText: document.querySelector("#app")?.innerText?.slice(0, 1200) || "",
+        scripts: [...document.scripts].map((script) => script.src).filter(Boolean)
+      }));
+      throw new Error(`Atlas mount failed on ${viewport.name}: ${JSON.stringify({ diagnostic, pageErrors: errors, consoleErrors, failedRequests, cause: error.message })}`);
+    }
     await page.waitForFunction(
       () => document.querySelector("#atlas-engine-state")?.textContent.includes("Moteur actif"),
       undefined,
