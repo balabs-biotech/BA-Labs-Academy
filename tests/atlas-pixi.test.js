@@ -116,3 +116,14 @@ test("unverified or evidence-free editorial relations never become knowledge edg
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways, relations);
   assert.equal(graph.edges.filter((edge) => edge.basis === "academy-knowledge-relation").length, 0);
 });
+
+
+test("Atlas inspector exposes parent and immediate-child navigation for hierarchical drill-down", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(source.includes('className = "atlas-branch-navigation"'));
+  assert.ok(source.includes('className = "atlas-branch-parent"'));
+  assert.ok(source.includes('className = "atlas-branch-children"'));
+  assert.ok(source.includes('node.parent === selected.id'));
+  assert.ok(source.includes('focusNode(parentNode)'));
+  assert.ok(source.includes('focusNode(child)'));
+});
