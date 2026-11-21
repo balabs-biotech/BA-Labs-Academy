@@ -54,3 +54,6 @@ Chaque push sur `main` exécute les tests, génère le site, puis tente le dépl
 Le moteur d’évaluation sépare les questionnaires, les questions, les options visibles et les clés de correction privées. Les tentatives sont versionnées, historisées et corrigées exclusivement côté serveur. Le premier type pris en charge est le QCM à choix unique ; le schéma permet d’étendre ultérieurement les modalités d’évaluation.
 
 Les parcours peuvent référencer des évaluations obligatoires ou complémentaires et fixer un seuil minimal propre au parcours. L’émission d’un certificat est contrôlée côté serveur : inscription au parcours, validation de toutes les étapes obligatoires et réussite des évaluations requises. Les certificats disposent d’un code unique et d’un endpoint public de vérification qui ne révèle aucune donnée personnelle de l’apprenant.
+
+
+La console éditoriale comprend un constructeur de QCM à choix unique, le paramétrage des seuils, tentatives et durées, ainsi que l’association d’évaluations publiques à un parcours. Les parcours peuvent imposer un seuil spécifique pour chaque évaluation liée.
