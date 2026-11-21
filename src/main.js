@@ -4,7 +4,7 @@ import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
-let data = { departments: [], domains: [], content: [], nodes: [], edges: [] };
+let data = { departments: [], domains: [], content: [], departmentLinks: [], domainLinks: [], nodes: [], edges: [] };
 let loadError = null;
 let unbindAtlas = () => {};
 
@@ -53,9 +53,13 @@ function departmentDetail(slug) {
   const department = data.departments.find((item) => item.slug === slug);
   if (!department) return notFound("Département indisponible", "Ce département n’est pas publié ou n’existe pas dans le catalogue public.");
   const domains = data.domains.filter((item) => item.department_code === department.code);
+  const contentIds = new Set(data.departmentLinks.filter((link) => link.department_code === department.code).map((link) => link.content_id));
+  const resources = data.content.filter((item) => contentIds.has(item.id));
   return `<section class="page-intro"><span class="eyebrow"><a href="#/departements">DÉPARTEMENTS</a> / ${escapeHtml(department.code)}</span><h1>${escapeHtml(department.title)}</h1><p>${escapeHtml(department.summary)}</p></section>
   <section class="section-block"><div class="section-heading"><div><span class="eyebrow">STRUCTURE DISCIPLINAIRE</span><h2>Domaines associés</h2></div><span class="resource-level">${domains.length} domaine(s) publié(s)</span></div>
-  <div class="domain-list">${domains.length ? domains.map((domain) => `<a class="domain-row domain-link" href="#/domaines/${encodeURIComponent(domain.slug)}"><span>${escapeHtml(domain.code)}</span><div><h3>${escapeHtml(domain.title)}</h3><p>${escapeHtml(domain.summary)}</p></div><b>↗</b></a>`).join("") : emptyState("Domaines en préparation", "Les domaines de ce département ne sont pas encore publiés.")}</div></section>`;
+  <div class="domain-list">${domains.length ? domains.map((domain) => `<a class="domain-row domain-link" href="#/domaines/${encodeURIComponent(domain.slug)}"><span>${escapeHtml(domain.code)}</span><div><h3>${escapeHtml(domain.title)}</h3><p>${escapeHtml(domain.summary)}</p></div><b>↗</b></a>`).join("") : emptyState("Domaines en préparation", "Les domaines de ce département ne sont pas encore publiés.")}</div>
+  <div class="section-heading"><div><span class="eyebrow">RESSOURCES PUBLIÉES</span><h2>Pour approfondir</h2></div></div>
+  <div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource associée", "Les ressources validées seront reliées à ce département au fil des publications.")}</div></section>`;
 }
 
 function resourceCards(items) {
@@ -70,9 +74,16 @@ function catalogueView() {
 
 function filterCatalogue(query) {
   const normalized = query.trim().toLocaleLowerCase("fr");
-  const filtered = data.content.filter((item) => [
-    item.title, item.summary, item.resource_type, item.learning_level, item.language_code
-  ].some((value) => String(value || "").toLocaleLowerCase("fr").includes(normalized)));
+  const filtered = data.content.filter((item) => {
+    const linkedDomainCodes = data.domainLinks.filter((link) => link.content_id === item.id).map((link) => link.domain_code);
+    const linkedDepartmentCodes = data.departmentLinks.filter((link) => link.content_id === item.id).map((link) => link.department_code);
+    const linkedLabels = [
+      ...data.domains.filter((domain) => linkedDomainCodes.includes(domain.code)).map((domain) => domain.title),
+      ...data.departments.filter((department) => linkedDepartmentCodes.includes(department.code)).map((department) => department.title)
+    ];
+    return [item.title, item.summary, item.resource_type, item.learning_level, item.language_code, ...linkedLabels]
+      .some((value) => String(value || "").toLocaleLowerCase("fr").includes(normalized));
+  });
   const results = document.querySelector("#resource-results");
   const count = document.querySelector("#resource-count");
   if (results) results.innerHTML = filtered.length
@@ -106,8 +117,12 @@ function domainDetail(slug) {
   const domain = data.domains.find((item) => item.slug === slug);
   if (!domain) return notFound("Domaine indisponible", "Ce domaine n’est pas publié ou n’existe pas dans le catalogue public.");
   const department = data.departments.find((item) => item.code === domain.department_code);
+  const contentIds = new Set(data.domainLinks.filter((link) => link.domain_code === domain.code).map((link) => link.content_id));
+  const resources = data.content.filter((item) => contentIds.has(item.id));
   return `<section class="page-intro"><span class="eyebrow"><a href="#/departements">DÉPARTEMENTS</a> / DOMAINE</span><h1>${escapeHtml(domain.title)}</h1><p>${escapeHtml(domain.summary)}</p></section>
-  <div class="detail-meta"><span>${escapeHtml(domain.code)}</span>${department ? `<a href="#/departements/${encodeURIComponent(department.slug)}">${escapeHtml(department.title)} ↗</a>` : ""}</div>`;
+  <div class="detail-meta"><span>${escapeHtml(domain.code)}</span>${department ? `<a href="#/departements/${encodeURIComponent(department.slug)}">${escapeHtml(department.title)} ↗</a>` : ""}</div>
+  <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RESSOURCES ASSOCIÉES</span><h2>Pour approfondir</h2></div></div>
+  <div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource associée", "Les ressources validées seront reliées à ce domaine au fil des publications.")}</div></section>`;
 }
 
 function atlasView() {
