@@ -135,3 +135,33 @@ test("Atlas viewport resize preserves the active exploration focus", () => {
   assert.match(source, /if \(!hasInitialFit\)\s*\{\s*fitOverview\(\);\s*hasInitialFit = true;/);
   assert.ok(source.includes("Subsequent resizes preserve the"));
 });
+
+
+test("Atlas navigation owns selection and bounded history independently of PixiJS", async () => {
+  const { createAtlasNavigation } = await import("../src/features/atlas/atlas-navigation.js");
+  const nodes = [{ id: "root" }, { id: "child" }, { id: "leaf" }];
+  const navigation = createAtlasNavigation(nodes, 2);
+  const view = (scale) => ({ scale, offset: { x: scale, y: -scale } });
+  assert.equal(navigation.selected, null);
+  assert.equal(navigation.canGoBack, false);
+  assert.equal(navigation.focus(nodes[0], view(1)), true);
+  navigation.focus(nodes[1], view(2));
+  navigation.focus(nodes[2], view(3));
+  assert.equal(navigation.back().scale, 2);
+  assert.equal(navigation.selected.id, "child");
+  assert.equal(navigation.back().scale, 1);
+  assert.equal(navigation.selected.id, "root");
+  assert.equal(navigation.back(), null);
+  navigation.reset();
+  assert.equal(navigation.selected, null);
+  assert.equal(navigation.canGoBack, false);
+  assert.equal(navigation.focus({ id: "unknown" }, view(1)), false);
+});
+
+test("Atlas view delegates selection and history to the navigation model", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(source.includes('import { createAtlasNavigation } from "./atlas-navigation.js";'));
+  assert.ok(source.includes("navigation.focus(node"));
+  assert.ok(source.includes("navigation.back()"));
+  assert.ok(source.includes("navigation.reset()"));
+});

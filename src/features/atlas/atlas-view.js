@@ -109,9 +109,8 @@ export function mountAcademyAtlas(container, graph) {
   let targetScale = 1;
   let offset = { x: 0, y: 0 };
   let targetOffset = { x: 0, y: 0 };
-  let selected = null;
+  const navigation = createAtlasNavigation(nodes);
   const pointers = new Map();
-  const history = [];
   let gesture = null;
   let dragged = false;
   let lastPinchDistance = 0;
@@ -128,7 +127,7 @@ export function mountAcademyAtlas(container, graph) {
     renderer.render({
       nodes,
       edges,
-      selected,
+      selected: navigation.selected,
       scale,
       offset,
       width,
@@ -160,12 +159,12 @@ export function mountAcademyAtlas(container, graph) {
 
   const updateBreadcrumbs = () => {
     if (zoomReadout) zoomReadout.textContent = targetScale < 0.3 ? "Vue globale" : targetScale < 1.25 ? "Constellations" : targetScale < 3 ? "Sections" : "Modules";
-    if (!selected) {
+    if (!navigation.selected) {
       breadcrumbs.textContent = "BA Labs Academy / Vue générale";
       return;
     }
     const path = [];
-    let current = selected;
+    let current = navigation.selected;
     while (current) {
       path.unshift(current.title);
       current = current.parent ? byId.get(current.parent) : null;
@@ -175,9 +174,9 @@ export function mountAcademyAtlas(container, graph) {
 
   const updateSelection = () => {
     updateBreadcrumbs();
-    backButton.disabled = history.length === 0;
+    backButton.disabled = !navigation.canGoBack;
     container.querySelectorAll("[data-atlas-root]").forEach((button) => {
-      const active = button.dataset.atlasRoot === selected?.id;
+      const active = button.dataset.atlasRoot === navigation.navigation.selected?.id;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", String(active));
     });
@@ -192,20 +191,20 @@ export function mountAcademyAtlas(container, graph) {
     heading.className = "atlas-selection-heading";
     const type = document.createElement("span");
     type.className = "eyebrow";
-    type.textContent = typeLabels[selected.entity_type] || "Nœud";
+    type.textContent = typeLabels[navigation.selected.entity_type] || "Nœud";
     const title = document.createElement("h3");
-    title.textContent = selected.title;
+    title.textContent = navigation.selected.title;
     heading.append(type, title);
     body.append(heading);
 
     const description = document.createElement("p");
-    description.textContent = selected.summary || "Fiche descriptive à compléter.";
+    description.textContent = navigation.selected.summary || "Fiche descriptive à compléter.";
     body.append(description);
 
     const branch = document.createElement("nav");
     branch.className = "atlas-branch-navigation";
     branch.setAttribute("aria-label", "Navigation dans la hiérarchie");
-    const parentNode = selected.parent ? byId.get(selected.parent) : null;
+    const parentNode = navigation.selected.parent ? byId.get(navigation.selected.parent) : null;
     if (parentNode) {
       const up = document.createElement("button");
       up.type = "button";
@@ -214,7 +213,7 @@ export function mountAcademyAtlas(container, graph) {
       up.addEventListener("click", () => focusNode(parentNode));
       branch.append(up);
     }
-    const children = nodes.filter((node) => node.parent === selected.id);
+    const children = nodes.filter((node) => node.parent === navigation.selected.id);
     if (children.length) {
       const branchTitle = document.createElement("strong");
       branchTitle.textContent = "Explorer cette branche · " + children.length;
@@ -233,19 +232,19 @@ export function mountAcademyAtlas(container, graph) {
     }
     if (parentNode || children.length) body.append(branch);
 
-    if (selected.entity_type === "PATHWAY" && Array.isArray(selected.data.sectionCodes)) {
+    if (navigation.selected.entity_type === "PATHWAY" && Array.isArray(navigation.selected.data.sectionCodes)) {
       const sections = document.createElement("div");
       sections.className = "atlas-selection-tags";
-      selected.data.sectionCodes.forEach((code) => {
+      navigation.selected.data.sectionCodes.forEach((code) => {
         const tag = document.createElement("span");
         tag.textContent = code;
         sections.append(tag);
       });
       body.append(sections);
-      if (Array.isArray(selected.data.domainCodes) && selected.data.domainCodes.length) {
+      if (Array.isArray(navigation.selected.data.domainCodes) && navigation.selected.data.domainCodes.length) {
         const domaines = document.createElement("div");
         domaines.className = "atlas-selection-tags";
-        selected.data.domainCodes.forEach((code) => {
+        navigation.selected.data.domainCodes.forEach((code) => {
           const tag = document.createElement("span");
           tag.textContent = "DOM · " + code;
           domaines.append(tag);
@@ -255,22 +254,22 @@ export function mountAcademyAtlas(container, graph) {
       const status = document.createElement("small");
       status.textContent = "Parcours cartographié · séquence et ressources à construire";
       body.append(status);
-    } else if (selected.entity_type === "DOMAIN") {
+    } else if (navigation.selected.entity_type === "DOMAIN") {
       const status = document.createElement("small");
       status.textContent = "Domaine publié · rattaché à son département";
       body.append(status);
-    } else if (selected.entity_type === "MODULE") {
+    } else if (navigation.selected.entity_type === "MODULE") {
       const status = document.createElement("small");
       status.textContent = "Module prévu · fiche pédagogique non rédigée";
       body.append(status);
-    } else if (selected.entity_type === "DEPARTMENT" || selected.entity_type === "DOMAIN" || selected.entity_type === "SECTION") {
+    } else if (navigation.selected.entity_type === "DEPARTMENT" || navigation.selected.entity_type === "DOMAIN" || navigation.selected.entity_type === "SECTION") {
       const status = document.createElement("small");
       status.textContent = "Référentiel cartographié · publication éditoriale distincte";
       body.append(status);
     }
 
-    if (selected.entity_type === "MODULE") {
-      const relationEdges = edges.filter((edge) => edge.basis === "academy-knowledge-relation" && (edge.a.id === selected.id || edge.b.id === selected.id));
+    if (navigation.selected.entity_type === "MODULE") {
+      const relationEdges = edges.filter((edge) => edge.basis === "academy-knowledge-relation" && (edge.a.id === navigation.selected.id || edge.b.id === navigation.selected.id));
       const connections = document.createElement("section");
       connections.className = "atlas-knowledge-connections";
       const connectionTitle = document.createElement("strong");
@@ -282,7 +281,7 @@ export function mountAcademyAtlas(container, graph) {
         connections.append(empty);
       } else {
         relationEdges.forEach((edge) => {
-          const isSource = edge.a.id === selected.id;
+          const isSource = edge.a.id === navigation.selected.id;
           const other = isSource ? edge.b : edge.a;
           const item = document.createElement("button");
           item.type = "button";
@@ -298,10 +297,10 @@ export function mountAcademyAtlas(container, graph) {
       }
       body.append(connections);
     }
-    if (selected.data.route) {
+    if (navigation.selected.data.route) {
       const link = document.createElement("a");
       link.className = "atlas-selection-link";
-      link.href = selected.data.route;
+      link.href = navigation.selected.data.route;
       link.textContent = "Ouvrir la fiche ↗";
       body.append(link);
     }
@@ -325,14 +324,10 @@ export function mountAcademyAtlas(container, graph) {
 
   const focusNode = (node, zoomTo) => {
     if (!node) return;
-    if (!selected || selected.id !== node.id) {
-      history.push({ scale: targetScale, offset: { ...targetOffset }, selected });
-      if (history.length > 80) history.shift();
-    }
+    navigation.focus(node, { scale: targetScale, offset: { ...targetOffset } });
     const zoomLevel = zoomTo ?? (node.level === 0 ? 0.96 : node.level === 1 ? 2.15 : 4.1);
     targetScale = clamp(zoomLevel, 0.075, 12);
     targetOffset = { x: -node.x * targetScale, y: -node.y * targetScale };
-    selected = node;
     updateSelection();
     draw();
   };
@@ -498,11 +493,10 @@ export function mountAcademyAtlas(container, graph) {
     if (action === "in") zoom(1.24);
     else if (action === "out") zoom(0.81);
     else if (action === "back") {
-      const previous = history.pop();
+      const previous = navigation.back();
       if (previous) {
         targetScale = previous.scale;
         targetOffset = { ...previous.offset };
-        selected = previous.selected || null;
         updateSelection();
         if (reduced) {
           scale = targetScale;
@@ -511,8 +505,7 @@ export function mountAcademyAtlas(container, graph) {
         }
       }
     } else {
-      selected = null;
-      history.length = 0;
+      navigation.reset();
       fitOverview();
       updateSelection();
       if (reduced) {
