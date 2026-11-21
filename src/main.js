@@ -2,16 +2,19 @@ import { loadAcademyData } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { resolvePathItems } from "./features/learning/progress.js";
+import { getSession, signInWithPassword, signOut } from "./core/auth.js";
+import { enrollInPath, saveResourceProgress } from "./data.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
 let data = {
   departments: [], domains: [], content: [], departmentLinks: [], domainLinks: [],
   learningPaths: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
-  nodes: [], edges: []
+  enrollments: [], progress: [], nodes: [], edges: []
 };
 let loadError = null;
 let unbindAtlas = () => {};
+let currentSession = null;
 
 function emptyState(title, description) {
   return `<div class="empty-state"><span class="empty-symbol">＋</span><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></div>`;
@@ -105,10 +108,12 @@ function resourceDetail(slug) {
   const item = data.content.find((entry) => entry.slug === slug);
   if (!item) return notFound("Ressource indisponible", "Cette ressource n’est pas publiée ou n’existe pas dans le catalogue public.");
   const destination = safeExternalUrl(item.destination_url);
+  const progress = data.progress.find((record) => record.content_id === item.id);
   return `<section class="page-intro"><span class="eyebrow"><a href="#/catalogue">CATALOGUE</a> / ${escapeHtml((item.resource_type || "RESSOURCE").toUpperCase())}</span><h1>${escapeHtml(item.title)}</h1><p>${escapeHtml(item.summary)}</p></section>
   <section class="resource-detail"><div class="detail-meta"><span>${escapeHtml((item.language_code || "fr").toUpperCase())}</span><span>${escapeHtml(item.learning_level || "Tous niveaux")}</span><span>Version ${escapeHtml(item.version_label || "—")}</span></div>
   <p class="detail-note">Cette fiche présente les informations publiques validées pour cette ressource.</p>
   ${destination ? `<a class="button button-primary" href="${escapeHtml(destination)}" target="_blank" rel="noopener noreferrer">Accéder à la ressource ↗</a>` : ""}
+  ${currentSession ? `<div class="learner-action"><span class="progress-state">${progress?.progress_status === "COMPLETED" ? "Ressource terminée" : "Suivre cette ressource"}</span><button class="button button-outline" id="complete-resource" data-content-id="${escapeHtml(item.id)}" ${progress?.progress_status === "COMPLETED" ? "disabled" : ""}>${progress?.progress_status === "COMPLETED" ? "Acquis ✓" : "Marquer comme terminée"}</button></div>` : `<p class="progress-note"><a href="#/espace">Connecte-toi à l’espace apprenant</a> pour enregistrer ta progression.</p>`}
   </section>`;
 }
 
@@ -182,6 +187,7 @@ function learningPathDetail(slug) {
     INTERMEDIATE: "Intermédiaire",
     ADVANCED: "Avancé"
   }[path.difficulty_level] || path.difficulty_level;
+  const enrolled = data.enrollments.some((record) => record.path_id === path.id);
   const steps = sequence.map((step, index) => {
     const resource = contentById.get(step.content_id);
     const title = resource?.title || "Ressource indisponible";
@@ -197,6 +203,9 @@ function learningPathDetail(slug) {
   }).join("");
   return `<section class="page-intro"><span class="eyebrow"><a href="#/parcours">PARCOURS</a> / ${escapeHtml(path.code)}</span><h1>${escapeHtml(path.title)}</h1><p>${escapeHtml(path.summary)}</p></section>
     <div class="pathway-overview"><span>${escapeHtml(difficulty)}</span><span>${sequence.length} étape(s)</span><span>${path.estimated_duration_minutes ? `${path.estimated_duration_minutes} minutes estimées` : "Durée à définir"}</span></div>
+    ${currentSession
+      ? enrolled ? `<p class="enrollment-state">Inscription active à ce parcours.</p>` : `<button class="button button-primary" id="enroll-path" data-path-id="${escapeHtml(path.id)}">S’inscrire à ce parcours ↗</button>`
+      : `<p class="progress-note"><a href="#/espace">Connecte-toi</a> pour t’inscrire et suivre tes acquis.</p>`}
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">SÉQUENCE D’APPRENTISSAGE</span><h2>Étapes et prérequis</h2></div></div>
     <div class="path-sequence">${steps || emptyState("Séquence en préparation", "Les ressources seront ajoutées au parcours après validation.")}</div></section>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RÉSULTATS D’APPRENTISSAGE</span><h2>Compétences visées</h2></div></div>
@@ -209,6 +218,41 @@ function atlasView() {
   <div class="atlas-panel"><div class="atlas-toolbar"><span><b>${data.nodes.length}</b> nœud(s) public(s)</span><span>${data.edges.length} relation(s) publique(s)</span></div>
   ${data.nodes.length ? renderAtlasGraph(data.nodes, data.edges) : emptyState("L’Atlas public est encore vide", "Le moteur 2D est en place. Les nœuds et relations apparaîtront ici après leur publication éditoriale.")}</div>
   <div class="atlas-legend"><span class="legend-department">Département</span><span class="legend-domain">Domaine</span><span class="legend-content">Ressource</span><span class="legend-pathway">Parcours</span></div>`;
+}
+
+function loginView() {
+  return `<section class="page-intro"><span class="eyebrow">ESPACE PERSONNEL</span><h1>Espace apprenant</h1><p>Connecte-toi pour t’inscrire aux parcours et conserver ton historique d’apprentissage.</p></section>
+    <section class="auth-panel"><form id="login-form" class="auth-form">
+      <label for="login-email">Adresse e-mail</label><input id="login-email" name="email" type="email" autocomplete="username" required>
+      <label for="login-password">Mot de passe</label><input id="login-password" name="password" type="password" autocomplete="current-password" required>
+      <button class="button button-primary" type="submit">Se connecter <span>↗</span></button>
+      <p id="auth-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
+      <p class="auth-footnote">Les comptes apprenants sont gérés par l’administration de l’Academy. La création publique de comptes n’est pas activée dans cette interface.</p>
+    </form></section>`;
+}
+
+function learnerDashboardView() {
+  const user = currentSession?.user;
+  const enrolledPaths = data.enrollments.map((record) => ({
+    ...record,
+    path: data.learningPaths.find((path) => path.id === record.path_id)
+  })).filter((record) => record.path);
+  const completed = data.progress.filter((record) => record.progress_status === "COMPLETED").length;
+  const inProgress = data.progress.filter((record) => record.progress_status === "IN_PROGRESS").length;
+  return `<section class="page-intro"><span class="eyebrow">ESPACE PERSONNEL</span><h1>Tableau de bord</h1><p>${escapeHtml(user?.email || "Apprenant")} · suivi individuel des apprentissages.</p></section>
+    <div class="learner-stats"><article><strong>${enrolledPaths.length}</strong><span>Parcours suivis</span></article><article><strong>${completed}</strong><span>Ressources acquises</span></article><article><strong>${inProgress}</strong><span>En cours</span></article></div>
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">MES APPRENTISSAGES</span><h2>Mes parcours</h2></div><a class="text-link" href="#/parcours">Explorer les parcours →</a></div>
+    ${enrolledPaths.length ? `<div class="pathway-grid">${enrolledPaths.map((record) => pathwayCard(record.path)).join("")}</div>` : emptyState("Aucun parcours suivi", "Inscris-toi à un parcours publié pour retrouver ici tes étapes et tes ressources.")}</section>
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">ACTIVITÉ INDIVIDUELLE</span><h2>Ressources acquises</h2></div></div>
+    ${completed ? `<div class="resource-list">${data.progress.filter((record) => record.progress_status === "COMPLETED").map((record) => {
+      const resource = data.content.find((item) => item.id === record.content_id);
+      return resource ? resourceCards([resource]) : "";
+    }).join("")}</div>` : emptyState("Aucun acquis enregistré", "Les ressources que tu valides apparaîtront dans cet espace.")}</section>
+    <button class="button button-outline" id="logout">Se déconnecter</button>`;
+}
+
+function learnerView() {
+  return currentSession?.user ? learnerDashboardView() : loginView();
 }
 
 function aboutView() {
@@ -226,7 +270,8 @@ function updateNavigation(route) {
       (["departements", "domaines"].includes(route) && target === "departements") ||
       (["catalogue", "ressource"].includes(route) && target === "catalogue") ||
       (route === "atlas" && target === "atlas") ||
-      (route === "parcours" && target === "parcours");
+      (route === "parcours" && target === "parcours") ||
+      (route === "espace" && target === "espace");
     link.classList.toggle("active", active);
     if (active) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
@@ -253,6 +298,7 @@ function render() {
     "catalogue": catalogueView,
     "ressource": () => resourceDetail(slug),
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
+    "espace": learnerView,
     "atlas": atlasView,
     "apropos": aboutView
   };
@@ -288,6 +334,50 @@ function render() {
   if (route === "catalogue") {
     document.querySelector("#resource-search")?.addEventListener("input", (event) => filterCatalogue(event.target.value));
   }
+  document.querySelector("#login-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const feedback = document.querySelector("#auth-feedback");
+    const submit = event.currentTarget.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    feedback.textContent = "Connexion…";
+    try {
+      const form = new FormData(event.currentTarget);
+      await signInWithPassword(form.get("email"), form.get("password"));
+      currentSession = await getSession();
+      await refresh();
+    } catch (error) {
+      feedback.textContent = error.message || "Connexion impossible.";
+      submit.disabled = false;
+    }
+  });
+  document.querySelector("#logout")?.addEventListener("click", async () => {
+    try { await signOut(); } catch (error) {
+      const feedback = document.querySelector("#auth-feedback");
+      if (feedback) feedback.textContent = error.message;
+    }
+  });
+  document.querySelector("#enroll-path")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await enrollInPath(button.dataset.pathId);
+      await refresh();
+    } catch (error) {
+      button.disabled = false;
+      window.alert(error.message || "Inscription impossible.");
+    }
+  });
+  document.querySelector("#complete-resource")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await saveResourceProgress(button.dataset.contentId, true);
+      await refresh();
+    } catch (error) {
+      button.disabled = false;
+      window.alert(error.message || "Enregistrement impossible.");
+    }
+  });
   document.title = route === "ressource" && slug
     ? `${data.content.find((item) => item.slug === slug)?.title || "Ressource"} — BA Labs Academy`
     : "BA Labs Academy";
@@ -307,4 +397,11 @@ async function refresh() {
 }
 
 window.addEventListener("hashchange", render);
-refresh();
+window.addEventListener("academy:auth-change", (event) => {
+  currentSession = event.detail?.session || null;
+  refresh();
+});
+getSession().then((session) => {
+  currentSession = session;
+  return refresh();
+}).catch(() => refresh());
