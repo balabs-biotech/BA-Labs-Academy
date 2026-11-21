@@ -4,6 +4,7 @@ import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { enrollInPath, saveResourceProgress } from "./data.js";
+import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
@@ -264,14 +265,14 @@ function learnerDashboardView() {
       const resource = data.content.find((item) => item.id === record.content_id);
       return resource ? resourceCards([resource]) : "";
     }).join("")}</div>` : emptyState("Aucun acquis enregistré", "Les ressources que tu valides apparaîtront dans cet espace.")}</section>
-    ${["OWNER", "ADMIN", "EDITOR", "REVIEWER"].includes(data.membership?.role) && data.membership?.membership_status === "ACTIVE" ? `<a class="button button-outline" href="#/administration">Ouvrir l’espace éditorial ↗</a>` : ""}
+    ${hasEditorialAccess(data.membership) ? `<a class="button button-outline" href="#/administration">Ouvrir l’espace éditorial ↗</a>` : ""}
     <button class="button button-outline" id="logout">Se déconnecter</button>`;
 }
 
 function administrationView() {
   if (!currentSession?.user) return loginView();
   const membership = data.membership;
-  if (!membership || membership.membership_status !== "ACTIVE") {
+  if (!hasEditorialAccess(membership)) {
     return `<section class="page-intro"><span class="eyebrow">CONTRÔLE D’ACCÈS</span><h1>Espace éditorial</h1><p>Cette zone est réservée aux membres actifs de l’équipe Academy.</p></section>
       ${emptyState("Accès non attribué", "Ton compte est authentifié, mais aucune fonction éditoriale ne lui est associée. L’accès est contrôlé côté base de données.")}`;
   }
@@ -282,8 +283,18 @@ function administrationView() {
     REVIEWER: ["Révision", "Examen des contenus soumis et décisions de revue."]
   };
   const [roleTitle, roleDescription] = roleDetails[membership.role] || ["Membre", "Accès limité."];
+  const capabilityLabels = {
+    CREATE_CONTENT: "Créer des brouillons",
+    EDIT_CONTENT: "Modifier les contenus",
+    SUBMIT_REVIEW: "Soumettre à la revue",
+    REVIEW_CONTENT: "Examiner les contenus",
+    PUBLISH_CONTENT: "Publier les contenus"
+  };
+  const capabilities = getRoleCapabilities(membership.role);
   return `<section class="page-intro"><span class="eyebrow">GOUVERNANCE ACADÉMIQUE</span><h1>Espace éditorial</h1><p>Console de travail réservée aux membres actifs de BA Labs Academy.</p></section>
-    <div class="editorial-role"><span class="eyebrow">RÔLE ACTIF</span><h2>${escapeHtml(roleTitle)}</h2><p>${escapeHtml(roleDescription)}</p></div>
+    <div class="editorial-role"><span class="eyebrow">RÔLE ACTIF</span><h2>${escapeHtml(roleTitle)}</h2><p>${escapeHtml(roleDescription)}</p>
+      <div class="capability-list">${capabilities.map((capability) => `<span>${escapeHtml(capabilityLabels[capability] || capability)}</span>`).join("")}</div>
+    </div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">WORKFLOW ÉDITORIAL</span><h2>Chaîne de publication</h2></div></div>
     <div class="editorial-stages"><article><b>01</b><h3>Brouillon</h3><p>Préparation et structuration d’un contenu.</p></article><article><b>02</b><h3>Revue</h3><p>Soumission et examen par les rôles autorisés.</p></article><article><b>03</b><h3>Publication</h3><p>Validation finale et diffusion publique contrôlée.</p></article></div></section>
     <p class="progress-note">Le contrôle d’accès de cette interface est indicatif. Chaque opération éditoriale reste protégée par les contrôles de rôle des fonctions PostgreSQL ; aucun droit n’est accordé par le frontend seul.</p>`;
