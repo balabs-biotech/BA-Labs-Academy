@@ -1,6 +1,7 @@
 import { cp, mkdir, readdir, rm } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
+import { assertPublicBundleSafe } from "./public-bundle-guard.js";
 
 const output = new URL("../dist/", import.meta.url);
 const root = new URL("../", import.meta.url);
@@ -22,4 +23,5 @@ await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 await cp(new URL("index.html", root), new URL("index.html", output));
 await cp(sourceDirectory, new URL("src/", output), { recursive: true });
-console.log("Academy source syntax verified; static build generated in dist/");
+await assertPublicBundleSafe(output.pathname);
+console.log("Academy source syntax verified; public bundle credential guard passed; static build generated in dist/");
