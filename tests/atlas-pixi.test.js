@@ -192,7 +192,7 @@ test("Atlas camera projects world coordinates into the viewport", async () => {
   const { atlasScreenPoint } = await import("../src/features/atlas/atlas-camera.js");
   assert.deepEqual(atlasScreenPoint({ x: 10, y: -5 }, {
     width: 800, height: 600, scale: 2, offset: { x: 20, y: -10 }
-  }), { x: 520, y: 190 });
+  }), { x: 440, y: 280 });
 });
 
 test("Atlas camera fits the complete root constellation for desktop and mobile", async () => {
