@@ -101,6 +101,8 @@ Le catalogue public propose une demande d’inscription aux sessions ouvertes po
 
 Les programmes sont des cursus distincts des parcours linéaires et des ressources de cours. Chaque programme possède un périmètre disciplinaire (un ou plusieurs départements, un ou plusieurs domaines). La mycologie peut être l’axe principal d’un cursus ou traverser plusieurs disciplines. Chaque programme possède une arborescence ordonnée de niveaux : cycle, année, semestre, bloc, module et unité. Les niveaux sont imbriqués par parent ; les racines sont des cycles ou des blocs. La base vérifie les codes, les rattachements domaine-département, les parents, l’ordre et l’absence de cycle. L’éditeur de programme ne stocke pas de cours, de leçons ni de supports : leur conception intervient dans une phase ultérieure.
 
+L’architecture détaillée, les règles de niveaux et les frontières avec les parcours et ressources sont documentées dans [ACADEMIC-PROGRAMME-ARCHITECTURE.md](./ACADEMIC-PROGRAMME-ARCHITECTURE.md).
+
 ### Catalogue public des formations
 
 Une page publique `#/formations` présente uniquement les offres au statut ACTIVE et les sessions au statut OPEN. Les politiques RLS permettent la lecture publique de ces deux ensembles sans exposer les partenaires, conventions, participants, présences ou documents internes. Le catalogue ne publie ni capacité, ni code de lieu, ni données personnelles.
