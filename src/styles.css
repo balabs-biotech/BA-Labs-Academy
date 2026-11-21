@@ -425,3 +425,22 @@
 .atlas-legend .legend-axis{color:#c88773}
 .axis-card .card-index{color:#c88773}
 .knowledge-axis{border-color:#c8877355}
+
+/* Compact root navigation for the connected knowledge field */
+.atlas-root-navigation{display:grid;grid-template-columns:1fr;gap:7px;margin:0 0 10px}
+.atlas-root-group{display:flex;align-items:center;gap:12px;min-width:0;padding:8px 10px;border:1px solid #ffffff12;background:#121e1b}
+.atlas-root-label{flex:0 0 118px;color:#849b8d;font-size:8px;letter-spacing:.12em}
+.atlas-root-items{display:flex;align-items:center;gap:6px;min-width:0;overflow-x:auto;padding:2px 0;scrollbar-width:thin}
+.atlas-root-chip{display:flex;flex:0 0 auto;flex-direction:column;gap:2px;max-width:150px;padding:5px 9px;border:1px solid #8da49433;border-radius:999px;background:#172522;color:#cbd7cd;text-align:left;cursor:pointer}
+.atlas-root-chip small{color:#9bada2;font-size:8px;letter-spacing:.08em}
+.atlas-root-chip span{overflow:hidden;max-width:130px;color:#cbd7cd;font-size:9px;text-overflow:ellipsis;white-space:nowrap}
+.atlas-root-chip:hover,.atlas-root-chip.is-active{border-color:#b96b4d;background:#243630}
+.atlas-root-group--axes .atlas-root-chip.is-active{border-color:#c88773}
+.atlas-root-group--pathways .atlas-root-chip.is-active{border-color:#a9a0d4}
+@media(max-width:700px){
+ .atlas-root-group{align-items:flex-start;flex-direction:column;gap:5px;padding:7px 8px}
+ .atlas-root-label{flex-basis:auto}
+ .atlas-root-items{width:100%}
+ .atlas-root-chip{max-width:125px;padding:4px 8px}
+ .atlas-root-chip span{max-width:108px;font-size:8px}
+}
