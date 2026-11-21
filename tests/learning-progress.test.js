@@ -68,3 +68,15 @@ test("sequence order is stable and missing progress defaults to not started", ()
   assert.deepEqual(result.map((item) => item.id), ["item-a", "item-b", "item-c"]);
   assert.equal(result[0].progressStatus, "NOT_STARTED");
 });
+test("progress for a shared resource does not leak across different path items", () => {
+  const anotherPathItems = [
+    { id: "path-b-item", content_id: "shared-content", sort_order: 1, is_required: true }
+  ];
+  const progressFromFirstPath = [
+    { path_item_id: "path-a-item", progress_status: "COMPLETED", progress_percent: 100 }
+  ];
+  const aggregate = buildPathProgress(anotherPathItems, progressFromFirstPath);
+  const sequence = resolvePathItems(anotherPathItems, [], progressFromFirstPath);
+  assert.equal(aggregate.percent, 0);
+  assert.equal(sequence[0].progressStatus, "NOT_STARTED");
+});
