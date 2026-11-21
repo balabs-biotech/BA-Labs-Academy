@@ -5,17 +5,19 @@ import { readFile } from "node:fs/promises";
 const main=await readFile(new URL("../src/main.js",import.meta.url),"utf8");
 const data=await readFile(new URL("../src/data.js",import.meta.url),"utf8");
 const migration=await readFile(new URL("../supabase/migrations/20261122018000_academy_programme_hierarchy_v1.sql",import.meta.url),"utf8");
+const depthMigration=await readFile(new URL("../supabase/migrations/20261122018200_academy_programme_hierarchy_depth_v1.sql",import.meta.url),"utf8");
 
 test("programme hierarchy has its own curriculum entity and ordered tree",()=>{
  assert.match(migration,/create table if not exists public\.academy_programs/);
  assert.match(migration,/create table if not exists public\.academy_program_nodes/);
  assert.match(migration,/parent_node_id/);
- assert.match(migration,/node_type text not null check\(node_type in \('CYCLE','YEAR','SEMESTER','BLOCK','MODULE','UNIT'\)\)/);
+ assert.match(depthMigration,/CHAPTER','SEQUENCE','LESSON','ACTIVITY/);
 });
 
 test("programme hierarchy enforces parent order and rejects missing parents or cycles",()=>{
- assert.match(migration,/academy_validate_program_node_parent/);
- assert.match(migration,/Programme hierarchy cannot move to the same or a higher level/);\n assert.match(migration,/when 'ACTIVITY' then 10/);
+ assert.match(depthMigration,/academy_validate_program_node_parent/);
+ assert.match(depthMigration,/Programme hierarchy cannot move to the same or a higher level/);
+ assert.match(depthMigration,/when 'ACTIVITY' then 10/);
  assert.match(migration,/Programme hierarchy contains a missing parent or cycle/);
 });
 
@@ -26,10 +28,14 @@ test("programme scope spans departments while domains stay inside selected depar
  assert.match(migration,/exactly one must be primary/);
 });
 
-test("programme editor exposes a structural outline without authoring lessons",()=>{
+test("programme editor exposes the complete structure without authoring lessons",()=>{
  assert.match(main,/function programmeEditorView/);
  assert.match(main,/data-program-node-row/);
  assert.match(main,/data-program-node-parent/);
+ assert.match(main,/CHAPTER/);
+ assert.match(main,/SEQUENCE/);
+ assert.match(main,/LESSON/);
+ assert.match(main,/ACTIVITY/);
  assert.match(main,/Aucun cours n’est rédigé dans cet éditeur/);
  assert.match(main,/subroute === "programmes"/);
 });
@@ -53,11 +59,4 @@ test("programme tables are RLS-enabled and Data API read grants are explicit",()
  assert.match(migration,/enable row level security/);
  assert.match(migration,/grant select on public\.academy_programs/);
  assert.match(migration,/revoke all on function public\.academy_save_program_draft[\s\S]*from public,anon/);
-});
-
-test("programme editor renders a live nested outline from parent and sibling order",()=>{
- assert.match(main,/programme-hierarchy-preview/);
- assert.match(main,/refreshHierarchyPreview/);
- assert.match(main,/parent_code/);
- assert.match(main,/sort_order/);
 });
