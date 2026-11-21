@@ -20,14 +20,14 @@ const ROOT_ANCHORS = [
 
 const DEPARTMENT_LABELS = {
   MIC: "Microbiologie",
-  MYC: "Mycologie appliquée",
-  BIO: "Biotechnologies végétales",
-  AGR: "Agronomie",
+  MYC: "MYCOLOGIE",
+  BIO: "Sciences végétales",
+  AGR: "Sols & écosystèmes",
   BPR: "Bioprocédés",
   BMT: "Biomatériaux",
   PHY: "Sciences physiques & chimiques",
-  INF: "Informatique et données",
-  GEN: "Génie biologique et instrumentation"
+  INF: "Sciences numériques",
+  GEN: "Ingénierie & instrumentation"
 };
 
 const PATHWAY_LABELS = {
