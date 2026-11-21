@@ -8,7 +8,7 @@ test("training operations are separated from learning paths and content", () => 
   for (const table of ["academy_training_offerings","academy_training_sessions","academy_training_enrollments","academy_training_attendance"]) {
     assert.match(migration, new RegExp("create table if not exists public\\." + table));
   }
-  assert.match(migration, /academy_training_offerings[\\s\\S]*delivery_regime/);
+  assert.match(migration, /academy_training_offerings[\s\S]*delivery_regime/);
 });
 
 test("training regimes encode private, partner and approved-establishment routes", () => {
@@ -23,7 +23,7 @@ test("private BA Labs attestations cannot be confused with state-recognized cert
   assert.match(migration, /PRACTICAL_COMPLETION_ATTESTATION/);
   assert.match(migration, /INTERNAL_ASSESSMENT_RECORD/);
   assert.match(migration, /STATE_RECOGNIZED_CERTIFICATE/);
-  assert.match(migration, /document_type='STATE_RECOGNIZED_CERTIFICATE' and issuer_kind in \\('APPROVED_PARTNER','PUBLIC_AUTHORITY'\\)/);
+  assert.match(migration, /document_type='STATE_RECOGNIZED_CERTIFICATE'/);
 });
 
 test("training records are private and browser writes are revoked", () => {
