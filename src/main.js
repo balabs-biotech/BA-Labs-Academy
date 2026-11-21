@@ -7,6 +7,7 @@ import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
 import { renderKnowledgeMap } from "./features/catalogue/render.js";
 import { catalogueMap } from "./catalogue-map.js";
+import { buildCatalogueAtlas } from "./features/catalogue/atlas.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
@@ -18,6 +19,8 @@ let data = {
 let loadError = null;
 let unbindAtlas = () => {};
 let currentSession = null;
+let atlasViewNodes = [];
+let atlasViewEdges = [];
 
 function emptyState(title, description) {
   return `<div class="empty-state"><span class="empty-symbol">＋</span><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></div>`;
@@ -285,12 +288,13 @@ function learningPathDetail(slug) {
 }
 
 function atlasView() {
-  return `<section class="page-intro"><span class="eyebrow">CARTOGRAPHIE DES CONNAISSANCES</span><h1>Atlas</h1><p>Explorer les relations entre départements, domaines et ressources. Déplace la carte par glisser-déposer et utilise la molette ou les contrôles pour zoomer.</p></section>
-  <div class="atlas-panel"><div class="atlas-toolbar"><span><b>${data.nodes.length}</b> nœud(s) public(s)</span><span>${data.edges.length} relation(s) publique(s)</span></div>
-  ${data.nodes.length ? renderAtlasGraph(data.nodes, data.edges) : emptyState("L’Atlas public est encore vide", "Le moteur 2D est en place. Les nœuds et relations apparaîtront ici après leur publication éditoriale.")}</div>
-  <div class="atlas-legend"><span class="legend-department">Département</span><span class="legend-domain">Domaine</span><span class="legend-content">Ressource</span><span class="legend-pathway">Parcours</span></div>`;
+  const graph = buildCatalogueAtlas(catalogueMap);
+  atlasViewNodes = graph.nodes;
+  atlasViewEdges = graph.edges;
+  return '<section class="page-intro"><span class="eyebrow">CARTOGRAPHIE DES CONNAISSANCES</span><h1>Atlas 2D</h1><p>Vue générale des départements et de leurs sections. Sélectionne un nœud, déplace la carte et utilise la molette pour explorer.</p></section>' +
+    '<div class="atlas-panel"><div class="atlas-toolbar"><span><b>' + atlasViewNodes.length + '</b> nœuds cartographiés</span><span>' + atlasViewEdges.length + ' relations de rattachement</span></div>' + renderAtlasGraph(atlasViewNodes, atlasViewEdges) + '</div>' +
+    '<div class="atlas-legend"><span class="legend-department">Département</span><span class="legend-section">Section</span></div>';
 }
-
 function loginView() {
   return `<section class="page-intro"><span class="eyebrow">ESPACE PERSONNEL</span><h1>Espace apprenant</h1><p>Connecte-toi pour t’inscrire aux parcours et conserver ton historique d’apprentissage.</p></section>
     <section class="auth-panel"><form id="login-form" class="auth-form">
@@ -886,11 +890,13 @@ function render() {
     "apropos": aboutView
   };
   root.innerHTML = (routes[route] || (() => notFound("Page introuvable", "Cette adresse ne correspond à aucune page publique de l’Academy.")))();
-  if (route === "atlas" && data.nodes.length) {
-    unbindAtlas = bindAtlasGraph(root, data.nodes, (node) => {
+  if (route === "atlas" && atlasViewNodes.length) {
+    unbindAtlas = bindAtlasGraph(root, atlasViewNodes, (node) => {
       if (node.entity_type === "DEPARTMENT") {
         const item = data.departments.find((entry) => entry.code === node.entity_key);
         if (item) location.hash = `#/departements/${encodeURIComponent(item.slug)}`;
+      } else if (node.entity_type === "SECTION") {
+        location.hash = "#/catalogue";
       } else if (node.entity_type === "DOMAIN") {
         const item = data.domains.find((entry) => entry.code === node.entity_key);
         if (item) location.hash = `#/domaines/${encodeURIComponent(item.slug)}`;
