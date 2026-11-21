@@ -42,11 +42,21 @@ try {
       }));
       throw new Error(`Atlas mount failed on ${viewport.name}: ${JSON.stringify({ diagnostic, pageErrors: errors, consoleErrors, failedRequests, cause: error.message })}`);
     }
-    await page.waitForFunction(
-      () => document.querySelector("#atlas-engine-state")?.textContent.includes("Moteur actif"),
-      undefined,
-      { timeout: 30000 }
-    );
+    try {
+      await page.waitForFunction(
+        () => document.querySelector("#atlas-engine-state")?.textContent.includes("Moteur actif"),
+        undefined,
+        { timeout: 30000 }
+      );
+    } catch (error) {
+      const diagnostic = await page.evaluate(() => ({
+        engineState: document.querySelector("#atlas-engine-state")?.textContent,
+        loading: document.querySelector("#academy-atlas-loading")?.innerText,
+        canvasRenderer: document.querySelector("#academy-atlas-canvas")?.dataset.renderer,
+        canvasSize: (() => { const c = document.querySelector("#academy-atlas-canvas"); return c ? [c.width, c.height] : null; })()
+      }));
+      throw new Error(`Atlas engine failed on ${viewport.name}: ${JSON.stringify({ diagnostic, pageErrors: errors, consoleErrors, failedRequests, cause: error.message })}`);
+    }
 
     const canvas = page.locator("#academy-atlas-canvas");
     const surface = await canvas.evaluate((element) => ({
