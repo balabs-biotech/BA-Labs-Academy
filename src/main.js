@@ -1,4 +1,4 @@
-import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, publishCompetency } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
@@ -10,7 +10,7 @@ const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
 let data = {
   departments: [], domains: [], content: [], departmentLinks: [], domainLinks: [],
-  learningPaths: [], editorialPaths: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
+  learningPaths: [], editorialPaths: [], editorialCompetencies: [], editorialContentCompetencies: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
   enrollments: [], progress: [], pathItemProgress: [], nodes: [], edges: []
 };
 let loadError = null;
@@ -334,6 +334,18 @@ function administrationView() {
       <div class="editorial-path-list">${(data.editorialPaths || []).filter((path) => path.status === "DRAFT").map((path) => `<a class="editorial-path-row" href="#/administration/parcours/${encodeURIComponent(path.id)}"><div><span class="eyebrow">${escapeHtml(path.code)} · ${escapeHtml(path.status)}</span><h3>${escapeHtml(path.title)}</h3><p>${escapeHtml(path.summary || "Aucun résumé.")}</p></div><b>Modifier ↗</b></a>`).join("") || emptyState("Aucun parcours", "Crée le premier brouillon pédagogique.")}</div>
     </section>` : ""}
 
+    <section class="section-block competency-editorial">
+      <div class="section-heading"><div><span class="eyebrow">RÉFÉRENTIEL DES COMPÉTENCES</span><h2>Compétences et acquis visés</h2></div>${["OWNER","ADMIN","EDITOR"].includes(membership.role) ? `<a class="button button-primary" href="#/administration/competences/nouveau">Créer une compétence ↗</a>` : ""}</div>
+      <p class="taxonomy-intro">Chaque compétence est une entité du référentiel. Ses liens aux ressources alimentent l’Atlas ; la publication reste réservée aux rôles Owner et Admin.</p>
+      <div class="competency-queue">
+        ${(data.editorialCompetencies || []).map((item) => {
+          const mappings = (data.editorialContentCompetencies || []).filter((link) => link.competency_id === item.id).length;
+          const editable = ["OWNER","ADMIN","EDITOR"].includes(membership.role) && item.status === "DRAFT";
+          const canPublish = ["OWNER","ADMIN"].includes(membership.role) && item.status === "DRAFT";
+          return `<article class="taxonomy-row"><div><span class="eyebrow">${escapeHtml(item.code)} · ${escapeHtml(item.status)} · ${escapeHtml(item.competency_level)}</span><b>${escapeHtml(item.title)}</b><small>${mappings} ressource(s) associée(s)</small></div><div class="competency-row-actions">${editable ? `<a class="button button-outline" href="#/administration/competences/${encodeURIComponent(item.id)}">Modifier</a>` : ""}${canPublish ? `<button class="button button-primary" data-competency-publish="${escapeHtml(item.id)}">Publier</button>` : `<span class="taxonomy-state">${escapeHtml(item.visibility)}</span>`}</div></article>`;
+        }).join("") || emptyState("Aucune compétence", "Le référentiel est prêt. Crée les premières compétences à partir des acquis réellement visés par les ressources.")}
+      </div>
+    </section>
     <section class="section-block taxonomy-editorial">
       <div class="section-heading"><div><span class="eyebrow">STRUCTURE ACADÉMIQUE</span><h2>Départements et domaines</h2></div><span class="resource-level">${(data.editorialDepartments || []).length} départements · ${(data.editorialDomains || []).length} domaines</span></div>
       <p class="taxonomy-intro">Référentiel disciplinaire préconfiguré. Les brouillons restent internes ; chaque publication synchronise les nœuds et relations déjà préparés dans l’Atlas.</p>
@@ -352,6 +364,36 @@ function administrationView() {
       </div>
     </section>
     <p class="progress-note">Le contrôle d’accès de cette interface est indicatif. Chaque opération éditoriale reste protégée par les contrôles de rôle des fonctions PostgreSQL ; aucun droit n’est accordé par le frontend seul.</p>`;
+}
+
+function competencyEditorView(competencyId = "nouveau") {
+  if (!currentSession?.user) return loginView();
+  const membership = data.membership;
+  if (!["OWNER","ADMIN","EDITOR"].includes(membership?.role) || membership.membership_status !== "ACTIVE") return notFound("Édition non autorisée", "La gestion des compétences est réservée aux rôles Owner, Admin et Editor.");
+  const isNew = !competencyId || competencyId === "nouveau";
+  const competency = isNew ? null : (data.editorialCompetencies || []).find((item) => item.id === competencyId);
+  if (!isNew && (!competency || competency.status !== "DRAFT")) return notFound("Brouillon indisponible", "Seules les compétences au statut DRAFT peuvent être modifiées.");
+  const mappings = (data.editorialContentCompetencies || []).filter((item) => item.competency_id === competency?.id);
+  const mapped = new Map(mappings.map((item) => [item.content_id, item]));
+  const levels = ["INTRODUCTORY","FOUNDATION","INTERMEDIATE","ADVANCED","EXPERT"];
+  return `<section class="page-intro"><span class="eyebrow"><a href="#/administration">ESPACE ÉDITORIAL</a> / COMPÉTENCES</span><h1>${isNew ? "Nouvelle compétence" : escapeHtml(competency.title)}</h1><p>Définir un acquis observable, son niveau de maîtrise attendu et les ressources qui contribuent à son développement.</p></section>
+    <form class="competency-editor-form" id="competency-editor-form" data-competency-id="${escapeHtml(competency?.id || "")}">
+      <div class="editor-form-grid">
+        <label>Code interne<input name="code" required maxlength="48" pattern="[A-Z0-9_-]{2,48}" value="${escapeHtml(competency?.code || "")}" placeholder="MYCO-IDENTIFICATION"></label>
+        <label>Niveau de référence<select name="level">${levels.map((level) => `<option value="${level}" ${(competency?.competency_level || "FOUNDATION") === level ? "selected" : ""}>${level}</option>`).join("")}</select></label>
+        <label class="wide">Intitulé<input name="title" required maxlength="180" value="${escapeHtml(competency?.title || "")}" placeholder="Identifier les principaux groupes de champignons"></label>
+        <label class="wide">Description opérationnelle<textarea name="description" rows="3" maxlength="2000">${escapeHtml(competency?.description || "")}</textarea></label>
+      </div>
+      <section class="competency-mapping-panel"><span class="eyebrow">CARTOGRAPHIE DES ACQUIS</span><h2>Ressources contributives</h2><p>Associe uniquement les ressources qui enseignent, entraînent ou évaluent effectivement cette compétence.</p>
+        <div class="competency-resource-list">${data.content.map((resource) => {
+          const link = mapped.get(resource.id);
+          return `<article class="competency-resource-row"><label><input type="checkbox" data-competency-content value="${escapeHtml(resource.id)}" ${link ? "checked" : ""}><span><b>${escapeHtml(resource.title)}</b><small>${escapeHtml(resource.resource_type || "RESSOURCE")}</small></span></label><div class="competency-resource-settings"><select data-expected-level aria-label="Niveau attendu pour ${escapeHtml(resource.title)}">${levels.map((level) => `<option value="${level}" ${(link?.expected_level || competency?.competency_level || "FOUNDATION") === level ? "selected" : ""}>${level}</option>`).join("")}</select><input data-assessment-hint maxlength="300" aria-label="Indice d’évaluation" placeholder="Indice d’évaluation (facultatif)" value="${escapeHtml(link?.assessment_hint || "")}"></div></article>`;
+        }).join("") || emptyState("Aucune ressource publiée", "Les associations pourront être configurées dès que le catalogue contiendra des ressources.")}</div>
+      </section>
+      <div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour à l’espace éditorial</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div>
+      <p id="competency-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
+    </form>
+    ${!isNew && ["OWNER","ADMIN"].includes(membership.role) ? `<section class="pathway-publish-panel"><div><span class="eyebrow">VALIDATION FINALE</span><h2>Publier cette compétence</h2><p>La publication rend la compétence visible et synchronise les relations éligibles dans l’Atlas.</p></div><button class="button button-outline" id="publish-competency" data-competency-id="${escapeHtml(competency.id)}">Publier ↗</button></section>` : ""}`;
 }
 
 function readPathwaySequence(panel) {
@@ -493,7 +535,7 @@ function render() {
     "ressource": () => resourceDetail(slug, pathItemId),
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "espace": learnerView,
-    "administration": () => subroute === "parcours" ? learningPathEditorView(subId) : administrationView(),
+    "administration": () => subroute === "parcours" ? learningPathEditorView(subId) : subroute === "competences" ? competencyEditorView(subId) : administrationView(),
     "atlas": atlasView,
     "apropos": aboutView
   };
@@ -597,6 +639,41 @@ function render() {
         button.disabled = false;
         button.textContent = "Publier";
       }
+    });
+  });
+  document.querySelector("#competency-editor-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    const feedback = document.querySelector("#competency-editor-feedback");
+    button.disabled = true;
+    feedback.textContent = "Enregistrement de la compétence et synchronisation de l’Atlas…";
+    try {
+      const values = new FormData(form);
+      const mappings = [...form.querySelectorAll("[data-competency-content]:checked")].map((checkbox) => {
+        const row = checkbox.closest(".competency-resource-row");
+        return { content_id: checkbox.value, expected_level: row.querySelector("[data-expected-level]").value, assessment_hint: row.querySelector("[data-assessment-hint]").value.trim() };
+      });
+      const id = await saveCompetency({ id: form.dataset.competencyId || null, code: values.get("code").trim().toUpperCase(), title: values.get("title").trim(), description: values.get("description"), level: values.get("level"), mappings });
+      location.hash = `#/administration/competences/${encodeURIComponent(id)}`;
+      await refresh();
+    } catch (error) {
+      feedback.textContent = error.message || "Enregistrement impossible.";
+      button.disabled = false;
+    }
+  });
+  document.querySelector("#publish-competency")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.textContent = "Publication…";
+    try { await publishCompetency(button.dataset.competencyId); await refresh(); location.hash = "#/administration"; }
+    catch (error) { window.alert(error.message || "Publication impossible."); button.disabled = false; button.textContent = "Publier ↗"; }
+  });
+  document.querySelectorAll("[data-competency-publish]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      try { await publishCompetency(button.dataset.competencyPublish); await refresh(); }
+      catch (error) { window.alert(error.message || "Publication impossible."); button.disabled = false; }
     });
   });
   document.querySelector("#pathway-editor-form")?.addEventListener("submit", async (event) => {
