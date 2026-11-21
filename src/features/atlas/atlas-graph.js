@@ -40,7 +40,7 @@ export function buildAcademyGraph(departments, pathways) {
   const edges = [];
   const byId = new Map();
   const departmentNodes = new Map();
-  const domainNodes = new Map();
+  const sectionNodes = new Map();
   const rootItems = [
     ...departments.map((department) => ({ ...department, kind: "department" })),
     ...pathways.map((pathway) => ({ ...pathway, kind: "pathway" }))
@@ -88,10 +88,10 @@ export function buildAcademyGraph(departments, pathways) {
       const sway = depth > 1 ? lateral * Math.min(22, distance * 0.16) : 0;
       const x = parent.x + Math.cos(angle) * bend - Math.sin(angle) * sway;
       const y = parent.y + Math.sin(angle) * bend + Math.cos(angle) * sway;
-      const entityType = item.kind === "domain" ? "DOMAIN" : "MODULE";
+      const entityType = item.kind === "section" ? "SECTION" : "MODULE";
       const node = addNode(makeNode(item, parent, rootId, depth, x, y, angle, entityType));
       addEdge(parent, node);
-      if (item.kind === "domain") domainNodes.set(item.code, node);
+      if (item.kind === "section") sectionNodes.set(item.code, node);
       if (item.children?.length) {
         const nextDrift = Math.sin((node.x + node.y) * 0.0017 + seed * 0.000001) * 0.16;
         walk(item.children, node, rootId, depth + 1, angle + fraction * 0.22 + jitter * 0.45 + nextDrift);
@@ -121,9 +121,9 @@ export function buildAcademyGraph(departments, pathways) {
       departmentNodes.set(item.code, root);
       const children = item.sections.map((section) => ({
         ...section,
-        route: "#/domaines/" + section.code.toLowerCase(),
+        route: "#/sections/" + section.code.toLowerCase(),
         id: "domain:" + section.code,
-        kind: "domain",
+        kind: "section",
         children: section.modules.map((module, moduleIndex) => ({
           id: "module:" + section.code + ":" + String(moduleIndex + 1).padStart(2, "0"),
           code: section.code + "-" + String(moduleIndex + 1).padStart(2, "0"),
@@ -210,12 +210,12 @@ export function buildAcademyGraph(departments, pathways) {
     stats: {
       departments: departments.length,
       pathways: pathways.length,
-      domains: domainNodes.size,
+      sections: sectionNodes.size,
       modules: nodes.filter((node) => node.entity_type === "MODULE").length,
       anastomoses: localAnastomoses
     },
     byId,
     departmentNodes,
-    domainNodes
+    sectionNodes
   };
 }
