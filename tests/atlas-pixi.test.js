@@ -244,11 +244,12 @@ test("Atlas view delegates projection, fit, zoom and animation interpolation to 
 
 test("Atlas wheel renderer keeps the restrained radial motif", () => {
   const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
   assert.ok(source.includes("filaments.circle(0,0,820)"));
   assert.ok(source.includes("filaments.circle(0,0,1600)"));
   assert.ok(source.includes("const departmentRoots = nodes.filter"));
   assert.ok(!source.includes('field.moveTo(x,y).quadraticCurveTo'));
-  assert.ok(source.includes("Three arms echo the BA Labs Y mark"));
+  assert.ok(nodesSource.includes("Three arms echo the BA Labs Y mark"));
 });
 
 test("Atlas connection layer hides pathway roots outside pathway focus", async () => {
@@ -382,7 +383,8 @@ test("Atlas node geometry is isolated from Pixi renderer orchestration", () => {
   const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
   assert.ok(source.includes('import { renderAtlasNodes } from "./atlas-nodes.js";'));
   assert.ok(source.includes("renderAtlasNodes({ junctions, nodes, selected, scale, alphaFor, activeBranch, lineage })"));
-  assert.ok(!source.includes("for(const n of nodes){"));
+  assert.ok(!source.includes("junctions.circle(n.x,n.y,r*1.9)"));
+  assert.ok(nodesSource.includes("junctions.circle(n.x,n.y,r*1.9)"));
   assert.ok(nodesSource.includes("export function renderAtlasNodes"));
   assert.ok(nodesSource.includes("if(n.isAcademyCore)"));
   assert.ok(nodesSource.includes("Three arms echo the BA Labs Y mark"));
