@@ -77,3 +77,17 @@
 .sequence-prerequisites select{min-height:54px;padding:5px;border:1px solid var(--line);background:#101815;color:var(--text);font:inherit;font-size:11px;letter-spacing:0;text-transform:none}
 .sequence-prerequisites option{padding:4px}
 @media(max-width:650px){.pathway-resource-add{grid-template-columns:1fr}.pathway-resource-options{grid-template-columns:1fr}.sequence-row-settings{grid-template-columns:1fr;margin-left:0}.sequence-row-head{gap:8px}.sequence-position{flex-basis:30px;height:30px}.sequence-row-actions button{width:27px;height:27px}}
+
+/* Academic taxonomy publication queue */
+.taxonomy-editorial{margin-top:55px}
+.taxonomy-intro{max-width:760px;margin:-20px 0 25px;color:var(--muted);font-size:11px;line-height:1.7}
+.taxonomy-queue{margin:25px 0 35px}
+.taxonomy-queue>h3{margin:0 0 10px;font-size:15px;font-weight:500}
+.taxonomy-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 15px;border:1px solid var(--line);border-bottom:0;background:var(--panel)}
+.taxonomy-row:last-child{border-bottom:1px solid var(--line)}
+.taxonomy-row>div{display:grid;gap:5px;min-width:0}
+.taxonomy-row>div>b{font-size:12px;font-weight:500}
+.taxonomy-row small{color:var(--muted);font-size:9px;overflow-wrap:anywhere}
+.taxonomy-row .button{flex-shrink:0;padding:9px 12px;font-size:9px}
+.taxonomy-state{color:var(--muted);font-size:9px;white-space:nowrap}
+@media(max-width:600px){.taxonomy-row{align-items:flex-start;flex-direction:column}.taxonomy-row .button{align-self:flex-start}}
