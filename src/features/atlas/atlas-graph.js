@@ -8,37 +8,43 @@ const hash = (value) => {
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-// Irregular biological field inspired by the BA Labs continuous explorer.
+// Organic field: seven departments, three transversal axes, ten pathways.
 const ROOT_ANCHORS = [
   [-690, -310], [-360, -520], [80, -610], [520, -420], [790, -60],
-  [620, 390], [210, 620], [-310, 570], [-760, 230],
-  [-510, -20], [-90, -260], [310, -90], [570, 180], [140, 310],
-  [-160, 60], [-430, 350], [20, 800], [470, 650], [880, 410]
+  [620, 390], [210, 620],
+  [-760, 230], [-310, 570], [140, 310],
+  [-510, -20], [-90, -260], [310, -90],
+  [-430, -610], [-80, -740], [320, -690], [710, -470],
+  [900, 40], [520, 760], [-520, 790]
 ];
 
 const DEPARTMENT_LABELS = {
-  MYC: "Mycologie",
   MIC: "Microbiologie",
-  BIO: "Sciences végétales",
-  AGR: "Sols & écosystèmes",
+  MYC: "Mycologie appliquée",
+  BIO: "Biotechnologies végétales",
+  AGR: "Agronomie",
+  ZOO: "Zootechnie",
+  INF: "Informatique et données",
+  GEN: "Génie biologique et instrumentation"
+};
+
+const AXIS_LABELS = {
   BPR: "Bioprocédés",
   BMT: "Biomatériaux",
-  GEN: "Ingénierie",
-  INF: "Sciences numériques",
-  PHY: "Physique & chimie"
+  PHY: "Sciences physiques & chimiques"
 };
 
 const PATHWAY_LABELS = {
-  "MYC-PAR-001": "Production mycologique",
-  "MYC-PAR-002": "Technicien fongique",
-  "BPR-PAR-001": "Bioprocédés fongiques",
-  "MIC-PAR-001": "Microbiologie sols/plantes",
+  "MYC-PAR-001": "Prod. mycologique",
+  "MYC-PAR-002": "Tech. fongique",
+  "MYC-PAR-003": "Ing. bioprocédés",
+  "MIC-PAR-001": "MIC sols/plantes",
   "BIO-PAR-001": "Biostimulants",
-  "GEN-PAR-001": "Conception labo bio",
-  "GEN-PAR-002": "Automatisation culture",
-  "BPR-PAR-002": "Valorisation biomasses",
-  "BMT-PAR-001": "Mycomatériaux",
-  "INF-PAR-001": "Données & intelligence"
+  "GEN-PAR-001": "Labo biologique",
+  "GEN-PAR-002": "Auto. culture",
+  "AGR-PAR-001": "Biomasses",
+  "MYC-PAR-004": "Mycomatériaux",
+  "INF-PAR-001": "Données & IA"
 };
 
 function makeNode(item, parent, rootId, level, x, y, angle, entityType) {
@@ -61,14 +67,16 @@ function makeNode(item, parent, rootId, level, x, y, angle, entityType) {
   };
 }
 
-export function buildAcademyGraph(departments, pathways) {
+export function buildAcademyGraph(departments, axes, pathways) {
   const nodes = [];
   const edges = [];
   const byId = new Map();
   const departmentNodes = new Map();
+  const axisNodes = new Map();
   const sectionNodes = new Map();
   const rootItems = [
     ...departments.map((department) => ({ ...department, kind: "department" })),
+    ...axes.map((axis) => ({ ...axis, kind: "axis" })),
     ...pathways.map((pathway) => ({ ...pathway, kind: "pathway" }))
   ];
 
@@ -126,32 +134,46 @@ export function buildAcademyGraph(departments, pathways) {
   };
 
   rootItems.forEach((item, index) => {
-    const anchor = ROOT_ANCHORS[index % ROOT_ANCHORS.length];
+    const anchor = ROOT_ANCHORS[index];
     const seed = hash(item.code || item.id);
     const x = anchor[0] + ((seed & 255) / 255 - 0.5) * 34;
     const y = anchor[1] + (((seed >>> 8) & 255) / 255 - 0.5) * 30;
     const angle = Math.atan2(y, x) + (((seed >>> 16) & 255) / 255 - 0.5) * 0.24;
     const rootId = item.kind === "pathway" ? "pathways" : item.code.toLowerCase();
+    const shortTitle = item.kind === "pathway"
+      ? (PATHWAY_LABELS[item.code] || item.title)
+      : item.kind === "axis"
+        ? item.code
+        : item.code;
+    const entityType = item.kind === "pathway"
+      ? "PATHWAY"
+      : item.kind === "axis"
+        ? "TRANSVERSAL"
+        : "DEPARTMENT";
     const root = addNode(makeNode(
-      {
-        ...item,
-        id: item.kind + ":" + item.code,
-        shortTitle: item.kind === "pathway"
-          ? (PATHWAY_LABELS[item.code] || item.title)
-          : (DEPARTMENT_LABELS[item.code] || item.title)
-      },
+      { ...item, id: item.kind + ":" + item.code, shortTitle },
       null,
       rootId,
       0,
       x,
       y,
       angle,
-      item.kind === "pathway" ? "PATHWAY" : "DEPARTMENT"
+      entityType
     ));
+
     if (item.kind === "department") {
       root.data.route = "#/departements/" + item.code.toLowerCase();
       departmentNodes.set(item.code, root);
-      const children = item.sections.map((section) => ({
+    } else if (item.kind === "axis") {
+      root.data.route = "#/axes/" + item.code.toLowerCase();
+      axisNodes.set(item.code, root);
+    } else {
+      root.data.route = "#/parcours/" + item.slug;
+      root.data.kind = "pathway";
+    }
+
+    if (item.kind === "department" || item.kind === "axis") {
+      const children = (item.sections || []).map((section) => ({
         ...section,
         route: "#/sections/" + section.code.toLowerCase(),
         id: "section:" + section.code,
@@ -165,28 +187,34 @@ export function buildAcademyGraph(departments, pathways) {
         }))
       }));
       walk(children, root, rootId, 1, angle);
-    } else {
-      root.data.route = "#/parcours/" + item.slug;
-      root.data.kind = "pathway";
     }
   });
 
-  // A pathway is a practical bridge between disciplines, not a nested programme.
+  // Pathways connect canonical departments and transversal axes without duplicating modules.
   pathways.forEach((pathway) => {
     const source = byId.get("pathway:" + pathway.code);
     if (!source) return;
     for (const departmentCode of pathway.departmentCodes || [pathway.departmentCode]) {
       const target = departmentNodes.get(departmentCode);
-      if (target && target.id !== source.id) {
-        addEdge(source, target, {
-          id: "pathway-link:" + pathway.code + ":" + departmentCode,
-          relationType: "APPLIES_TO",
-          cross: true,
-          verified: true,
-          basis: "academy-pathway",
-          label: "Parcours transversal"
-        });
-      }
+      if (target) addEdge(source, target, {
+        id: "pathway-department:" + pathway.code + ":" + departmentCode,
+        relationType: "APPLIES_TO",
+        cross: true,
+        verified: true,
+        basis: "academy-pathway",
+        label: "Département mobilisé"
+      });
+    }
+    for (const axisCode of pathway.axisCodes || []) {
+      const target = axisNodes.get(axisCode);
+      if (target) addEdge(source, target, {
+        id: "pathway-axis:" + pathway.code + ":" + axisCode,
+        relationType: "USES",
+        cross: true,
+        verified: true,
+        basis: "academy-axis",
+        label: "Axe transversal mobilisé"
+      });
     }
   });
 
@@ -241,6 +269,7 @@ export function buildAcademyGraph(departments, pathways) {
     edges,
     stats: {
       departments: departments.length,
+      axes: axes.length,
       pathways: pathways.length,
       sections: sectionNodes.size,
       modules: nodes.filter((node) => node.entity_type === "MODULE").length,
@@ -248,6 +277,7 @@ export function buildAcademyGraph(departments, pathways) {
     },
     byId,
     departmentNodes,
+    axisNodes,
     sectionNodes
   };
 }
