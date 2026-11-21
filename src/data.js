@@ -229,6 +229,21 @@ async function callEditorialRpc(name, payload, errorLabel) {
   }
   return response.json();
 }
+export function saveLearningPath(path) {
+  return callEditorialRpc("academy_save_learning_path_editorial", {
+    p_path_id: path.id || null,
+    p_code: path.code,
+    p_slug: path.slug,
+    p_title: path.title,
+    p_summary: path.summary || "",
+    p_target_audience: path.targetAudience || "",
+    p_difficulty_level: path.difficultyLevel || "FOUNDATION",
+    p_estimated_duration_minutes: path.durationMinutes ? Number(path.durationMinutes) : null,
+    p_version_label: path.versionLabel || "0.1",
+    p_items: path.items || []
+  }, "Enregistrement du parcours impossible");
+}
+
 export function saveLearningPathDraft(path) {
   return callEditorialRpc("academy_save_learning_path_draft", {
     p_path_id: path.id || null, p_code: path.code, p_slug: path.slug, p_title: path.title,
