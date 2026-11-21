@@ -5,6 +5,7 @@ const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)"
 
 const typeLabels = {
   DEPARTMENT: "Département",
+  TRANSVERSAL: "Axe transversal",
   SECTION: "Section",
   MODULE: "Module",
   PATHWAY: "Parcours"
@@ -15,7 +16,7 @@ const escapeAtlasText = (value = "") => String(value).replace(/[&<>"']/g, (char)
 }[char]));
 
 export function renderAcademyAtlas(graph) {
-  const { departments, pathways, sections, modules } = graph.stats;
+  const { departments, axes, pathways, sections, modules } = graph.stats;
   const departmentRoots = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.level === 0);
   const pathwayRoots = graph.nodes.filter((node) => node.entity_type === "PATHWAY" && node.level === 0);
   const rootNavigation = (items, kind, label) => `
@@ -36,7 +37,7 @@ export function renderAcademyAtlas(graph) {
       <div class="atlas-topline">
         <div class="atlas-topline-copy">
           <span class="eyebrow">EXPLORATEUR 2D · PIXIJS / WEBGL</span>
-          <strong>${departments} départements <i>·</i> ${pathways} parcours <i>·</i> ${sections} sections <i>·</i> ${modules} modules</strong>
+          <strong>${departments} départements <i>·</i> ${axes} axes transversaux <i>·</i> ${pathways} parcours <i>·</i> ${sections} sections <i>·</i> ${modules} modules</strong>
         </div>
         <span class="atlas-engine-state" id="atlas-engine-state">Initialisation du moteur…</span>
       </div>
@@ -64,6 +65,7 @@ export function renderAcademyAtlas(graph) {
       <div class="atlas-legend">
         <span class="legend-department">Département</span>
         <span class="legend-pathway">Parcours transversal</span>
+        <span class="legend-axis">Axe transversal</span>
         <span class="legend-section">Section</span>
         <span class="legend-module">Module</span>
         <span class="legend-link">Relation entre disciplines</span>
@@ -186,8 +188,22 @@ export function mountAcademyAtlas(container, graph) {
         sections.append(tag);
       });
       body.append(sections);
+      if (Array.isArray(selected.data.axisCodes) && selected.data.axisCodes.length) {
+        const axes = document.createElement("div");
+        axes.className = "atlas-selection-tags";
+        selected.data.axisCodes.forEach((code) => {
+          const tag = document.createElement("span");
+          tag.textContent = "AXE · " + code;
+          axes.append(tag);
+        });
+        body.append(axes);
+      }
       const status = document.createElement("small");
       status.textContent = "Parcours cartographié · séquence et ressources à construire";
+      body.append(status);
+    } else if (selected.entity_type === "TRANSVERSAL") {
+      const status = document.createElement("small");
+      status.textContent = "Axe transversal · rattachements disciplinaires à valider";
       body.append(status);
     } else if (selected.entity_type === "MODULE") {
       const status = document.createElement("small");
