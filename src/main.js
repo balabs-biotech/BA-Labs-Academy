@@ -8,7 +8,7 @@ import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
 import { renderKnowledgeMap } from "./features/catalogue/render.js";
 import { catalogueMap, catalogueTotals } from "./catalogue-map.js";
-import { catalogueAxes } from "./catalogue-axes.js";
+import { catalogueDomains } from "./catalogue-domains.js";
 import { cataloguePathways } from "./catalogue-pathways.js";
 
 const root = document.querySelector("#app");
@@ -49,13 +49,13 @@ function departmentCard(item) {
   </a>`;
 }
 
-function axisCard(item) {
+function transversalDomainCard(item) {
   const count = item.sections?.length || 0;
-  return `<a class="department-card axis-card" href="#/axes/${encodeURIComponent(item.code.toLowerCase())}">
-    <span class="card-index">AXE · ${escapeHtml(item.code)}</span>
+  return `<a class="department-card axis-card" href="#/domaines/${encodeURIComponent(item.code.toLowerCase())}">
+    <span class="card-index">DOM · ${escapeHtml(item.code)}</span>
     <h3>${escapeHtml(item.title)}</h3>
     <p>${escapeHtml(item.description)}</p>
-    <span class="card-meta">${count} section(s) · rattachement à valider <b>↗</b></span>
+    <span class="card-meta">${count} section(s) · relations à préciser <b>↗</b></span>
   </a>`;
 }
 
@@ -90,29 +90,29 @@ function homeView() {
     <div class="section-heading"><div><span class="eyebrow">APPRENTISSAGE PAR OBJECTIF</span><h2>Parcours pratiques</h2></div><a class="text-link" href="#/parcours">Voir les parcours <span>→</span></a></div>
     ${pathCards.length ? `<div class="pathway-grid">${pathCards.join("")}</div>` : emptyState("Parcours en préparation", "Les parcours seront ajoutés au fur et à mesure de la cartographie.")}
   </section>
-  <section class="section-block feature-strip"><div><span class="eyebrow">EXPLORATION TRANSVERSALE</span><h2>L’Atlas des connaissances</h2><p>Un réseau navigable qui relie les sept départements, les axes transversaux, les sections, les modules et les parcours.</p></div><a class="button button-outline" href="#/atlas">Explorer l’Atlas <span>↗</span></a></section>`;
+  <section class="section-block feature-strip"><div><span class="eyebrow">EXPLORATION TRANSVERSALE</span><h2>L’Atlas des connaissances</h2><p>Un réseau navigable qui relie les sept départements, les domaines transversaux, les sections, les modules et les parcours.</p></div><a class="button button-outline" href="#/atlas">Explorer l’Atlas <span>↗</span></a></section>`;
 }
 
 function departmentsView() {
   const departments = mappedDepartments();
-  return `<section class="page-intro"><span class="eyebrow">ORGANISATION DES SAVOIRS · CARTOGRAPHIE DE TRAVAIL</span><h1>Départements</h1><p>Sept départements canoniques structurent l’Academy. Les trois axes transversaux restent distincts et seront rattachés aux disciplines sans les transformer en départements supplémentaires.</p></section>
-    <div class="knowledge-catalogue-stats"><div><strong>${catalogueTotals.departments}</strong><span>départements canoniques</span></div><div><strong>${catalogueTotals.axes}</strong><span>axes transversaux</span></div><div><strong>${catalogueTotals.sections}</strong><span>sections thématiques</span></div><div><strong>${catalogueTotals.modules}</strong><span>modules cartographiés</span></div></div>
+  return `<section class="page-intro"><span class="eyebrow">ORGANISATION DES SAVOIRS · CARTOGRAPHIE DE TRAVAIL</span><h1>Départements</h1><p>Sept départements canoniques structurent l’Academy. Les trois domaines transversaux restent distincts et seront rattachés aux disciplines sans les transformer en départements supplémentaires.</p></section>
+    <div class="knowledge-catalogue-stats"><div><strong>${catalogueTotals.departments}</strong><span>départements canoniques</span></div><div><strong>${catalogueTotals.axes}</strong><span>domaines transversaux</span></div><div><strong>${catalogueTotals.sections}</strong><span>sections thématiques</span></div><div><strong>${catalogueTotals.modules}</strong><span>modules cartographiés</span></div></div>
     <div class="card-grid">${departments.map(departmentCard).join("")}</div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">CLASSIFICATION TRANSVERSALE</span><h2>Axes à rattacher</h2></div><a class="text-link" href="#/axes">Voir les 3 axes <span>→</span></a></div>
-      <div class="card-grid">${catalogueAxes.map(axisCard).join("")}</div>
+      <div class="card-grid">${catalogueDomains.map(transversalDomainCard).join("")}</div>
       <p class="taxonomy-intro">BPR, BMT et PHY sont conservés comme axes de travail. Leur rattachement disciplinaire précis reste à valider.</p>
     </section>`;
 }
 
-function axesView(slug = "") {
+function transversalDomainsView(slug = "") {
   if (!slug) {
-    return `<section class="page-intro"><span class="eyebrow">CLASSIFICATION TRANSVERSALE</span><h1>Axes transversaux</h1><p>Des ensembles de connaissances qui traversent plusieurs départements. Ils ne constituent pas des départements autonomes.</p></section>
-      <div class="card-grid">${catalogueAxes.map(axisCard).join("")}</div>`;
+    return `<section class="page-intro"><span class="eyebrow">CLASSIFICATION TRANSVERSALE</span><h1>Domaines transversaux</h1><p>Des ensembles de connaissances qui traversent plusieurs départements. Ils ne constituent pas des départements autonomes.</p></section>
+      <div class="card-grid">${catalogueDomains.map(transversalDomainCard).join("")}</div>`;
   }
-  const axis = catalogueAxes.find((item) => item.code.toLowerCase() === slug);
+  const axis = catalogueDomains.find((item) => item.code.toLowerCase() === slug);
   if (!axis) return notFound("Axe indisponible", "Cet axe transversal n’existe pas dans la cartographie actuelle.");
-  return `<section class="page-intro"><span class="eyebrow"><a href="#/axes">AXES TRANSVERSAUX</a> / ${escapeHtml(axis.code)}</span><h1>${escapeHtml(axis.title)}</h1><p>${escapeHtml(axis.description)}</p></section>
-    <div class="detail-meta"><span>AXE TRANSVERSAL</span><span>${axis.sections.length} section(s)</span><span>Rattachements à valider</span></div>
+  return `<section class="page-intro"><span class="eyebrow"><a href="#/axes">DOMAINES TRANSVERSAUX</a> / ${escapeHtml(axis.code)}</span><h1>${escapeHtml(axis.title)}</h1><p>${escapeHtml(axis.description)}</p></section>
+    <div class="detail-meta"><span>DOMAINE TRANSVERSAL</span><span>${axis.sections.length} section(s)</span><span>Rattachements à valider</span></div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">STRUCTURE THÉMATIQUE</span><h2>Sections cartographiées</h2></div></div>
       <div class="domain-list">${axis.sections.map((section)=>`<a class="domain-row domain-link" href="#/sections/${encodeURIComponent(section.code.toLowerCase())}"><span>${escapeHtml(section.code)}</span><div><h3>${escapeHtml(section.title)}</h3><p>${escapeHtml(section.description)}</p><small>${section.modules.length} modules prévus</small></div><b>↗</b></a>`).join("")}</div>
     </section>`;
@@ -228,18 +228,18 @@ function domainDetail(slug) {
 }
 
 function sectionDetail(slug) {
-  const mapped = [...catalogueMap, ...catalogueAxes]
+  const mapped = [...catalogueMap, ...catalogueDomains]
     .flatMap((group) => group.sections.map((section) => ({
       ...section,
       parent: group,
-      parentType: catalogueAxes.includes(group) ? "axis" : "department"
+      parentType: catalogueDomains.includes(group) ? "domain" : "department"
     })))
     .find((section) => section.code.toLowerCase() === slug);
   if (!mapped) return notFound("Section indisponible", "Cette section n’existe pas dans la cartographie actuelle.");
-  const parentRoute = mapped.parentType === "axis"
+  const parentRoute = mapped.parentType === "domain"
     ? "#/axes/" + mapped.parent.code.toLowerCase()
     : "#/departements/" + mapped.parent.code.toLowerCase();
-  const parentLabel = mapped.parentType === "axis" ? "AXE TRANSVERSAL" : "DÉPARTEMENT";
+  const parentLabel = mapped.parentType === "domain" ? "DOMAINE TRANSVERSAL" : "DÉPARTEMENT";
   return `<section class="page-intro"><span class="eyebrow"><a href="${parentRoute}">${escapeHtml(mapped.parent.title)}</a> / SECTION · ${parentLabel}</span><h1>${escapeHtml(mapped.title)}</h1><p>${escapeHtml(mapped.description)}</p></section>
     <div class="detail-meta"><span>${escapeHtml(mapped.code)}</span><span>${mapped.modules.length} modules cartographiés</span><span>Fiches non rédigées</span></div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">MODULES ASSOCIÉS</span><h2>Connaissances à développer</h2></div></div>
@@ -319,14 +319,14 @@ function learningPathDetail(slug) {
   if (!path) {
     const planned = cataloguePathways.find((item) => item.slug === slug);
     if (!planned) return notFound("Parcours indisponible", "Ce parcours n’existe pas dans la cartographie actuelle.");
-    const sections = planned.sectionCodes.map((code) => [...catalogueMap, ...catalogueAxes].flatMap((group) => group.sections).find((section) => section.code === code)).filter(Boolean);
-    const axes = (planned.axisCodes || []).map((code) => catalogueAxes.find((item) => item.code === code)).filter(Boolean);
+    const sections = planned.sectionCodes.map((code) => [...catalogueMap, ...catalogueDomains].flatMap((group) => group.sections).find((section) => section.code === code)).filter(Boolean);
+    const transversalDomains = (planned.domainCodes || []).map((code) => catalogueDomains.find((item) => item.code === code)).filter(Boolean);
     const departments = planned.departmentCodes.map((code) => mappedDepartments().find((item) => item.code === code)).filter(Boolean);
     return `<section class="page-intro"><span class="eyebrow"><a href="#/parcours">PARCOURS</a> / ${escapeHtml(planned.code)} · CARTOGRAPHIÉ</span><h1>${escapeHtml(planned.title)}</h1><p>${escapeHtml(planned.summary)}</p></section>
       <div class="pathway-overview"><span>Finalité pratique</span><span>${sections.length} sections mobilisées</span><span>Séquence à construire</span></div>
       <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PUBLIC VISÉ</span><h2>À qui s’adresse ce parcours ?</h2></div></div><p class="taxonomy-intro">${escapeHtml(planned.target)}</p></section>
       <section class="section-block"><div class="section-heading"><div><span class="eyebrow">ANCRAGE DISCIPLINAIRE</span><h2>Départements reliés</h2></div></div><div class="competency-list">${departments.map((item)=>`<a class="competency-chip" href="#/departements/${encodeURIComponent(item.slug)}"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.code)}</span></a>`).join("")}</div></section>
-      <section class="section-block"><div class="section-heading"><div><span class="eyebrow">AXES TRANSVERSAUX</span><h2>Axes mobilisés</h2></div></div><div class="competency-list">${axes.map((item)=>`<a class="competency-chip" href="#/axes/${encodeURIComponent(item.code.toLowerCase())}"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.code)}</span></a>`).join("") || "<span class=\"taxonomy-intro\">Aucun axe transversal relié.</span>"}</div></section>
+      <section class="section-block"><div class="section-heading"><div><span class="eyebrow">DOMAINES TRANSVERSAUX</span><h2>Domaines mobilisés</h2></div></div><div class="competency-list">${transversalDomains.map((item)=>`<a class="competency-chip" href="#/domaines/${encodeURIComponent(item.code.toLowerCase())}"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.code)}</span></a>`).join("") || "<span class=\"taxonomy-intro\">Aucun axe transversal relié.</span>"}</div></section>
       <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PÉRIMÈTRE SCIENTIFIQUE</span><h2>Sections mobilisées</h2></div></div><div class="domain-list">${sections.map((item)=>`<a class="domain-row domain-link" href="#/sections/${encodeURIComponent(item.code.toLowerCase())}"><span>${escapeHtml(item.code)}</span><div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div><b>↗</b></a>`).join("")}</div></section>
       <p class="progress-note">Ce parcours est une entrée de cartographie, pas une formation ouverte. Les étapes, prérequis, évaluations et ressources seront définis après validation des modules.</p>`;
   }
@@ -913,7 +913,7 @@ function updateNavigation(route) {
   document.querySelectorAll("[data-route]").forEach((link) => {
     const target = link.dataset.route;
     const active = (route === "" && target === "home") ||
-      (["departements", "domaines", "sections", "axes"].includes(route) && target === "departements") ||
+      (["departements", "domaines", "sections"].includes(route) && target === "departements") ||
       (["catalogue", "ressource"].includes(route) && target === "catalogue") ||
       (route === "recherche" && target === "recherche") ||
       (route === "atlas" && target === "atlas") ||
@@ -931,7 +931,7 @@ function render() {
   const [route = "", routeTail = ""] = path.split("/");
   const [slug = "", query = ""] = routeTail.split("?");
   const [subroute = "", subId = ""] = slug.split("/");
-  const atlasGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, catalogueAxes, cataloguePathways) : null;
+  const atlasGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, catalogueDomains, cataloguePathways) : null;
   const pathItemId = new URLSearchParams(query).get("pathItem") || "";
   updateNavigation(route);
   if (loadError) {
@@ -947,7 +947,7 @@ function render() {
     "departements": () => slug ? departmentDetail(slug) : departmentsView(),
     "domaines": () => domainDetail(slug),
     "sections": () => sectionDetail(slug),
-    "axes": () => axesView(slug),
+    "domaines": () => domainDetail(slug),
     "catalogue": catalogueView,
     "formations": trainingCatalogView,
     "recherche": () => searchResultsView(new URLSearchParams(query).get("q") || ""),
