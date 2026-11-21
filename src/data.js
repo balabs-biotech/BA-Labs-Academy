@@ -1,4 +1,5 @@
 import { SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY } from "./config.js";
+import { getAccessToken, getCurrentUser } from "./core/auth.js";
 
 const API = `${SUPABASE_URL}/rest/v1`;
 const headers = {
@@ -7,9 +8,13 @@ const headers = {
   Accept: "application/json",
 };
 
-async function readTable(table, params) {
+async function readTable(table, params, accessToken = null) {
   const query = new URLSearchParams(params);
-  const response = await fetch(`${API}/${table}?${query}`, { headers });
+  const requestHeaders = {
+    ...headers,
+    Authorization: `Bearer ${accessToken || SUPABASE_PUBLISHABLE_KEY}`
+  };
+  const response = await fetch(`${API}/${table}?${query}`, { headers: requestHeaders });
   if (!response.ok) {
     const detail = await response.text().catch(() => "");
     throw new Error(`Lecture ${table} impossible (HTTP ${response.status})${detail ? `: ${detail.slice(0, 180)}` : ""}`);
@@ -42,7 +47,20 @@ function resolveAtlasTitles(nodes, departments, domains, content, learningPaths,
 }
 
 export async function loadAcademyData() {
-  const [departments, domains, content, departmentLinks, domainLinks, learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies, rawNodes, edges] = await Promise.all([
+  const accessToken = await getAccessToken();
+  const memberData = accessToken
+    ? Promise.all([
+        readTable("academy_path_enrollments", {
+          select: "path_id,enrollment_status,enrolled_at,completed_at",
+          order: "enrolled_at.desc"
+        }, accessToken),
+        readTable("academy_member_progress", {
+          select: "content_id,progress_status,progress_percent,started_at,completed_at,last_accessed_at",
+          order: "last_accessed_at.desc"
+        }, accessToken)
+      ])
+    : Promise.resolve([[], []]);
+  const [departments, domains, content, departmentLinks, domainLinks, learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies, rawNodes, edges, memberRecords] = await Promise.all([
     readTable("departments", {
       select: "code,slug,title,summary,color_token,sort_order",
       status: "eq.PUBLISHED",
@@ -98,12 +116,59 @@ export async function loadAcademyData() {
     readTable("atlas_edges", {
       select: "id,source_node_id,target_node_id,relation_type,rationale",
       status: "eq.PUBLISHED"
-    })
+    }),
+    memberData
   ]);
+  const [enrollments, progress] = memberRecords;
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
     learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies,
-    nodes, edges
+    enrollments, progress, nodes, edges
   };
+}
+
+async function writeMemberRecord(table, payload, conflictColumns) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) throw new Error("Connecte-toi pour enregistrer ta progression.");
+  const response = await fetch(`${API}/${table}?on_conflict=${conflictColumns}`, {
+    method: "POST",
+    headers: {
+      ...headers,
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+      Prefer: "resolution=merge-duplicates,return=representation"
+    },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Enregistrement impossible (HTTP ${response.status})${detail ? `: ${detail.slice(0, 180)}` : ""}`);
+  }
+  return response.json();
+}
+
+export async function enrollInPath(pathId) {
+  const user = await getCurrentUser();
+  if (!user?.id) throw new Error("Session apprenant introuvable.");
+  return writeMemberRecord("academy_path_enrollments", {
+    user_id: user.id,
+    path_id: pathId,
+    enrollment_status: "ACTIVE"
+  }, "user_id,path_id");
+}
+
+export async function saveResourceProgress(contentId, completed = true) {
+  const user = await getCurrentUser();
+  if (!user?.id) throw new Error("Session apprenant introuvable.");
+  const now = new Date().toISOString();
+  return writeMemberRecord("academy_member_progress", {
+    user_id: user.id,
+    content_id: contentId,
+    progress_status: completed ? "COMPLETED" : "IN_PROGRESS",
+    progress_percent: completed ? 100 : 10,
+    started_at: now,
+    completed_at: completed ? now : null,
+    last_accessed_at: now
+  }, "user_id,content_id");
 }
