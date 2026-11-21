@@ -160,7 +160,7 @@ test("Atlas navigation owns selection and bounded history independently of PixiJ
 
 test("Atlas view delegates selection and history to the navigation model", () => {
   const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
-  assert.ok(source.includes('import { createAtlasNavigation } from "./atlas-navigation.js";'));
+  assert.ok(source.includes('import { createAtlasNavigation, getAtlasBreadcrumbPath } from "./atlas-navigation.js";'));
   assert.ok(source.includes("navigation.focus(node"));
   assert.ok(source.includes("navigation.back()"));
   assert.ok(source.includes("navigation.reset()"));
