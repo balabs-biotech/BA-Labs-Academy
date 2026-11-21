@@ -114,7 +114,7 @@ function transversalDomainsView(slug = "") {
   return `<section class="page-intro"><span class="eyebrow"><a href="#/domaines">DOMAINES TRANSVERSAUX</a> / ${escapeHtml(domain.code)}</span><h1>${escapeHtml(domain.title)}</h1><p>${escapeHtml(domain.description)}</p></section>
     <div class="detail-meta"><span>DOMAINE TRANSVERSAL</span><span>${domain.sections.length} section(s)</span><span>Relations transversales à préciser</span></div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">STRUCTURE THÉMATIQUE</span><h2>Sections cartographiées</h2></div></div>
-      <div class="domain-list">${axis.sections.map((section)=>`<a class="domain-row domain-link" href="#/sections/${encodeURIComponent(section.code.toLowerCase())}"><span>${escapeHtml(section.code)}</span><div><h3>${escapeHtml(section.title)}</h3><p>${escapeHtml(section.description)}</p><small>${section.modules.length} modules prévus</small></div><b>↗</b></a>`).join("")}</div>
+      <div class="domain-list">${domain.sections.map((section)=>`<a class="domain-row domain-link" href="#/sections/${encodeURIComponent(section.code.toLowerCase())}"><span>${escapeHtml(section.code)}</span><div><h3>${escapeHtml(section.title)}</h3><p>${escapeHtml(section.description)}</p><small>${section.modules.length} modules prévus</small></div><b>↗</b></a>`).join("")}</div>
     </section>`;
 }
 
