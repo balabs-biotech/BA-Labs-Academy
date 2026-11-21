@@ -64,3 +64,8 @@ La console éditoriale comprend un constructeur de QCM à choix unique, le param
 La taxonomie comprend huit pôles disciplinaires — Microbiologie, Sciences végétales, Sols & écosystèmes, Bioprocédés, Biomatériaux, Ingénierie & instrumentation, Sciences numériques, Sciences physiques & chimiques — et un neuvième pôle central, MYCOLOGIE. Celui-ci couvre la biologie fongique, la culture, les symbioses, l’écologie, les applications et les mycomatériaux. Dans l’Atlas, MYCOLOGIE est reliée explicitement aux huit autres pôles par des relations transversales, sans hiérarchie disciplinaire.
 
 Les domaines existants sont conservés autant que possible. L’ancienne classification zootechnique est archivée et reste traçable ; les nouveaux domaines des bioprocédés, biomatériaux et sciences physiques & chimiques sont préparés comme structures éditoriales, sans remplissage de cours.
+
+
+## Référentiel de compétences et preuves d’acquisition
+
+Les compétences peuvent être rattachées à plusieurs domaines disciplinaires, avec un ancrage principal. Une même évaluation peut mesurer plusieurs compétences et définir, pour chacune, un niveau attendu et un seuil de validation. La soumission d’une tentative produit côté serveur une preuve append-only par compétence, avec niveau, score et statut de démonstration. La vue `academy_learner_competency_mastery` agrège les niveaux démontrés et l’historique des preuves ; aucune preuve ne peut être créée ou modifiée directement par le navigateur.
