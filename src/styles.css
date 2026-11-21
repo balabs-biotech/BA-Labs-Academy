@@ -336,3 +336,5 @@
 .knowledge-module h4{margin:0;font-size:.86rem;line-height:1.35}
 .knowledge-module p{margin:0;color:var(--muted);font-size:.76rem;line-height:1.45}
 @media(max-width:760px){.knowledge-catalogue-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.knowledge-department-head{grid-template-columns:2.6rem minmax(0,1fr)}.knowledge-department-head>b{grid-column:2}.knowledge-module-grid{grid-template-columns:1fr}}
+
+.atlas-node--section circle{fill:#8ab6a0;stroke:#d2eadc}.legend-section{color:#8ab6a0}
