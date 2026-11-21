@@ -31,7 +31,7 @@ test("every pathway has valid department and domain references", () => {
   for (const pathway of cataloguePathways) {
     assert.ok(departmentCodes.has(pathway.departmentCode), pathway.code + " primary department");
     assert.ok(pathway.departmentCodes.every((code) => departmentCodes.has(code)), pathway.code + " linked departments");
-    assert.ok(pathway.sectionCodes.every((code) => domainCodes.has(code)), pathway.code + " linked domains");
+    assert.ok(pathway.sectionCodes.every((code) => sectionCodes.has(code)), pathway.code + " linked sections");
   }
 });
 
