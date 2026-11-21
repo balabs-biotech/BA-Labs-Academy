@@ -3,7 +3,7 @@ import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
-import { enrollInPath, saveResourceProgress } from "./data.js";
+import { enrollInPath, saveResourceProgress, savePathItemProgress } from "./data.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 
 const root = document.querySelector("#app");
@@ -11,7 +11,7 @@ const connection = document.querySelector("#connection-state");
 let data = {
   departments: [], domains: [], content: [], departmentLinks: [], domainLinks: [],
   learningPaths: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
-  enrollments: [], progress: [], nodes: [], edges: []
+  enrollments: [], progress: [], pathItemProgress: [], nodes: [], edges: []
 };
 let loadError = null;
 let unbindAtlas = () => {};
@@ -105,16 +105,30 @@ function filterCatalogue(query) {
   if (count) count.textContent = `${filtered.length} / ${data.content.length} ressource(s)`;
 }
 
-function resourceDetail(slug) {
+function resourceDetail(slug, pathItemId = "") {
   const item = data.content.find((entry) => entry.slug === slug);
   if (!item) return notFound("Ressource indisponible", "Cette ressource n’est pas publiée ou n’existe pas dans le catalogue public.");
   const destination = safeExternalUrl(item.destination_url);
   const progress = data.progress.find((record) => record.content_id === item.id);
+  const pathItem = pathItemId
+    ? data.pathItems.find((entry) => entry.id === pathItemId && entry.content_id === item.id)
+    : null;
+  const stepProgress = pathItem
+    ? data.pathItemProgress.find((record) => record.path_item_id === pathItem.id)
+    : null;
+  const parentPath = pathItem ? data.learningPaths.find((entry) => entry.id === pathItem.path_id) : null;
+  const isEnrolled = pathItem && data.enrollments.some((entry) => entry.path_id === pathItem.path_id);
+  const completed = pathItem ? stepProgress?.progress_status === "COMPLETED" : progress?.progress_status === "COMPLETED";
+  const learnerAction = pathItem
+    ? isEnrolled
+      ? `<div class="learner-action"><span class="progress-state">${completed ? "Étape terminée" : "Étape du parcours"}</span><button class="button button-outline" id="complete-resource" data-path-item-id="${escapeHtml(pathItem.id)}" ${completed ? "disabled" : ""}>${completed ? "Acquis ✓" : "Valider cette étape"}</button></div>`
+      : `<p class="progress-note">Inscris-toi au parcours ${parentPath ? `<a href="#/parcours/${encodeURIComponent(parentPath.slug)}">${escapeHtml(parentPath.title)}</a>` : "associé"} pour enregistrer cette étape.</p>`
+    : `<div class="learner-action"><span class="progress-state">${completed ? "Ressource terminée" : "Suivre cette ressource"}</span><button class="button button-outline" id="complete-resource" data-content-id="${escapeHtml(item.id)}" ${completed ? "disabled" : ""}>${completed ? "Acquis ✓" : "Marquer comme terminée"}</button></div>`;
   return `<section class="page-intro"><span class="eyebrow"><a href="#/catalogue">CATALOGUE</a> / ${escapeHtml((item.resource_type || "RESSOURCE").toUpperCase())}</span><h1>${escapeHtml(item.title)}</h1><p>${escapeHtml(item.summary)}</p></section>
   <section class="resource-detail"><div class="detail-meta"><span>${escapeHtml((item.language_code || "fr").toUpperCase())}</span><span>${escapeHtml(item.learning_level || "Tous niveaux")}</span><span>Version ${escapeHtml(item.version_label || "—")}</span></div>
   <p class="detail-note">Cette fiche présente les informations publiques validées pour cette ressource.</p>
   ${destination ? `<a class="button button-primary" href="${escapeHtml(destination)}" target="_blank" rel="noopener noreferrer">Accéder à la ressource ↗</a>` : ""}
-  ${currentSession ? `<div class="learner-action"><span class="progress-state">${progress?.progress_status === "COMPLETED" ? "Ressource terminée" : "Suivre cette ressource"}</span><button class="button button-outline" id="complete-resource" data-content-id="${escapeHtml(item.id)}" ${progress?.progress_status === "COMPLETED" ? "disabled" : ""}>${progress?.progress_status === "COMPLETED" ? "Acquis ✓" : "Marquer comme terminée"}</button></div>` : `<p class="progress-note"><a href="#/espace">Connecte-toi à l’espace apprenant</a> pour enregistrer ta progression.</p>`}
+  ${currentSession ? learnerAction : `<p class="progress-note"><a href="#/espace">Connecte-toi à l’espace apprenant</a> pour enregistrer ta progression.</p>`}
   </section>`;
 }
 
@@ -173,7 +187,7 @@ function learningPathDetail(slug) {
   const sequence = resolvePathItems(
     rawItems,
     data.pathPrerequisites.filter((relation) => relation.path_id === path.id),
-    data.progress
+    data.pathItemProgress
   );
   const contentById = new Map(data.content.map((item) => [item.id, item]));
   const competencyIds = new Set(
@@ -182,7 +196,7 @@ function learningPathDetail(slug) {
       .map((relation) => relation.competency_id)
   );
   const competencies = data.competencies.filter((item) => competencyIds.has(item.id));
-  const pathProgress = buildPathProgress(rawItems, data.progress);
+  const pathProgress = buildPathProgress(rawItems, data.pathItemProgress);
   const difficulty = {
     INTRODUCTORY: "Initiation",
     FOUNDATION: "Fondamental",
@@ -201,7 +215,7 @@ function learningPathDetail(slug) {
       <span class="path-step-status">${step.progressStatus === "COMPLETED" ? "Acquis ✓" : step.isLocked ? "Verrouillé ⌑" : "Ouvrir ↗"}</span>`;
     return step.isLocked || !resource
       ? `<div class="path-step is-locked">${body}</div>`
-      : `<a class="path-step" href="#/ressource/${encodeURIComponent(resource.slug)}">${body}</a>`;
+      : `<a class="path-step" href="#/ressource/${encodeURIComponent(resource.slug)}?pathItem=${encodeURIComponent(step.id)}">${body}</a>`;
   }).join("");
   return `<section class="page-intro"><span class="eyebrow"><a href="#/parcours">PARCOURS</a> / ${escapeHtml(path.code)}</span><h1>${escapeHtml(path.title)}</h1><p>${escapeHtml(path.summary)}</p></section>
     <div class="pathway-overview"><span>${escapeHtml(difficulty)}</span><span>${sequence.length} étape(s)</span><span>${path.estimated_duration_minutes ? `${path.estimated_duration_minutes} minutes estimées` : "Durée à définir"}</span>${currentSession && enrolled ? `<span>${pathProgress.percent}% acquis</span>` : ""}</div>
@@ -235,7 +249,7 @@ function loginView() {
 
 function learnerPathCard(path) {
   const items = data.pathItems.filter((item) => item.path_id === path.id);
-  const progress = buildPathProgress(items, data.progress);
+  const progress = buildPathProgress(items, data.pathItemProgress);
   return `<a class="pathway-card learner-path-card" href="#/parcours/${encodeURIComponent(path.slug)}">
     <span class="eyebrow">PARCOURS · ${escapeHtml(path.difficulty_level || "FORMATION")}</span>
     <h3>${escapeHtml(path.title)}</h3>
@@ -330,7 +344,9 @@ function updateNavigation(route) {
 function render() {
   unbindAtlas();
   const path = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
-  const [route = "", slug = ""] = path.split("/");
+  const [route = "", routeTail = ""] = path.split("/");
+  const [slug = "", query = ""] = routeTail.split("?");
+  const pathItemId = new URLSearchParams(query).get("pathItem") || "";
   updateNavigation(route);
   if (loadError) {
     root.innerHTML = `<section class="page-intro"><span class="eyebrow">ÉTAT DES DONNÉES</span><h1>Connexion indisponible</h1><p>${escapeHtml(loadError)}</p><p>La plateforme reste accessible ; les données seront rechargées dès que l’API publique répondra.</p><button class="button button-outline" id="retry">Réessayer</button></section>`;
@@ -345,7 +361,7 @@ function render() {
     "departements": () => slug ? departmentDetail(slug) : departmentsView(),
     "domaines": () => domainDetail(slug),
     "catalogue": catalogueView,
-    "ressource": () => resourceDetail(slug),
+    "ressource": () => resourceDetail(slug, pathItemId),
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "espace": learnerView,
     "administration": administrationView,
@@ -421,7 +437,11 @@ function render() {
     const button = event.currentTarget;
     button.disabled = true;
     try {
-      await saveResourceProgress(button.dataset.contentId, true);
+      if (button.dataset.pathItemId) {
+        await savePathItemProgress(button.dataset.pathItemId, true);
+      } else {
+        await saveResourceProgress(button.dataset.contentId, true);
+      }
       await refresh();
     } catch (error) {
       button.disabled = false;
