@@ -201,6 +201,37 @@ export function mountAcademyAtlas(container, graph) {
     description.textContent = selected.summary || "Fiche descriptive à compléter.";
     body.append(description);
 
+    const branch = document.createElement("nav");
+    branch.className = "atlas-branch-navigation";
+    branch.setAttribute("aria-label", "Navigation dans la hiérarchie");
+    const parentNode = selected.parent ? byId.get(selected.parent) : null;
+    if (parentNode) {
+      const up = document.createElement("button");
+      up.type = "button";
+      up.className = "atlas-branch-parent";
+      up.textContent = "↑ Remonter vers " + parentNode.title;
+      up.addEventListener("click", () => focusNode(parentNode));
+      branch.append(up);
+    }
+    const children = nodes.filter((node) => node.parent === selected.id);
+    if (children.length) {
+      const branchTitle = document.createElement("strong");
+      branchTitle.textContent = "Explorer cette branche · " + children.length;
+      branch.append(branchTitle);
+      const childList = document.createElement("div");
+      childList.className = "atlas-branch-children";
+      children.forEach((child) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "atlas-branch-child";
+        item.textContent = child.title;
+        item.addEventListener("click", () => focusNode(child));
+        childList.append(item);
+      });
+      branch.append(childList);
+    }
+    if (parentNode || children.length) body.append(branch);
+
     if (selected.entity_type === "PATHWAY" && Array.isArray(selected.data.sectionCodes)) {
       const sections = document.createElement("div");
       sections.className = "atlas-selection-tags";
