@@ -131,7 +131,7 @@ export async function loadAcademyData() {
     memberData
   ]);
   const { enrollments, progress, pathItemProgress, membership, error: memberError } = memberRecords;
-  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies] = accessToken
+  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialContent, editorialDepartmentLinks, editorialDomainLinks] = accessToken
     ? await Promise.all([
         readTable("academy_learning_paths", {
           select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
@@ -151,13 +151,16 @@ export async function loadAcademyData() {
         }, accessToken).catch(() => []),
         readTable("academy_content_competencies", {
           select: "content_id,competency_id,expected_level,assessment_hint"
-        }, accessToken).catch(() => [])
+        }, accessToken).catch(() => []),
+        readTable("content_items", { select: "id,business_id,slug,title,summary,resource_type,language_code,learning_level,editorial_status,status,visibility,updated_at", order: "updated_at.desc" }, accessToken).catch(() => []),
+        readTable("content_department_links", { select: "content_id,department_code,is_primary" }, accessToken).catch(() => []),
+        readTable("content_domain_links", { select: "content_id,domain_code" }, accessToken).catch(() => [])
       ])
-    : [[], [], [], [], []];
+    : [[], [], [], [], [], [], [], []];
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
-    learningPaths, editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies,
+    learningPaths, editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialContent, editorialDepartmentLinks, editorialDomainLinks,
     pathItems, pathPrerequisites, competencies, contentCompetencies,
     enrollments, progress, pathItemProgress, membership, memberError, nodes, edges
   };
@@ -296,3 +299,14 @@ export function publishLearningPath(pathId, note = "") {
   return callEditorialRpc("academy_publish_learning_path", { p_path_id: pathId, p_note: note },
     "Publication du parcours impossible");
 }
+
+export function saveContentEditorial(content) {
+ return callEditorialRpc("academy_save_content_editorial", {
+  p_content_id:content.id||null,p_business_id:content.businessId,p_slug:content.slug,p_title:content.title,
+  p_summary:content.summary||"",p_resource_type:content.resourceType,p_language_code:content.languageCode||"fr",
+  p_learning_level:content.learningLevel||null,p_departments:content.departments||[],p_domains:content.domains||[]
+ },"Enregistrement de la ressource impossible");
+}
+export function submitContentForReview(id,note="") { return callEditorialRpc("academy_submit_content_for_review",{p_content_id:id,p_note:note},"Soumission en revue impossible"); }
+export function reviewContent(id,decision,note="") { return callEditorialRpc("academy_review_content_item",{p_content_id:id,p_decision:decision,p_note:note},"Décision de revue impossible"); }
+export function publishContent(id,visibility="PUBLIC",note="") { return callEditorialRpc("academy_publish_content_item",{p_content_id:id,p_visibility:visibility,p_note:note},"Publication de la ressource impossible"); }
