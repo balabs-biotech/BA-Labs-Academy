@@ -384,3 +384,36 @@ export function saveContentAssets(contentId, assets) {
     p_assets: assets || []
   }, "Enregistrement des supports impossible");
 }
+
+
+export function issueTrainingDocument(enrollmentId, documentType, title, issuerKind = null, issuerReference = null) {
+  return callEditorialRpc("academy_issue_training_document", {
+    p_enrollment_id: enrollmentId,
+    p_document_type: documentType,
+    p_title: title,
+    p_issuer_kind: issuerKind,
+    p_issuer_reference: issuerReference
+  }, "Émission du document impossible");
+}
+
+export function revokeTrainingDocument(documentId, reason) {
+  return callEditorialRpc("academy_revoke_training_document", {
+    p_document_id: documentId,
+    p_reason: reason
+  }, "Révocation du document impossible");
+}
+
+export async function verifyTrainingDocument(token) {
+  if (!token || !/^[a-f0-9]{64}$/i.test(token.trim())) return null;
+  const response = await fetch(`${API}/rpc/academy_verify_training_document`, {
+    method: "POST",
+    headers: { ...headers, "Content-Type": "application/json" },
+    body: JSON.stringify({ p_verification_token: token.trim() })
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Vérification du document impossible (HTTP ${response.status})${detail ? `: ${detail.slice(0, 180)}` : ""}`);
+  }
+  const rows = await response.json();
+  return Array.isArray(rows) ? (rows[0] || null) : rows;
+}
