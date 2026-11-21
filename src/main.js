@@ -337,6 +337,55 @@ function administrationView() {
     <p class="progress-note">Le contrôle d’accès de cette interface est indicatif. Chaque opération éditoriale reste protégée par les contrôles de rôle des fonctions PostgreSQL ; aucun droit n’est accordé par le frontend seul.</p>`;
 }
 
+function readPathwaySequence(panel) {
+  return [...panel.querySelectorAll(".pathway-sequence-row")].map((row) => ({
+    contentId: row.dataset.contentId,
+    isRequired: row.querySelector('[data-field="required"]').checked,
+    prerequisites: [...row.querySelector('[data-field="prerequisites"]').selectedOptions].map((option) => option.value)
+  }));
+}
+
+function renderPathwaySequence(panel, resources, sequence) {
+  const selectedIds = new Set(sequence.map((item) => item.contentId));
+  const byId = new Map(resources.map((resource) => [resource.id, resource]));
+  panel.innerHTML = `
+    <div class="pathway-resource-add">
+      <div><span class="eyebrow">BIBLIOTHÈQUE</span><h3>Ajouter une ressource</h3></div>
+      <div class="pathway-resource-options">${resources.filter((resource) => !selectedIds.has(resource.id)).map((resource) => `
+        <label><input type="checkbox" data-action="add" value="${escapeHtml(resource.id)}"><span>${escapeHtml(resource.title)}</span><small>${escapeHtml(resource.resource_type || "RESSOURCE")}</small></label>
+      `).join("") || '<p class="search-count">Toutes les ressources disponibles sont déjà dans la séquence.</p>'}</div>
+    </div>
+    <div class="pathway-sequence-list">
+      ${sequence.map((item,index) => {
+        const resource = byId.get(item.contentId);
+        if (!resource) return "";
+        const prerequisites = new Set(item.prerequisites || []);
+        const candidates = sequence.filter((candidate) => candidate.contentId !== item.contentId);
+        return `
+          <article class="pathway-sequence-row" data-content-id="${escapeHtml(item.contentId)}">
+            <div class="sequence-row-head">
+              <span class="sequence-position">${String(index+1).padStart(2,"0")}</span>
+              <div class="sequence-row-title"><b>${escapeHtml(resource.title)}</b><small>${escapeHtml(resource.resource_type || "RESSOURCE")}</small></div>
+              <div class="sequence-row-actions">
+                <button type="button" data-action="up" aria-label="Monter" ${index===0?"disabled":""}>↑</button>
+                <button type="button" data-action="down" aria-label="Descendre" ${index===sequence.length-1?"disabled":""}>↓</button>
+                <button type="button" data-action="remove" aria-label="Retirer">×</button>
+              </div>
+            </div>
+            <div class="sequence-row-settings">
+              <label class="sequence-required"><input type="checkbox" data-field="required" ${item.isRequired?"checked":""}> Étape obligatoire</label>
+              <label class="sequence-prerequisites">Prérequis
+                <select data-field="prerequisites" multiple size="2" aria-label="Prérequis de ${escapeHtml(resource.title)}">
+                  ${candidates.map((candidate) => `<option value="${escapeHtml(candidate.contentId)}" ${prerequisites.has(candidate.contentId)?"selected":""}>${escapeHtml(byId.get(candidate.contentId)?.title || "Ressource")}</option>`).join("")}
+                </select>
+              </label>
+            </div>
+          </article>`;
+      }).join("") || '<p class="search-count">Aucune étape. Ajoute des ressources depuis la bibliothèque.</p>'}
+    </div>
+    <p class="search-count">L’ordre affiché définit la progression. Les prérequis peuvent être multiples ; les cycles sont refusés par le backend.</p>`;
+}
+
 function learningPathEditorView(pathId = "nouveau") {
   if (!currentSession?.user) return loginView();
   const membership = data.membership;
@@ -346,10 +395,16 @@ function learningPathEditorView(pathId = "nouveau") {
   const isNew = !pathId || pathId === "nouveau";
   const path = isNew ? null : (data.editorialPaths || []).find((item) => item.id === pathId);
   if (!isNew && (!path || path.status !== "DRAFT")) return notFound("Brouillon indisponible", "Seuls les parcours au statut DRAFT peuvent être modifiés.");
-  const selected = new Set(data.pathItems.filter((item) => item.path_id === path?.id).map((item) => item.content_id));
+  const currentItems = data.pathItems.filter((item) => item.path_id === path?.id).sort((a,b) => a.sort_order-b.sort_order);
   const resources = [...data.content].sort((a,b) => a.title.localeCompare(b.title, "fr"));
+  const sequence = currentItems.map((item) => ({
+    contentId: item.content_id,
+    isRequired: item.is_required,
+    prerequisites: data.pathPrerequisites.filter((link) => link.item_id === item.id)
+      .map((link) => currentItems.find((candidate) => candidate.id === link.prerequisite_item_id)?.content_id).filter(Boolean)
+  }));
   const canPublish = ["OWNER","ADMIN"].includes(membership.role);
-  return `<section class="page-intro"><span class="eyebrow"><a href="#/administration">ESPACE ÉDITORIAL</a> / PARCOURS</span><h1>${isNew ? "Nouveau parcours" : escapeHtml(path.title)}</h1><p>Configurer les métadonnées et la séquence pédagogique. Les ressources proposées sont limitées au catalogue public validé.</p></section>
+  return `<section class="page-intro"><span class="eyebrow"><a href="#/administration">ESPACE ÉDITORIAL</a> / PARCOURS</span><h1>${isNew ? "Nouveau parcours" : escapeHtml(path.title)}</h1><p>Configurer les métadonnées et construire une séquence ordonnée avec étapes obligatoires et prérequis.</p></section>
     <form class="pathway-editor-form" id="pathway-editor-form" data-path-id="${escapeHtml(path?.id || "")}">
       <div class="editor-form-grid">
         <label>Code interne<input name="code" required maxlength="48" value="${escapeHtml(path?.code || "")}" placeholder="BIO-MYCO-01"></label>
@@ -361,11 +416,7 @@ function learningPathEditorView(pathId = "nouveau") {
         <label>Durée estimée (minutes)<input name="duration" type="number" min="1" step="1" value="${escapeHtml(path?.estimated_duration_minutes || "")}" placeholder="120"></label>
         <label>Version<input name="version_label" value="${escapeHtml(path?.version_label || "0.1")}" maxlength="24"></label>
       </div>
-      <div class="pathway-resource-picker">
-        <div><span class="eyebrow">SÉQUENCE</span><h2>Ressources du parcours</h2><p>Sélectionne les ressources ; l’ordre alphabétique du catalogue devient l’ordre initial des étapes. Les prérequis sont contrôlés par le moteur backend.</p></div>
-        <select name="content_ids" multiple size="10" aria-label="Ressources à inclure dans le parcours">${resources.map((resource) => `<option value="${escapeHtml(resource.id)}" ${selected.has(resource.id) ? "selected" : ""}>${escapeHtml(resource.title)} · ${escapeHtml(resource.resource_type || "RESSOURCE")}</option>`).join("")}</select>
-        <span class="search-count">${resources.length} ressource(s) publiées disponibles · Ctrl/Cmd pour sélection multiple</span>
-      </div>
+      <section class="pathway-sequence-builder" id="pathway-sequence-builder"><span class="eyebrow">CONSTRUCTION DE LA SÉQUENCE</span><h2>Étapes et dépendances</h2><p class="sequence-builder-intro">Ajoute les ressources, change leur ordre et définis leurs prérequis. Le moteur vérifie la cohérence du graphe avant validation.</p><div id="pathway-sequence-panel"></div></section>
       <div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour à l’espace éditorial</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div>
       <p id="pathway-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
     </form>
@@ -468,6 +519,54 @@ function render() {
   if (route === "catalogue") {
     document.querySelector("#resource-search")?.addEventListener("input", (event) => filterCatalogue(event.target.value));
   }
+  const sequencePanel = document.querySelector("#pathway-sequence-panel");
+  if (sequencePanel) {
+    const form = document.querySelector("#pathway-editor-form");
+    const pathId = form.dataset.pathId || "";
+    const existingItems = data.pathItems.filter((item) => item.path_id === pathId).sort((a,b) => a.sort_order-b.sort_order);
+    let sequence = existingItems.map((item) => ({
+      contentId: item.content_id,
+      isRequired: item.is_required,
+      prerequisites: data.pathPrerequisites.filter((link) => link.item_id === item.id)
+        .map((link) => existingItems.find((candidate) => candidate.id === link.prerequisite_item_id)?.content_id).filter(Boolean)
+    }));
+    const resources = [...data.content].sort((a,b) => a.title.localeCompare(b.title, "fr"));
+    renderPathwaySequence(sequencePanel, resources, sequence);
+    sequencePanel.addEventListener("change", (event) => {
+      const action = event.target.dataset.action;
+      if (action === "add" && event.target.checked) {
+        sequence.push({ contentId: event.target.value, isRequired: true, prerequisites: [] });
+        renderPathwaySequence(sequencePanel, resources, sequence);
+        return;
+      }
+      const row = event.target.closest(".pathway-sequence-row");
+      if (!row) return;
+      const current = readPathwaySequence(sequencePanel);
+      sequence = current;
+      const item = sequence.find((entry) => entry.contentId === row.dataset.contentId);
+      if (!item) return;
+      if (event.target.dataset.field === "required") item.isRequired = event.target.checked;
+      if (event.target.dataset.field === "prerequisites") item.prerequisites = [...event.target.selectedOptions].map((option) => option.value);
+    });
+    sequencePanel.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const action = button.dataset.action;
+      const row = button.closest(".pathway-sequence-row");
+      if (!row) return;
+      sequence = readPathwaySequence(sequencePanel);
+      const index = sequence.findIndex((entry) => entry.contentId === row.dataset.contentId);
+      if (action === "remove") {
+        const removed = sequence.splice(index,1)[0];
+        sequence.forEach((item) => { item.prerequisites = item.prerequisites.filter((id) => id !== removed.contentId); });
+      } else if (action === "up" && index > 0) {
+        [sequence[index-1],sequence[index]] = [sequence[index],sequence[index-1]];
+      } else if (action === "down" && index < sequence.length-1) {
+        [sequence[index+1],sequence[index]] = [sequence[index],sequence[index+1]];
+      }
+      renderPathwaySequence(sequencePanel, resources, sequence);
+    });
+  }
   document.querySelector("#pathway-editor-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget;
@@ -477,10 +576,13 @@ function render() {
     feedback.textContent = "Enregistrement du brouillon…";
     try {
       const values = new FormData(form);
-      const contentIds = values.getAll("content_ids");
-      const currentItems = data.pathItems.filter((item) => item.path_id === (form.dataset.pathId || ""));
-      const currentPrerequisites = data.pathPrerequisites.filter((link) => link.path_id === (form.dataset.pathId || ""));
-      const items = buildPathwayItems(contentIds, currentItems, currentPrerequisites);
+      const sequencePanel = document.querySelector("#pathway-sequence-panel");
+      const sequence = readPathwaySequence(sequencePanel);
+      const items = sequence.map((item) => ({
+        content_id: item.contentId,
+        is_required: item.isRequired,
+        prerequisites: item.prerequisites
+      }));
       const pathId = await saveLearningPath({
         id: form.dataset.pathId || null, code: values.get("code"), slug: values.get("slug"),
         title: values.get("title"), summary: values.get("summary"),
