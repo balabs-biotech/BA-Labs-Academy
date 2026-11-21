@@ -283,7 +283,7 @@ export function buildAcademyGraph(departments, domains, pathways) {
     edges,
     stats: {
       departments: departments.length,
-      domains: domains.length,
+      domains: domainNodes.size,
       pathways: pathways.length,
       sections: sectionNodes.size,
       modules: nodes.filter((node) => node.entity_type === "MODULE").length,
