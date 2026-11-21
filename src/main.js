@@ -1,4 +1,4 @@
-import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, publishAssessment, savePathAssessments } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, saveCompetencyDomains, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, saveAssessmentCompetencies, publishAssessment, savePathAssessments } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
@@ -10,7 +10,7 @@ const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
 let data = {
   departments: [], domains: [], content: [], departmentLinks: [], domainLinks: [],
-  learningPaths: [], editorialPaths: [], editorialCompetencies: [], editorialContentCompetencies: [], editorialContent: [], editorialDepartmentLinks: [], editorialDomainLinks: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
+  learningPaths: [], editorialPaths: [], editorialCompetencies: [], editorialContentCompetencies: [], editorialCompetencyDomains: [], editorialAssessmentCompetencies: [], editorialContent: [], editorialDepartmentLinks: [], editorialDomainLinks: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
   enrollments: [], progress: [], pathItemProgress: [], nodes: [], edges: []
 };
 let loadError = null;
@@ -509,6 +509,10 @@ function assessmentEditorView(assessmentId="nouveau") {
         <label>Durée (minutes)<input name="time_limit_minutes" type="number" min="1" max="1440" value="${assessment?.time_limit_minutes??""}" placeholder="Sans limite"></label>
       </div>
       <section class="assessment-question-builder"><div class="section-heading"><div><span class="eyebrow">CONSTRUCTION DU QUESTIONNAIRE</span><h2>Questions à choix unique</h2></div><button type="button" id="add-assessment-question" class="button button-outline">Ajouter une question +</button></div><div id="assessment-question-list">${questions.map((question,index)=>assessmentQuestionMarkup(question,index)).join("")||assessmentQuestionMarkup({prompt:"",options:["",""],correctIndex:0},0)}</div></section>
+
+      <section class="assessment-question-builder"><span class="eyebrow">RÉFÉRENTIEL DES COMPÉTENCES</span><h2>Compétences évaluées</h2><p>Associe chaque évaluation aux compétences réellement mesurées. Le niveau et le seuil sont propres à chaque compétence.</p>
+        <div class="assessment-competency-list">\${(data.editorialCompetencies||[]).filter((item)=>item.status==="PUBLISHED").map((item)=>{const link=(data.editorialAssessmentCompetencies||[]).find((mapping)=>mapping.assessment_id===assessment?.id&&mapping.competency_id===item.id);return \`<article class="assessment-competency-row"><label><input type="checkbox" data-assessment-competency value="\${escapeHtml(item.id)}" \${link?"checked":""}><span><b>\${escapeHtml(item.title)}</b><small>\${escapeHtml(item.code)}</small></span></label><label>Niveau attendu<select data-assessment-competency-level \${link?"":"disabled"}>\${["INTRODUCTORY","FOUNDATION","INTERMEDIATE","ADVANCED","EXPERT"].map((level)=>\`<option value="\${level}" \${(link?.expected_level||"FOUNDATION")===level?"selected":""}>\${level}</option>\`).join("")}</select></label><label>Seuil (%)<input data-assessment-competency-score type="number" min="0" max="100" step="1" value="\${link?.minimum_score??assessment?.pass_score??70}" \${link?"":"disabled"}></label></article>\`}).join("")||emptyState("Aucune compétence publiée","Publie d’abord les compétences du référentiel pour pouvoir les associer à une évaluation.")}</div>
+      </section>
       <div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour à l’espace éditorial</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div>
       <p id="assessment-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
     </form>
@@ -538,6 +542,10 @@ function competencyEditorView(competencyId = "nouveau") {
           const link = mapped.get(resource.id);
           return `<article class="competency-resource-row"><label><input type="checkbox" data-competency-content value="${escapeHtml(resource.id)}" ${link ? "checked" : ""}><span><b>${escapeHtml(resource.title)}</b><small>${escapeHtml(resource.resource_type || "RESSOURCE")}</small></span></label><div class="competency-resource-settings"><select data-expected-level aria-label="Niveau attendu pour ${escapeHtml(resource.title)}">${levels.map((level) => `<option value="${level}" ${(link?.expected_level || competency?.competency_level || "FOUNDATION") === level ? "selected" : ""}>${level}</option>`).join("")}</select><input data-assessment-hint maxlength="300" aria-label="Indice d’évaluation" placeholder="Indice d’évaluation (facultatif)" value="${escapeHtml(link?.assessment_hint || "")}"></div></article>`;
         }).join("") || emptyState("Aucune ressource publiée", "Les associations pourront être configurées dès que le catalogue contiendra des ressources.")}</div>
+      </section>
+
+      <section class="competency-mapping-panel"><span class="eyebrow">ANCRAGE DISCIPLINAIRE</span><h2>Domaines de rattachement</h2><p>Une compétence peut être transversale. Sélectionne un ou plusieurs domaines ; le premier sélectionné devient son ancrage principal.</p>
+        <div class="competency-domain-grid">\${data.editorialDepartments.filter((department)=>department.status!=="ARCHIVED").map((department)=>{const domains=data.editorialDomains.filter((domain)=>domain.department_code===department.code&&domain.status!=="ARCHIVED");return domains.length?\`<fieldset class="competency-domain-group"><legend>\${escapeHtml(department.title)}</legend>\${domains.map((domain)=>{const link=(data.editorialCompetencyDomains||[]).find((item)=>item.competency_id===competency?.id&&item.domain_code===domain.code);return \`<label><input type="checkbox" data-competency-domain value="\${escapeHtml(domain.code)}" \${link?"checked":""}><span>\${escapeHtml(domain.title)}</span></label>\`}).join("")}</fieldset>\`:""}).join("")}</div>
       </section>
       <div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour à l’espace éditorial</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div>
       <p id="competency-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
@@ -793,10 +801,13 @@ function render() {
     if(action==="remove-option"){const options=question.querySelector("[data-assessment-options]");if(options.children.length>2){const wasChecked=button.closest("[data-assessment-option]").querySelector('input[type="radio"]').checked;button.closest("[data-assessment-option]").remove();if(wasChecked)options.querySelector('input[type="radio"]').checked=true;options.querySelectorAll("[data-assessment-option]").forEach((row,index)=>{const radio=row.querySelector('input[type="radio"]');radio.value=index;radio.name="correct_"+question.dataset.questionIndex;row.querySelector('[data-assessment-action="remove-option"]').disabled=options.children.length<=2;});}}
   });
   document.querySelectorAll("[data-path-assessment]").forEach((checkbox)=>checkbox.addEventListener("change",()=>{const row=checkbox.closest("[data-path-assessment-row]");row.querySelector("[data-path-assessment-score]").disabled=!checkbox.checked;row.querySelector("[data-path-assessment-required]").disabled=!checkbox.checked;}));
+  document.querySelectorAll("[data-assessment-competency]").forEach((checkbox)=>checkbox.addEventListener("change",()=>{const row=checkbox.closest(".assessment-competency-row");row.querySelector("[data-assessment-competency-level]").disabled=!checkbox.checked;row.querySelector("[data-assessment-competency-score]").disabled=!checkbox.checked;}));
   const assessmentForm=document.querySelector("#assessment-editor-form");
   assessmentForm?.addEventListener("submit",async(event)=>{event.preventDefault();const button=assessmentForm.querySelector('button[type="submit"]');const feedback=document.querySelector("#assessment-editor-feedback");button.disabled=true;feedback.textContent="Enregistrement et validation des clés de correction…";
     try{const values=new FormData(assessmentForm);const questions=[...assessmentBuilder.querySelectorAll("[data-assessment-question]")].map((question)=>{const rows=[...question.querySelectorAll("[data-assessment-option]")];return {prompt:question.querySelector("[data-question-prompt]").value.trim(),options:rows.map((row)=>row.querySelector("[data-option-text]").value.trim()),correct_option_indexes:[rows.findIndex((row)=>row.querySelector('input[type="radio"]').checked)]};});
       const id=await saveAssessment({id:assessmentForm.dataset.assessmentId||null,code:values.get("code").trim().toUpperCase(),title:values.get("title").trim(),description:values.get("description"),passScore:values.get("pass_score"),maxAttempts:values.get("max_attempts"),timeLimitMinutes:values.get("time_limit_minutes"),versionLabel:values.get("version_label"),questions});
+      const competencyMappings=[...assessmentForm.querySelectorAll("[data-assessment-competency]:checked")].map((checkbox)=>{const row=checkbox.closest(".assessment-competency-row");return {competency_id:checkbox.value,expected_level:row.querySelector("[data-assessment-competency-level]").value,minimum_score:Number(row.querySelector("[data-assessment-competency-score]").value)};});
+      await saveAssessmentCompetencies(id,competencyMappings);
       location.hash="#/administration/evaluations/"+encodeURIComponent(id);await refresh();
     }catch(error){feedback.textContent=error.message||"Enregistrement impossible.";button.disabled=false;}
   });
@@ -878,6 +889,8 @@ function render() {
         return { content_id: checkbox.value, expected_level: row.querySelector("[data-expected-level]").value, assessment_hint: row.querySelector("[data-assessment-hint]").value.trim() };
       });
       const id = await saveCompetency({ id: form.dataset.competencyId || null, code: values.get("code").trim().toUpperCase(), title: values.get("title").trim(), description: values.get("description"), level: values.get("level"), mappings });
+      const domainCodes = [...form.querySelectorAll("[data-competency-domain]:checked")].map((checkbox) => checkbox.value);
+      await saveCompetencyDomains(id, domainCodes);
       location.hash = `#/administration/competences/${encodeURIComponent(id)}`;
       await refresh();
     } catch (error) {
