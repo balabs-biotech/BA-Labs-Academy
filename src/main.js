@@ -1,4 +1,4 @@
-import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, saveCompetencyDomains, saveCompetencyPrerequisites, publishCompetency, saveContentEditorial, saveContentAssets, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, saveTrainingOffering, saveTrainingSession, setTrainingStatus, recordTrainingAttendance, setTrainingEnrollmentStatus, issueTrainingDocument, revokeTrainingDocument, verifyTrainingDocument, saveTrainingPartner, saveTrainingAgreement, setTrainingReferenceStatus, saveTrainingBillingRecord, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, saveAssessmentCompetencies, publishAssessment, savePathAssessments } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, saveCompetencyDomains, saveCompetencyPrerequisites, publishCompetency, saveContentEditorial, saveContentAssets, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, enrollInTrainingSession, saveTrainingOffering, saveTrainingSession, setTrainingStatus, recordTrainingAttendance, setTrainingEnrollmentStatus, issueTrainingDocument, revokeTrainingDocument, verifyTrainingDocument, saveTrainingPartner, saveTrainingAgreement, setTrainingReferenceStatus, saveTrainingBillingRecord, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, saveAssessmentCompetencies, publishAssessment, savePathAssessments } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
@@ -341,15 +341,45 @@ function learnerDashboardView() {
 function trainingCatalogView() {
   const offerings=data.publicTrainingOfferings||[];
   const sessions=data.publicTrainingSessions||[];
+  const enrollments=data.trainingEnrollments||[];
+  const account=currentSession?.user||null;
+  const email=account?.email||"";
+  const profile=account?.user_metadata||{};
+  const suggestedName=profile.full_name||profile.name||"";
   const labels={PRIVATE_WORKSHOP:"Atelier BA Labs",PARTNER_DELIVERED:"Programme opéré avec partenaire",APPROVED_ESTABLISHMENT:"Programme via établissement partenaire"};
   const modes={IN_PERSON:"Présentiel",HYBRID:"Hybride",DISTANCE:"À distance",ALTERNATING:"Alterné"};
-  return `<section class="page-intro"><span class="eyebrow">BA LABS ACADEMY · FORMATIONS COURTES</span><h1>Formations & ateliers</h1><p>Catalogue public des offres activées et des prochaines sessions ouvertes. Les informations de lieu et d'inscription sont communiquées dans le cadre de chaque session.</p></section>
+  const statusLabels={PENDING:"Demande reçue · en attente de confirmation",CONFIRMED:"Inscription confirmée",WAITLISTED:"Liste d’attente",COMPLETED:"Participation terminée",NO_SHOW:"Absence enregistrée"};
+  const sessionMarkup=(session)=>{
+    const existing=account?enrollments.find(item=>item.session_id===session.id&&item.user_id===account.id&&item.enrollment_status!=="CANCELLED"):null;
+    const opens=session.registration_opens_at?new Date(session.registration_opens_at):null;
+    const closes=session.registration_closes_at?new Date(session.registration_closes_at):null;
+    const now=Date.now();
+    const notOpen=opens&&opens.getTime()>now;
+    const closed=closes&&closes.getTime()<now;
+    const windowNote=notOpen?`Ouverture des inscriptions : ${opens.toLocaleString("fr-FR")}`:closed?"Les inscriptions sont closes.":"";
+    const registration=existing
+      ? `<p class="training-enrollment-state" role="status">${escapeHtml(statusLabels[existing.enrollment_status]||existing.enrollment_status)}</p>`
+      : notOpen||closed
+        ? `<p class="progress-note">${escapeHtml(windowNote)}</p>`
+        : !account
+          ? '<a class="button button-outline training-enroll-login" href="#/espace">Se connecter pour s’inscrire ↗</a>'
+          : !email
+            ? '<p class="progress-note">Une adresse e-mail vérifiée est nécessaire pour l’inscription.</p>'
+            : `<form class="training-public-enroll-form" data-training-enroll="${escapeHtml(session.id)}">
+                <label>Nom et prénom<input name="participant_name" required maxlength="120" value="${escapeHtml(suggestedName)}" placeholder="Nom complet"></label>
+                <label>Profil<select name="participant_category"><option value="OTHER">Autre</option><option value="STUDENT">Étudiant</option><option value="EMPLOYEE">Salarié</option><option value="SELF_EMPLOYED">Indépendant</option><option value="JOB_SEEKER">Demandeur d’emploi</option></select></label>
+                <p class="training-account-email">Compte utilisé : ${escapeHtml(email)}</p>
+                <button class="button button-primary" type="submit">Demander mon inscription ↗</button>
+                <p class="training-enroll-feedback" role="status" aria-live="polite"></p>
+              </form>`;
+    return `<div class="training-public-session"><div><span>${new Date(session.starts_at).toLocaleString("fr-FR",{dateStyle:"medium",timeStyle:"short"})} – ${new Date(session.ends_at).toLocaleString("fr-FR",{dateStyle:"medium",timeStyle:"short"})}</span><small>${escapeHtml(modes[session.delivery_mode]||session.delivery_mode)}</small></div>${registration}</div>`;
+  };
+  return `<section class="page-intro"><span class="eyebrow">BA LABS ACADEMY · FORMATIONS COURTES</span><h1>Formations & ateliers</h1><p>Catalogue public des offres activées et des prochaines sessions ouvertes. L’inscription est réservée aux comptes apprenants connectés ; la capacité et les délais sont contrôlés par le serveur.</p></section>
   ${offerings.length?`<div class="training-public-grid">${offerings.map(o=>{
     const upcoming=sessions.filter(s=>s.offering_id===o.id);
-    return `<article class="training-public-card"><span class="eyebrow">${escapeHtml(o.specialty_code)} · ${escapeHtml(o.audience_profile==="MIXED"?"Public mixte":o.audience_profile==="PROFESSIONAL"?"Professionnels":"Tout public")}</span><h2>${escapeHtml(o.title)}</h2><p>${escapeHtml(o.description||"Présentation détaillée à venir.")}</p><div class="training-public-meta"><span>${escapeHtml(labels[o.delivery_regime]||"Formation")}</span><span>${Number(o.default_duration_days||0)} jour(s)</span></div>${upcoming.length?`<div class="training-public-sessions"><b>Sessions ouvertes</b>${upcoming.map(s=>`<div><span>${new Date(s.starts_at).toLocaleDateString("fr-FR")} – ${new Date(s.ends_at).toLocaleDateString("fr-FR")}</span><small>${escapeHtml(modes[s.delivery_mode]||s.delivery_mode)}</small></div>`).join("")}</div>`:'<p class="progress-note">Aucune session ouverte pour le moment.</p>'}</article>`;
+    return `<article class="training-public-card"><span class="eyebrow">${escapeHtml(o.specialty_code)} · ${escapeHtml(o.audience_profile==="MIXED"?"Public mixte":o.audience_profile==="PROFESSIONAL"?"Professionnels":"Tout public")}</span><h2>${escapeHtml(o.title)}</h2><p>${escapeHtml(o.description||"Présentation détaillée à venir.")}</p><div class="training-public-meta"><span>${escapeHtml(labels[o.delivery_regime]||"Formation")}</span><span>${Number(o.default_duration_days||0)} jour(s)</span></div>${upcoming.length?`<div class="training-public-sessions"><b>Sessions ouvertes</b>${upcoming.map(sessionMarkup).join("")}</div>`:'<p class="progress-note">Aucune session ouverte pour le moment.</p>'}</article>`;
   }).join("")}</div>`:emptyState("Le catalogue de formations est en préparation","Les offres seront affichées ici après leur validation et leur activation dans l’espace Academy.")}`;
 }
-
 function trainingOperationsView(membership) {
   const canEdit = ["OWNER","ADMIN","EDITOR"].includes(membership.role);
   const canManage = ["OWNER","ADMIN"].includes(membership.role);
@@ -807,6 +837,30 @@ function render() {
         );
         if (item) location.hash = `#/ressource/${encodeURIComponent(item.slug)}`;
       }
+    });
+  }
+  if (route === "formations") {
+    document.querySelectorAll("[data-training-enroll]").forEach((form)=>{
+      form.addEventListener("submit",async(event)=>{
+        event.preventDefault();
+        const button=form.querySelector('button[type="submit"]');
+        const feedback=form.querySelector(".training-enroll-feedback");
+        const values=new FormData(form);
+        const participantName=String(values.get("participant_name")||"").trim();
+        const participantCategory=String(values.get("participant_category")||"OTHER");
+        if(!currentSession?.user?.email){feedback.textContent="Reconnecte-toi avec un compte disposant d’une adresse e-mail.";return;}
+        if(!participantName){feedback.textContent="Le nom complet est obligatoire.";return;}
+        button.disabled=true;feedback.textContent="Transmission de la demande…";
+        try{
+          await enrollInTrainingSession(form.dataset.trainingEnroll,participantName,currentSession.user.email,participantCategory);
+          await refresh();
+          const enrollment=(data.trainingEnrollments||[]).find(item=>item.session_id===form.dataset.trainingEnroll&&item.user_id===currentSession?.user?.id&&item.enrollment_status!=="CANCELLED");
+          window.alert(enrollment?.enrollment_status==="WAITLISTED"?"Capacité atteinte : ta demande est enregistrée en liste d’attente.":"Ta demande d’inscription est enregistrée. Elle reste en attente de confirmation.");
+        }catch(error){
+          feedback.textContent=error.message||"Inscription impossible.";
+          button.disabled=false;
+        }
+      });
     });
   }
   if (route === "recherche") {
