@@ -131,6 +131,7 @@ export async function loadAcademyData() {
     memberData
   ]);
   const { enrollments, progress, pathItemProgress, membership, error: memberError } = memberRecords;
+  const editorialMembers = accessToken && ['OWNER','ADMIN'].includes(membership?.role) ? await callEditorialRpc('academy_list_members', {}, 'Chargement des membres impossible').catch(() => []) : [];
   const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialContent, editorialDepartmentLinks, editorialDomainLinks] = accessToken
     ? await Promise.all([
         readTable("academy_learning_paths", {
@@ -162,7 +163,7 @@ export async function loadAcademyData() {
     departments, domains, content, departmentLinks, domainLinks,
     learningPaths, editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialContent, editorialDepartmentLinks, editorialDomainLinks,
     pathItems, pathPrerequisites, competencies, contentCompetencies,
-    enrollments, progress, pathItemProgress, membership, memberError, nodes, edges
+    enrollments, progress, pathItemProgress, membership, memberError, editorialMembers, nodes, edges
   };
 }
 
@@ -310,3 +311,7 @@ export function saveContentEditorial(content) {
 export function submitContentForReview(id,note="") { return callEditorialRpc("academy_submit_content_for_review",{p_content_id:id,p_note:note},"Soumission en revue impossible"); }
 export function reviewContent(id,decision,note="") { return callEditorialRpc("academy_review_content_item",{p_content_id:id,p_decision:decision,p_note:note},"Décision de revue impossible"); }
 export function publishContent(id,visibility="PUBLIC",note="") { return callEditorialRpc("academy_publish_content_item",{p_content_id:id,p_visibility:visibility,p_note:note},"Publication de la ressource impossible"); }
+
+export function manageAcademyMembership(userId, role, status, note = "") {
+ return callEditorialRpc("academy_manage_membership", {p_user_id:userId,p_role:role,p_status:status,p_note:note}, "Modification du membre impossible");
+}
