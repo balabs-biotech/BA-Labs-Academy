@@ -59,7 +59,9 @@ create table if not exists public.academy_program_nodes (
  check(parent_node_id is null or parent_node_id<>id)
 );
 create index if not exists academy_program_nodes_parent_order_idx
- on public.academy_program_nodes(program_id,parent_node_id,sort_order);
+ on public.academy_program_nodes(program_id,parent_node_id,sort_order) where parent_node_id is not null;
+create unique index if not exists academy_program_nodes_root_order_unique
+ on public.academy_program_nodes(program_id,sort_order) where parent_node_id is null;
 
 alter table public.academy_programs enable row level security;
 alter table public.academy_program_departments enable row level security;
@@ -207,7 +209,7 @@ begin
      insert into public.academy_program_nodes(program_id,parent_node_id,code,node_type,title,summary,sort_order,is_required,estimated_minutes)
      select v_id,(select n.id from public.academy_program_nodes n where n.program_id=v_id and n.code=v_parent_code),
       v_code,upper(v_item->>'node_type'),btrim(v_item->>'title'),coalesce(v_item->>'summary',''),
-      (v_item->>'sort_order')::integer,coalesce((v_item->>'is_required')::boolean,true),nullif((v_item->>'estimated_minutes')::integer,0);
+      (v_item->>'sort_order')::integer,coalesce((v_item->>'is_required')::boolean,true),nullif(nullif(v_item->>'estimated_minutes','')::integer,0);
      v_inserted:=v_inserted+1;
     end if;
    end if;
