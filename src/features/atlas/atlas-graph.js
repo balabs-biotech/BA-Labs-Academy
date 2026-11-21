@@ -119,7 +119,13 @@ export function buildAcademyGraph(departments, domains, pathways) {
       const y = parent.y + Math.sin(angle) * bend + Math.cos(angle) * sway;
       const entityType = item.kind === "section" ? "SECTION" : item.kind === "domain" ? "DOMAIN" : "MODULE";
       const node = addNode(makeNode(item, parent, rootId, depth, x, y, angle, entityType));
-      addEdge(parent, node);
+      addEdge(parent, node, {
+        relationType: item.kind === "domain" ? "BELONGS_TO" : "CONTAINS",
+        cross: false,
+        verified: true,
+        basis: "academy-hierarchy",
+        label: item.kind === "domain" ? "Domaine du département" : item.kind === "section" ? "Section du département" : "Module de section"
+      });
       if (item.kind === "section") sectionNodes.set(item.code, node);
       if (item.kind === "domain") domainNodes.set(item.code, node);
       if (item.children?.length) {
