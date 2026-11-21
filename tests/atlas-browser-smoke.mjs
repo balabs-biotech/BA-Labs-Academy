@@ -53,7 +53,7 @@ try {
     assert.ok(surface.width > 0 && surface.height > 0, "PixiJS must create a real drawing surface");
     assert.ok(surface.rect.width >= surface.stage.width * 0.98, "Canvas must fill the Atlas stage width");
     assert.ok(surface.rect.height >= surface.stage.height * 0.98, "Canvas must fill the Atlas stage height");
-    assert.ok(surface.visibleNodes >= 18, "All department and pathway roots must be visible in the overview");
+    assert.ok(surface.visibleNodes >= 19, "All department and pathway roots must be visible in the overview");
 
     const stats = await page.locator(".atlas-topline-copy strong").innerText();
     assert.match(stats, /9 départements/);
@@ -65,7 +65,7 @@ try {
     assert.equal(accessibleCount, 330, "All 329 mapped nodes must be keyboard-accessible");
 
     const pathway = page.locator("#academy-atlas-accessible button").filter({
-      hasText: "De la souche à la production fongique"
+      hasText: "Production mycologique, du laboratoire à la fructification"
     });
     await pathway.click();
     await page.waitForFunction(
@@ -74,7 +74,7 @@ try {
     assert.match(await page.locator("#academy-atlas-selection").innerText(), /séquence et ressources à construire/);
 
     await page.locator("#academy-atlas-selection .atlas-selection-link").click();
-    await page.waitForURL("**/#/parcours/souche-a-production-fongique");
+    await page.waitForURL("**/#/parcours/production-mycologique-laboratoire-fructification");
     assert.equal(await page.locator(".page-intro h1").innerText(), "De la souche à la production fongique");
 
     await page.goto(base, { waitUntil: "domcontentloaded" });
