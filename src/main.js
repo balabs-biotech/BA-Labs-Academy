@@ -172,7 +172,7 @@ function learningPathDetail(slug) {
   const sequence = resolvePathItems(
     rawItems,
     data.pathPrerequisites.filter((relation) => relation.path_id === path.id),
-    []
+    data.progress
   );
   const contentById = new Map(data.content.map((item) => [item.id, item]));
   const competencyIds = new Set(
@@ -210,7 +210,7 @@ function learningPathDetail(slug) {
     <div class="path-sequence">${steps || emptyState("Séquence en préparation", "Les ressources seront ajoutées au parcours après validation.")}</div></section>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RÉSULTATS D’APPRENTISSAGE</span><h2>Compétences visées</h2></div></div>
     ${competencies.length ? `<div class="competency-list">${competencies.map((item) => `<div class="competency-chip"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.competency_level)}</span></div>`).join("")}</div>` : emptyState("Compétences en cours de définition", "Les compétences seront associées aux ressources du parcours.")}</section>
-    <p class="progress-note">Le suivi individuel et la sauvegarde de la progression seront activés avec l’espace apprenant et l’authentification.</p>`;
+    <p class="progress-note">${currentSession ? "Ta progression est synchronisée avec ton compte apprenant." : "Connecte-toi à l’espace apprenant pour enregistrer tes acquis et déverrouiller les étapes suivantes."}</p>`;
 }
 
 function atlasView() {
