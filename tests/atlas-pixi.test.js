@@ -422,3 +422,15 @@ test("Atlas department palette is a single shared rendering contract", () => {
   assert.ok(rendererSource.includes('import { PALETTE } from "./atlas-palette.js";'));
   assert.ok(nodesSource.includes('import { PALETTE } from "./atlas-palette.js";'));
 });
+
+
+test("Atlas label renderer owns a safe live-node set when not injected", async () => {
+  const { renderAtlasLabels } = await import("../src/features/atlas/atlas-labels.js");
+  const canvas = { dataset: {} };
+  const label = { style: {}, anchor: { set() {} }, position: { set() {} }, visible: false };
+  const pool = new Map();
+  const labels = { addChild() {} };
+  renderAtlasLabels({ canvas, labels, labelPool: pool, style: {}, createLabel: () => label, nodes: [], selected: null, scale: 1, offset: { x: 0, y: 0 }, width: 400, height: 700, alphaFor: () => 1, activeBranch: new Set(), lineage: new Set(), lang: "fr" });
+  assert.equal(canvas.dataset.visibleNodeIds, "[]");
+  assert.equal(canvas.dataset.visibleNodeHitBoxes, "{}");
+});

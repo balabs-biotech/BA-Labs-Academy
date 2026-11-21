@@ -4,7 +4,7 @@
  */
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
-export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nodes,selected,scale,offset,width,height,alphaFor,activeBranch,lineage,lang}) {
+export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nodes,selected,scale,offset,width,height,alphaFor,activeBranch,lineage,lang,live=new Set()}) {
  const shortRoots={
  fr:{bio:"BIOTECH",myco:"MYCO",soil:"TECHNOSOIL",lab:"LABO",products:"PRODUITS",iot:"IOT",work:"R&D",evidence:"PREUVES"},
  en:{bio:"BIOTECH",myco:"MYCOLOGY",soil:"TECHNOSOIL",lab:"LAB",products:"PRODUCTS",iot:"IOT",work:"PROJECTS",evidence:"EVIDENCE"},
