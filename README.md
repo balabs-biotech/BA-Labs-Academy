@@ -7,21 +7,21 @@ Frontend public de BA Labs Academy. Le site est conçu comme une application sta
 - `index.html` — point d'entrée et structure globale.
 - `src/main.js` — routes, vues et orchestration de l'interface.
 - `src/data.js` — adaptateur de lecture Supabase et résolution des libellés de l'Atlas.
-- `src/core/` — fonctions partagées du runtime.
+- `src/core/` — fonctions partagées du runtime, dont `auth.js` pour les sessions Supabase Auth.
 - `src/features/atlas/layout.js` — moteur de positionnement 2D déterministe.
 - `src/features/atlas/renderer.js` — rendu SVG, sélection, déplacement et zoom.
 - `src/features/learning/progress.js` — calcul de progression et résolution des prérequis.
 - `supabase/migrations/` — migrations versionnées du schéma Academy.
 - `src/styles.css` — système visuel responsive.
 - `scripts/build.mjs` — génération du site statique dans `dist/`.
-- `tests/` — tests unitaires du moteur Atlas.
+- `tests/` — tests unitaires du moteur Atlas, de l’authentification et de la progression.
 - `.github/workflows/deploy-pages.yml` — tests, build et déploiement.
 
 ## Données et sécurité
 
 Le frontend utilise exclusivement une clé Supabase publishable, destinée à être exposée dans le navigateur. Aucune clé `service_role` ni aucun secret serveur ne doit être ajouté au dépôt.
 
-Les parcours pédagogiques, leurs étapes, les prérequis, les compétences, les inscriptions et la progression individuelle disposent de tables dédiées. Les parcours et compétences publiés sont consultables publiquement ; les inscriptions et la progression sont limitées à l'utilisateur authentifié via `auth.uid()` et RLS. Aucun contenu n'a été créé ou publié dans ces nouvelles tables. Le suivi individuel affiché dans l'interface attend encore l'intégration de l'authentification.
+Les parcours pédagogiques, leurs étapes, les prérequis, les compétences, les inscriptions et la progression individuelle disposent de tables dédiées. Les parcours et compétences publiés sont consultables publiquement ; les inscriptions et la progression sont limitées à l'utilisateur authentifié via `auth.uid()` et RLS. Le client Auth utilise les endpoints officiels Supabase, stocke les jetons dans `sessionStorage` et renouvelle les sessions avant expiration. L'espace apprenant permet la connexion, l'inscription à un parcours publié et la validation d'une ressource. La création publique de comptes reste désactivée dans l'interface : les comptes sont provisionnés par l'administration. Aucun contenu n'a été créé ou publié dans les tables pédagogiques.
 
 Les lectures sont filtrées par les statuts de publication et les politiques PostgreSQL RLS. Les brouillons, données internes et fiches non publiées ne doivent jamais être rendus accessibles au public. Les opérations éditoriales restent réservées aux fonctions contrôlées du backend.
 
