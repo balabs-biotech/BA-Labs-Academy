@@ -394,3 +394,8 @@
  .atlas-legend{gap:10px}
 }
 @media(prefers-reduced-motion:reduce){.atlas-loading-pulse{animation:none}}
+
+/* DaisyUI primitives are restricted to Atlas controls and the floating selection card. */
+.academy-atlas .atlas-selection{padding:0}
+.academy-atlas .atlas-selection .card-body{display:block;padding:15px}
+.academy-atlas .atlas-controls .btn{font-family:inherit}
