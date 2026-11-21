@@ -1,4 +1,5 @@
 import { createPixiRenderer } from "./pixi-renderer.js";
+import { createAtlasNavigation } from "./atlas-navigation.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
