@@ -37,7 +37,7 @@ ACADEMY
                                     └── Activité pédagogique
 ```
 
-Les niveaux intermédiaires sont facultatifs. Un cursus court peut commencer par un bloc ; un cursus long peut être structuré en cycles, années et semestres.
+Les niveaux intermédiaires sont facultatifs. Un cursus court peut commencer par un bloc ; un cursus long peut être structuré en cycles, années et semestres. Des niveaux de granularité supplémentaires sont également pris en charge sous les unités : chapitre, séquence, leçon et activité pédagogique. Les racines restent des cycles ou des blocs.
 
 Types de nœuds pris en charge :
 
@@ -47,6 +47,10 @@ Types de nœuds pris en charge :
 - `BLOCK`
 - `MODULE`
 - `UNIT`
+- `CHAPTER`
+- `SEQUENCE`
+- `LESSON`
+- `ACTIVITY`
 - `CHAPTER`
 - `SEQUENCE`
 - `LESSON`
@@ -90,7 +94,7 @@ Les relations sont désormais prévues dans des tables dédiées : `academy_prog
 4. Relecture éditoriale.
 5. Publication par Owner ou Admin.
 
-Les programmes publiés ne sont pas modifiables par l’éditeur de brouillon. La stratégie de création d’une nouvelle version d’un programme publié sera traitée avant l’ouverture de la production de contenu.
+Les programmes publiés ne sont pas modifiables par l’éditeur de brouillon. Le champ `version_label` existe, mais la gestion de versions successives (fork d’un programme publié, lien entre versions, comparaison et archivage) reste à construire avant l’ouverture de la production de contenu.
 
 ## 6. Hors périmètre à ce stade
 
