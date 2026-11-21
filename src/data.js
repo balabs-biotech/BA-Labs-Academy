@@ -57,10 +57,16 @@ export async function loadAcademyData() {
         readTable("academy_member_progress", {
           select: "content_id,progress_status,progress_percent,started_at,completed_at,last_accessed_at",
           order: "last_accessed_at.desc"
+        }, accessToken),
+        readTable("academy_memberships", {
+          select: "role,membership_status"
         }, accessToken)
-      ]).then(([enrollments, progress]) => ({ enrollments, progress, error: null }))
-        .catch((error) => ({ enrollments: [], progress: [], error: error.message }))
-    : Promise.resolve({ enrollments: [], progress: [], error: null });
+      ]).then(([enrollments, progress, memberships]) => ({
+        enrollments, progress, membership: memberships[0] || null, error: null
+      })).catch((error) => ({
+        enrollments: [], progress: [], membership: null, error: error.message
+      }))
+    : Promise.resolve({ enrollments: [], progress: [], membership: null, error: null });
   const [departments, domains, content, departmentLinks, domainLinks, learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies, rawNodes, edges, memberRecords] = await Promise.all([
     readTable("departments", {
       select: "code,slug,title,summary,color_token,sort_order",
@@ -120,12 +126,12 @@ export async function loadAcademyData() {
     }),
     memberData
   ]);
-  const { enrollments, progress, error: memberError } = memberRecords;
+  const { enrollments, progress, membership, error: memberError } = memberRecords;
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
     learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies,
-    enrollments, progress, memberError, nodes, edges
+    enrollments, progress, membership, memberError, nodes, edges
   };
 }
 
