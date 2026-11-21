@@ -16,7 +16,8 @@ const escapeAtlasText = (value = "") => String(value).replace(/[&<>"']/g, (char)
 }[char]));
 
 export function renderAcademyAtlas(graph) {
-  const { departments, pathways, sections, modules } = graph.stats;
+  const { departments, domains, pathways, sections, modules } = graph.stats;
+  const domainSummary = domains ? `${domains} domaines <i>·</i> ` : "";
   const departmentRoots = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.level === 0);
   const pathwayRoots = graph.nodes.filter((node) => node.entity_type === "PATHWAY" && node.level === 0);
   const rootNavigation = (items, kind, label) => `
@@ -37,7 +38,7 @@ export function renderAcademyAtlas(graph) {
       <div class="atlas-topline">
         <div class="atlas-topline-copy">
           <span class="eyebrow">EXPLORATEUR 2D · PIXIJS / WEBGL</span>
-          <strong>${departments} départements <i>·</i> ${pathways} parcours <i>·</i> ${sections} sections <i>·</i> ${modules} modules</strong>
+          <strong>${departments} départements <i>·</i> ${domainSummary}${pathways} parcours <i>·</i> ${sections} sections <i>·</i> ${modules} modules</strong>
         </div>
         <span class="atlas-engine-state" id="atlas-engine-state">Initialisation du moteur…</span>
       </div>
@@ -64,7 +65,8 @@ export function renderAcademyAtlas(graph) {
       </div>
       <div class="atlas-legend">
         <span class="legend-department">Département</span>
-        <span class="legend-pathway">Parcours transversal</span>
+        ${domains ? '<span class="legend-domain">Domaine publié</span>' : ""}
+      <span class="legend-pathway">Parcours transversal</span>
         <span class="legend-section">Section</span>
         <span class="legend-module">Module</span>
         <span class="legend-link">Relation entre disciplines</span>
@@ -207,7 +209,7 @@ export function mountAcademyAtlas(container, graph) {
       body.append(status);
     } else if (selected.entity_type === "DOMAIN") {
       const status = document.createElement("small");
-      status.textContent = "Domaine scientifique · classification et rattachements à publier";
+      status.textContent = "Domaine publié · rattaché à son département";
       body.append(status);
     } else if (selected.entity_type === "MODULE") {
       const status = document.createElement("small");
