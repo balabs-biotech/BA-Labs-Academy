@@ -54,7 +54,7 @@ Types de nœuds pris en charge :
 
 Les racines autorisées sont `CYCLE` et `BLOCK`. Chaque nœud possède un code unique dans son programme, un parent éventuel, un ordre parmi ses frères, un indicateur obligatoire/facultatif et une durée indicative facultative.
 
-La base impose :
+Les codes des nœuds servent de clés éditoriales stables. Une sauvegarde met à jour les nœuds existants à partir de leur code et conserve leurs identifiants UUID ; cela protège les futurs liens vers compétences, ressources, évaluations et parcours. Les réordonnancements de frères sont appliqués sans collision d’index. Les nœuds supprimés ne sont retirés qu’après réconciliation de l’arborescence.\n\nLa base impose :
 - parent dans le même programme ;
 - progression vers un niveau inférieur dans la hiérarchie ;
 - absence de parent manquant ou de cycle ;
