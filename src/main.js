@@ -5,7 +5,6 @@ import { buildPathProgress, resolvePathItems } from "./features/learning/progres
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
-import { buildPathwayItems } from "./features/editorial/pathways.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
