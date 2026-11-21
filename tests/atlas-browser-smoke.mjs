@@ -62,20 +62,20 @@ try {
     assert.match(stats, /264 modules/);
 
     const accessibleCount = await page.locator("#academy-atlas-accessible button").count();
-    assert.equal(accessibleCount, 330, "All 329 mapped nodes must be keyboard-accessible");
+    assert.equal(accessibleCount, 330, "All 330 mapped nodes must be keyboard-accessible");
 
     const pathway = page.locator("#academy-atlas-accessible button").filter({
       hasText: "Production mycologique, du laboratoire à la fructification"
     });
     await pathway.click();
     await page.waitForFunction(
-      () => document.querySelector("#academy-atlas-selection")?.textContent.includes("De la souche à la production fongique")
+      () => document.querySelector("#academy-atlas-selection")?.textContent.includes("Production mycologique, du laboratoire à la fructification")
     );
     assert.match(await page.locator("#academy-atlas-selection").innerText(), /séquence et ressources à construire/);
 
     await page.locator("#academy-atlas-selection .atlas-selection-link").click();
     await page.waitForURL("**/#/parcours/production-mycologique-laboratoire-fructification");
-    assert.equal(await page.locator(".page-intro h1").innerText(), "De la souche à la production fongique");
+    assert.equal(await page.locator(".page-intro h1").innerText(), "Production mycologique, du laboratoire à la fructification");
 
     await page.goto(base, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(
