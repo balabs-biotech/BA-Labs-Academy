@@ -72,3 +72,8 @@ Les compétences peuvent être rattachées à plusieurs domaines disciplinaires,
 
 
 Les compétences peuvent aussi déclarer des prérequis. Le moteur rejette les dépendances cycliques, exige que les prérequis soient publiés avant la compétence dépendante et représente les relations `REQUIRES` dans l’Atlas. Cette progression par compétences est indépendante de l’ordre des ressources dans un parcours.
+
+
+## Supports pédagogiques versionnés
+
+Une fiche de ressource peut référencer plusieurs supports distincts : document, vidéo, audio, image, jeu de données, protocole, simulation, activité pratique, présentation ou lien externe. La table `academy_content_assets` conserve chaque version, son code stable, sa langue, son type MIME, son empreinte SHA-256 éventuelle, sa licence et son attribution. Les versions antérieures restent traçables via `previous_version_id`. Les supports héritent de la visibilité de leur ressource par RLS ; le navigateur ne peut pas écrire directement dans la table et passe par une RPC éditoriale contrôlée. Les liens externes HTTP(S) sont pris en charge dans la console. Le stockage de fichiers Supabase est prévu par le modèle, mais reste désactivé tant qu'un bucket privé et ses politiques d'accès ne sont pas configurés.
