@@ -38,13 +38,13 @@ Types de nœuds pris en charge :
 - `SEMESTER`
 - `BLOCK`
 - `MODULE`
-- `UNIT`
+- `UNIT`\n- `CHAPTER`\n- `SEQUENCE`\n- `LESSON`\n- `ACTIVITY`
 
 Les racines autorisées sont `CYCLE` et `BLOCK`. Chaque nœud possède un code unique dans son programme, un parent éventuel, un ordre parmi ses frères, un indicateur obligatoire/facultatif et une durée indicative facultative.
 
 La base impose :
 - parent dans le même programme ;
-- progression vers un niveau inférieur dans la hiérarchie ;
+- progression vers un niveau inférieur dans la hiérarchie (cycle → année → semestre → bloc → module → unité → chapitre → séquence → leçon → activité) ;
 - absence de parent manquant ou de cycle ;
 - unicité des codes et de l’ordre parmi les frères ;
 - un rattachement disciplinaire principal par programme.
