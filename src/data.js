@@ -170,6 +170,7 @@ export async function loadAcademyData() {
         readTable("content_items", { select: "id,business_id,slug,title,summary,resource_type,language_code,learning_level,editorial_status,status,visibility,updated_at", order: "updated_at.desc" }, accessToken).catch(() => []),
         readTable("content_department_links", { select: "content_id,department_code,is_primary" }, accessToken).catch(() => []),
         readTable("content_domain_links", { select: "content_id,domain_code" }, accessToken).catch(() => []),
+        readTable("academy_content_assets", { select: "id,content_id,asset_code,asset_kind,delivery_type,title,description,external_url,mime_type,file_name,file_size_bytes,checksum_sha256,language_code,license_code,attribution,asset_version,previous_version_id,sort_order,created_at", order: "created_at.desc" }, accessToken).catch(() => []),
         readTable("academy_assessments", { select: "id,code,title,description,pass_score,max_attempts,time_limit_minutes,version_label,status,visibility,published_at,updated_at", order: "updated_at.desc" }, accessToken).catch(() => []),
         readTable("academy_assessment_questions", { select: "id,assessment_id,prompt,sort_order,question_type", order: "sort_order.asc" }, accessToken).catch(() => []),
         readTable("academy_assessment_options", { select: "id,question_id,option_text,sort_order", order: "sort_order.asc" }, accessToken).catch(() => []),
@@ -178,11 +179,7 @@ export async function loadAcademyData() {
         readTable("academy_assessment_competencies", { select: "assessment_id,competency_id,expected_level,minimum_score" }, accessToken).catch(() => []),
         readTable("academy_competency_prerequisites", { select: "competency_id,prerequisite_competency_id" }, accessToken).catch(() => [])
       ])
-    : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
-  const editorialContentAssets = accessToken ? await readTable("academy_content_assets", {
-    select: "id,content_id,asset_code,asset_kind,delivery_type,title,description,external_url,mime_type,file_name,file_size_bytes,checksum_sha256,language_code,license_code,attribution,asset_version,previous_version_id,sort_order,created_at",
-    order: "created_at.desc"
-  }, accessToken).catch(() => []) : [];
+    : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
