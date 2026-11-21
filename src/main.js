@@ -1,12 +1,10 @@
-import { loadAcademyData } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
-import { enrollInPath, saveResourceProgress, savePathItemProgress } from "./data.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
-import { saveLearningPath, publishLearningPath } from "./data.js";
 import { buildPathwayItems } from "./features/editorial/pathways.js";
 
 const root = document.querySelector("#app");
