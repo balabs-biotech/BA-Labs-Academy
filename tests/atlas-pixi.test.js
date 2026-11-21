@@ -238,3 +238,13 @@ test("Atlas view delegates projection, fit, zoom and animation interpolation to 
   assert.ok(source.includes("zoomAtlasCamera("));
   assert.ok(source.includes("interpolateAtlasCamera("));
 });
+
+
+test("Atlas wheel renderer keeps pathways out of the overview and uses a restrained radial motif", async () => {
+  const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  assert.ok(source.includes('selected?.entity_type !== "PATHWAY"'));
+  assert.ok(source.includes("filaments.circle(0,0,1080)"));
+  assert.ok(source.includes("const departmentRoots = nodes.filter"));
+  assert.ok(!source.includes('field.moveTo(x,y).quadraticCurveTo'));
+  assert.ok(source.includes("Three arms echo the BA Labs Y mark"));
+});

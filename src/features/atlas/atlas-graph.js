@@ -100,27 +100,16 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
 
   const walk = (items, parent, rootId, depth, branchAngle) => {
     if (!items?.length) return;
-    const spread = parent.entity_type === "DEPARTMENT" && parent.entity_key === "MYC"
-      ? Math.PI * 1.72
-      : Math.min(2.5, 1.08 + Math.log2(items.length + 1) * 0.4);
-    const distance = depth === 1
-      ? 390 + Math.sqrt(items.length) * 22
-      : depth === 2
-        ? 285 + Math.sqrt(items.length) * 26
-        : Math.max(58, 92 - depth * 4);
+    const isMycologyCore = parent.entity_type === "DEPARTMENT" && parent.entity_key === "MYC";
+    const isDepartmentRoot = parent.entity_type === "DEPARTMENT";
+    // Mycology occupies the central hub; each outer department owns a narrow radial petal.
+    const spread = isMycologyCore ? Math.PI * 2 : isDepartmentRoot ? 0.82 : 1.15;
+    const distance = depth === 1 ? 390 : depth === 2 ? 260 : Math.max(58, 92 - depth * 4);
     items.forEach((item, index) => {
-      const seed = hash(item.id);
       const fraction = items.length === 1 ? 0 : index / (items.length - 1) - 0.5;
-      const jitter = ((seed % 1000) / 1000 - 0.5) * 0.3;
-      const fieldX = Math.sin(parent.x * 0.0021 + parent.y * 0.0013 + depth * 0.73);
-      const fieldY = Math.cos(parent.y * 0.0018 - parent.x * 0.0011 - depth * 0.51);
-      const curl = Math.atan2(fieldY, fieldX) * 0.22;
-      const angle = branchAngle + curl + fraction * spread + jitter;
-      const bend = distance * (0.72 + ((seed >>> 8) % 56) / 100);
-      const lateral = ((seed >>> 17) & 255) / 255 - 0.5;
-      const sway = depth > 1 ? lateral * Math.min(22, distance * 0.16) : 0;
-      const x = parent.x + Math.cos(angle) * bend - Math.sin(angle) * sway;
-      const y = parent.y + Math.sin(angle) * bend + Math.cos(angle) * sway;
+      const angle = branchAngle + fraction * spread;
+      const x = parent.x + Math.cos(angle) * distance;
+      const y = parent.y + Math.sin(angle) * distance;
       const entityType = item.kind === "section" ? "SECTION" : item.kind === "domain" ? "DOMAIN" : "MODULE";
       const node = addNode(makeNode(item, parent, rootId, depth, x, y, angle, entityType));
       addEdge(parent, node, {
@@ -151,16 +140,14 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     } else if (item.kind === "department") {
       const orbitIndex = satelliteDepartments.findIndex((department) => department.code === item.code);
       angle = -Math.PI / 2 + orbitIndex * (Math.PI * 2 / satelliteDepartments.length);
-      radius = 1540;
+      radius = 1850;
     } else {
       const orbitIndex = pathwayItems.findIndex((pathway) => pathway.code === item.code);
       angle = -Math.PI / 2 + (orbitIndex + 0.5) * (Math.PI * 2 / pathwayItems.length);
-      radius = 2520;
+      radius = 2600;
     }
-    const jitter = item.kind === "department" && item.code === "MYC" ? 0 : (((seed >>> 8) & 255) / 255 - 0.5) * 16;
-    const x = item.kind === "department" && item.code === "MYC" ? 0 : Math.cos(angle) * (radius + jitter);
-    const y = item.kind === "department" && item.code === "MYC" ? 0 : Math.sin(angle) * (radius + jitter);
-    if (item.kind !== "department" || item.code !== "MYC") angle += (((seed >>> 16) & 255) / 255 - 0.5) * 0.08;
+    const x = item.kind === "department" && item.code === "MYC" ? 0 : Math.cos(angle) * radius;
+    const y = item.kind === "department" && item.code === "MYC" ? 0 : Math.sin(angle) * radius;
     const rootId = item.kind === "pathway" ? "pathways" : item.code.toLowerCase();
     const shortTitle = item.kind === "pathway"
       ? (PATHWAY_LABELS[item.code] || item.title)
@@ -184,7 +171,7 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     ));
     if (item.kind === "department" && item.code === "MYC") {
       root.isAcademyCore = true;
-      root.r = 27;
+      root.r = 42;
       root.data.isAcademyCore = true;
     }
 

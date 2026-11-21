@@ -139,7 +139,7 @@ export function mountAcademyAtlas(container, graph) {
   };
 
   const fitOverview = () => {
-    const camera = fitAtlasCamera(nodes.filter((node) => node.level === 0), width, height);
+    const camera = fitAtlasCamera(nodes.filter((node) => node.level === 0 && node.entity_type === "DEPARTMENT"), width, height);
     if (!camera) return;
     targetScale = camera.scale;
     targetOffset = camera.offset;

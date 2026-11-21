@@ -58,8 +58,8 @@ test("Other departments and pathways occupy separate orbital bands", () => {
   const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
   const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
   const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
-  assert.ok(meanDepartmentRadius > 1450 && meanDepartmentRadius < 1650);
-  assert.ok(meanPathwayRadius > 2400 && meanPathwayRadius < 2650);
+  assert.ok(meanDepartmentRadius > 1800 && meanDepartmentRadius < 1900);
+  assert.ok(meanPathwayRadius > 2500 && meanPathwayRadius < 2700);
 });
 
 
@@ -116,4 +116,28 @@ test("Unknown relation types and unresolved endpoints are excluded from the grap
     { source: "module:MYC-01:01", target: "module:DOES-NOT-EXIST:01", type: "PREREQUISITE", status: "verified" }
   ]);
   assert.equal(linked.edges.filter((edge) => edge.basis === "academy-knowledge-relation").length, 0);
+});
+
+
+test("The overview geometry follows an eight-spoke wheel around the Mycology hub", () => {
+  const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
+  assert.equal(departments.length, 8);
+  const radii = departments.map((node) => Math.hypot(node.x, node.y));
+  assert.ok(radii.every((radius) => Math.abs(radius - 1850) < 1e-8));
+  const angles = departments.map((node) => (Math.atan2(node.y, node.x) + Math.PI * 2) % (Math.PI * 2)).sort((a, b) => a - b);
+  const gaps = angles.map((angle, index) => ((angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2)));
+  assert.ok(gaps.every((gap) => Math.abs(gap - Math.PI / 4) < 1e-8));
+});
+
+test("Department sections occupy narrow radial petals instead of overlapping fans", () => {
+  for (const department of catalogueMap.filter((item) => item.code !== "MYC")) {
+    const root = graph.nodes.find((node) => node.entity_type === "DEPARTMENT" && node.entity_key === department.code);
+    const sections = graph.nodes.filter((node) => node.parent === root.id && node.entity_type === "SECTION");
+    const rootAngle = Math.atan2(root.y, root.x);
+    for (const section of sections) {
+      const angle = Math.atan2(section.y - root.y, section.x - root.x);
+      const delta = Math.atan2(Math.sin(angle - rootAngle), Math.cos(angle - rootAngle));
+      assert.ok(Math.abs(delta) <= 0.42 + 1e-8, `${department.code} section escaped its radial petal`);
+    }
+  }
 });
