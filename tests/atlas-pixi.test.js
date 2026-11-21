@@ -14,9 +14,9 @@ test("Atlas includes every mapped department and practical pathway", () => {
 });
 
 test("Atlas exposes the full thematic map progressively", () => {
-  assert.equal(graph.stats.domains, catalogueTotals.sections);
+  assert.equal(graph.stats.sections, catalogueTotals.sections);
   assert.equal(graph.stats.modules, catalogueTotals.modules);
-  assert.equal(graph.nodes.filter((node) => node.entity_type === "DOMAIN").length, catalogueTotals.sections);
+  assert.equal(graph.nodes.filter((node) => node.entity_type === "SECTION").length, catalogueTotals.sections);
   assert.equal(graph.nodes.filter((node) => node.entity_type === "MODULE").length, catalogueTotals.modules);
 });
 
@@ -26,7 +26,7 @@ test("every pathway has valid department and domain references", () => {
   for (const pathway of cataloguePathways) {
     assert.ok(departmentCodes.has(pathway.departmentCode), pathway.code + " primary department");
     assert.ok(pathway.departmentCodes.every((code) => departmentCodes.has(code)), pathway.code + " linked departments");
-    assert.ok(pathway.domainCodes.every((code) => domainCodes.has(code)), pathway.code + " linked domains");
+    assert.ok(pathway.sectionCodes.every((code) => domainCodes.has(code)), pathway.code + " linked domains");
   }
 });
 
