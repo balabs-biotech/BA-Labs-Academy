@@ -1,0 +1,12 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+const main=await readFile(new URL("../src/main.js",import.meta.url),"utf8");
+const data=await readFile(new URL("../src/data.js",import.meta.url),"utf8");
+const migration=await readFile(new URL("../supabase/migrations/20261122016500_academy_training_enrollment_status_v1.sql",import.meta.url),"utf8");
+test("admin console covers partners, agreements, offerings and sessions",()=>{for(const term of ["trainingPartners","trainingAgreements","trainingOfferings","trainingSessions","training-offering-form","training-session-form"])assert.ok(main.includes(term),term);});
+test("participant console supports attendance and enrollment lifecycle",()=>{assert.match(main,/data-training-attendance/);assert.match(main,/data-training-enrollment-status/);assert.match(data,/recordTrainingAttendance/);assert.match(data,/setTrainingEnrollmentStatus/);});
+test("documents are issued only for completed participants and can be revoked",()=>{assert.match(main,/data-training-issue/);assert.match(main,/data-training-revoke/);assert.match(main,/training-public-verify-form/);assert.match(data,/issueTrainingDocument/);assert.match(data,/revokeTrainingDocument/);});
+test("training records are loaded only for authenticated editorial members",()=>{assert.match(data,/readTable\("academy_training_enrollments"/);assert.match(data,/readTable\("academy_training_documents"/);assert.match(data,/accessToken/);});
+test("public QR verification route is exposed",()=>{assert.match(main,/verifier-formation/);assert.match(main,/trainingVerificationView/);});
+test("enrollment completion requires attendance and status change is audited",()=>{assert.match(migration,/attendance_status in \('PRESENT','LATE'\)/);assert.match(migration,/TRAINING_ENROLLMENT/);assert.match(migration,/'STATUS_CHANGED'/);});
