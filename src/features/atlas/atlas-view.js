@@ -169,7 +169,7 @@ export function mountAcademyAtlas(container, graph) {
     } else if (selected.entity_type === "MODULE") {
       const status = document.createElement("small");
       status.textContent = "Module prévu · fiche pédagogique non rédigée";
-      selection.append(status);
+      body.append(status);
     } else if (selected.entity_type === "DEPARTMENT" || selected.entity_type === "DOMAIN") {
       const status = document.createElement("small");
       status.textContent = "Référentiel cartographié · publication éditoriale distincte";
