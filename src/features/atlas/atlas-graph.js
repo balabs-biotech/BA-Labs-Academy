@@ -8,9 +8,7 @@ const hash = (value) => {
   return result >>> 0;
 };
 
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-
-// Organic field: nine disciplinary departments, ten pathways and their linked sections/modules.
+// Radial Academy graph: disciplinary hierarchy, declared pathways and verified knowledge relations.
 const DEPARTMENT_LABELS = {
   MIC: "Microbiologie",
   MYC: "MYCOLOGIE",
@@ -275,52 +273,6 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     edge.evidence = String(relation.evidence).trim();
   }
 
-  // Local anastomoses connect nearby branches without imposing a grid.
-  const groups = new Map();
-  nodes.filter((node) => node.level > 0).forEach((node) => {
-    const key = node.rootId + ":" + node.level;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(node);
-  });
-  let localAnastomoses = 0;
-  groups.forEach((group) => {
-    if (group.length < 4) return;
-    const candidates = [];
-    const nearestDistances = [];
-    group.forEach((a, index) => {
-      const nearby = group
-        .filter((b, otherIndex) => otherIndex !== index)
-        .map((b) => ({ a, b, distance: Math.hypot(a.x - b.x, a.y - b.y) }))
-        .sort((left, right) => left.distance - right.distance)
-        .slice(0, 3);
-      if (nearby.length) nearestDistances.push(nearby[0].distance);
-      nearby.forEach((pair) => candidates.push(pair));
-    });
-    nearestDistances.sort((a, b) => a - b);
-    const median = nearestDistances[Math.floor(nearestDistances.length / 2)] || 60;
-    const maxDistance = clamp(median * 2.8, 48, 175);
-    candidates.sort((a, b) => a.distance - b.distance);
-    const degree = new Map();
-    const existing = new Set(edges.map((edge) => [edge.a.id, edge.b.id].sort().join("|")));
-    for (const pair of candidates) {
-      if (pair.distance > maxDistance) break;
-      if ((degree.get(pair.a.id) || 0) >= 1 || (degree.get(pair.b.id) || 0) >= 1) continue;
-      const key = [pair.a.id, pair.b.id].sort().join("|");
-      if (existing.has(key)) continue;
-      addEdge(pair.a, pair.b, {
-        id: "anastomosis:" + key,
-        relationType: "RELATED_TO",
-        cross: true,
-        verified: false,
-        basis: "local-anastomosis"
-      });
-      existing.add(key);
-      degree.set(pair.a.id, 1);
-      degree.set(pair.b.id, 1);
-      localAnastomoses += 1;
-    }
-  });
-
   return {
     nodes,
     edges,
@@ -329,8 +281,7 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
       domains: domainNodes.size,
       pathways: pathways.length,
       sections: sectionNodes.size,
-      modules: nodes.filter((node) => node.entity_type === "MODULE").length,
-      anastomoses: localAnastomoses
+      modules: nodes.filter((node) => node.entity_type === "MODULE").length
     },
     byId,
     departmentNodes,

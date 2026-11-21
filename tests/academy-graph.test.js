@@ -151,3 +151,36 @@ test("Mycology sections form a complete inner ring without a duplicate end point
   const gaps = angles.map((angle, index) => ((angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2)));
   assert.ok(gaps.every((gap) => Math.abs(gap - Math.PI / 3) < 1e-8));
 });
+
+
+test("Graph edges never infer scientific relations from spatial proximity", () => {
+  const synthetic = graph.edges.filter((edge) =>
+    edge.basis === "local-anastomosis" || edge.relation_type === "RELATED_TO"
+  );
+  assert.equal(synthetic.length, 0);
+  const allowedBases = new Set([
+    "hierarchy",
+    "academy-pathway",
+    "academy-domain",
+    "academy-pathway-flow",
+    "academy-knowledge-relation"
+  ]);
+  assert.ok(graph.edges.every((edge) => allowedBases.has(edge.basis)));
+});
+
+test("Cross-module relations exist only when explicitly verified and evidenced", () => {
+  const crossModule = graph.edges.filter((edge) =>
+    edge.a.entity_type === "MODULE" && edge.b.entity_type === "MODULE"
+  );
+  assert.equal(crossModule.length, 0);
+  const explicit = buildAcademyGraph(catalogueMap, [], cataloguePathways, [{
+    source: "module:MYC-01:01",
+    target: "module:MIC-03:01",
+    type: "METHOD_TRANSFER",
+    evidence: "Validated editorial relation",
+    status: "verified"
+  }]);
+  const verified = explicit.edges.filter((edge) => edge.basis === "academy-knowledge-relation");
+  assert.equal(verified.length, 1);
+  assert.ok(verified[0].evidence);
+});
