@@ -5,6 +5,7 @@ import { buildPathProgress, resolvePathItems } from "./features/learning/progres
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { enrollInPath, saveResourceProgress, savePathItemProgress } from "./data.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
+import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
@@ -77,6 +78,23 @@ function departmentDetail(slug) {
 
 function resourceCards(items) {
   return items.map((item) => `<a class="resource-row resource-link" href="#/ressource/${encodeURIComponent(item.slug)}"><div><span class="eyebrow">${escapeHtml((item.resource_type || "RESSOURCE").toUpperCase())} · ${escapeHtml((item.language_code || "fr").toUpperCase())}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.summary)}</p></div><span class="resource-level">${escapeHtml(item.learning_level || "Tous niveaux")} <b>↗</b></span></a>`).join("");
+}
+
+function searchResultsView(query) {
+  const results = searchAcademy(query, data);
+  const cards = results.map((item) => `<a class="search-result" href="${item.href}">
+    <span class="eyebrow">${escapeHtml(searchTypeLabel(item.type))}</span>
+    <h3>${escapeHtml(item.title)}</h3>
+    <p>${escapeHtml(item.summary || "Fiche académique publiée.")}</p>
+    <span class="search-result-link">Ouvrir la fiche ↗</span>
+  </a>`).join("");
+  return `<section class="page-intro"><span class="eyebrow">EXPLORATION TRANSVERSALE</span><h1>Recherche</h1><p>Explorer les départements, domaines, ressources, parcours et compétences publiés.</p></section>
+    <form class="academy-search-form" id="academy-search-form">
+      <label for="academy-search-input">Recherche dans l’Academy</label>
+      <div><input id="academy-search-input" name="q" type="search" value="${escapeHtml(query)}" placeholder="Ex. mycologie, culture, microbiologie…" autocomplete="off"><button class="button button-primary" type="submit">Rechercher ↗</button></div>
+      <span class="search-count">${query ? `${results.length} résultat(s)` : "Saisis un terme pour lancer la recherche."}</span>
+    </form>
+    <section class="search-results" id="academy-search-results">${query ? cards || emptyState("Aucun résultat", "Essaie un autre terme ou une formulation plus courte.") : emptyState("Recherche multi-domaines", "Les résultats couvrent les cinq types de fiches publiques de l’Academy.")}</section>`;
 }
 
 function catalogueView() {
@@ -332,6 +350,7 @@ function updateNavigation(route) {
     const active = (route === "" && target === "home") ||
       (["departements", "domaines"].includes(route) && target === "departements") ||
       (["catalogue", "ressource"].includes(route) && target === "catalogue") ||
+      (route === "recherche" && target === "recherche") ||
       (route === "atlas" && target === "atlas") ||
       (route === "parcours" && target === "parcours") ||
       (route === "espace" && target === "espace");
@@ -361,6 +380,7 @@ function render() {
     "departements": () => slug ? departmentDetail(slug) : departmentsView(),
     "domaines": () => domainDetail(slug),
     "catalogue": catalogueView,
+    "recherche": () => searchResultsView(new URLSearchParams(query).get("q") || ""),
     "ressource": () => resourceDetail(slug, pathItemId),
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "espace": learnerView,
@@ -395,6 +415,13 @@ function render() {
         );
         if (item) location.hash = `#/ressource/${encodeURIComponent(item.slug)}`;
       }
+    });
+  }
+  if (route === "recherche") {
+    document.querySelector("#academy-search-form")?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const value = new FormData(event.currentTarget).get("q")?.toString().trim() || "";
+      location.hash = `#/recherche/?q=${encodeURIComponent(value)}`;
     });
   }
   if (route === "catalogue") {
