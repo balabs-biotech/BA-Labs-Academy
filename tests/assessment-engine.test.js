@@ -5,12 +5,13 @@ const engine=await readFile(new URL("../supabase/migrations/20261121223000_acade
 const hardening=await readFile(new URL("../supabase/migrations/20261121230000_academy_assessment_rpc_hardening_v1.sql",import.meta.url),"utf8");
 const linkHardening=await readFile(new URL("../supabase/migrations/20261121233000_academy_path_assessment_link_validation_v1.sql",import.meta.url),"utf8");
 const answerKeyPolicy=await readFile(new URL("../supabase/migrations/20261121231500_academy_assessment_editor_answer_key_access_v1.sql",import.meta.url),"utf8");
+const auditMigration=await readFile(new URL("../supabase/migrations/20261121234500_academy_audit_vocabulary_and_certificate_events_v1.sql",import.meta.url),"utf8");
 const main=await readFile(new URL("../src/main.js",import.meta.url),"utf8");
 const data=await readFile(new URL("../src/data.js",import.meta.url),"utf8");
 test("assessment answer keys are hidden from learners and visible only to editorial members",()=>{
  assert.match(engine,/revoke all on public\.academy_assessment_answer_keys from public,anon,authenticated/i);
  assert.match(answerKeyPolicy,/academy_is_editorial_member/);
- assert.match(answerKeyPolicy,/grant select on public\.academy_assessment_answer_keys to authenticated/);
+ assert.match(answerKeyPolicy,/grant select on public\.academy_assessment_answer_keys to authenticated/);\n assert.match(auditMigration,/MEMBER_CREATED/);\n assert.match(auditMigration,/ASSESSMENT_PUBLISHED/);\n assert.match(auditMigration,/CERTIFICATE_ISSUED/);
 });
 test("assessment attempts are server-graded and versioned",()=>{
  assert.match(engine,/assessment_version/);
