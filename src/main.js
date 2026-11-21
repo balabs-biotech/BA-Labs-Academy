@@ -779,7 +779,7 @@ function programmeEditorView(programId="nouveau") {
  '<div class="programme-check-grid programme-domain-grid">'+domains.map(x=>'<label data-program-domain-row data-department-code="'+escapeHtml(x.department_code)+'"><input type="checkbox" data-program-domain value="'+escapeHtml(x.code)+'" '+(domainLinks.some(y=>y.domain_code===x.code)?'checked':'')+'><span><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.department_code)+' · '+escapeHtml(x.code)+'</small></span></label>').join('')+'</div></section>'+
  '<section class="programme-editor-section"><div class="section-heading"><div><span class="eyebrow">03 · HIÉRARCHIE PÉDAGOGIQUE</span><h2>Arborescence du cursus</h2></div><button type="button" id="add-programme-node" class="button button-outline">Ajouter un niveau +</button></div>'+
  '<p>Imbrication possible : cycle → année → semestre → bloc → module → unité. Les racines sont des cycles ou des blocs. Aucun contenu de cours n’est stocké ici.</p>'+
- '<div id="programme-node-list">'+(nodes.map((x,i)=>programmeNodeRowMarkup(x,i,nodes)).join('')||programmeNodeRowMarkup({node_type:"CYCLE",sort_order:1,is_required:true},0,[]))+'</div></section>'+
+ '<div id="programme-node-list">'+(nodes.map((x,i)=>programmeNodeRowMarkup(x,i,nodes)).join('')||programmeNodeRowMarkup({node_type:"CYCLE",sort_order:1,is_required:true},0,[]))+'</div><div class="programme-hierarchy-preview" id="programme-hierarchy-preview"><span class="eyebrow">APERÇU DE L’ARBORESCENCE</span></div></section>'+
  '<div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour</a><button class="button button-primary" type="submit">Enregistrer la structure ↗</button></div><p id="programme-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p></form>'+
  (!isNew&&canPublish?'<section class="section-block"><p>La publication ouvre le programme au catalogue public après validation de ses rattachements et de sa hiérarchie.</p><button type="button" id="publish-programme" data-program-id="'+escapeHtml(program.id)+'" class="button button-outline">Publier le programme ↗</button></section>':'');
 }
@@ -1218,6 +1218,20 @@ function render() {
   const programmeForm=document.querySelector("#programme-editor-form");
   if(programmeForm){
     const nodeList=programmeForm.querySelector("#programme-node-list");
+    const refreshHierarchyPreview=()=>{
+      const rows=[...nodeList.querySelectorAll("[data-program-node-row]")];
+      const nodes=rows.map(row=>({code:row.querySelector("[data-program-node-code]").value.trim().toUpperCase(),node_type:row.querySelector("[data-program-node-type]").value,title:row.querySelector("[data-program-node-title]").value.trim(),parent_code:row.querySelector("[data-program-node-parent]").value,sort_order:Number(row.querySelector("[data-program-node-order]").value)||9999})).filter(node=>node.code);
+      const preview=programmeForm.querySelector("#programme-hierarchy-preview");
+      const children=new Map();
+      nodes.forEach(node=>{const key=node.parent_code||"";if(!children.has(key))children.set(key,[]);children.get(key).push(node);});
+      const render=(parent,depth,seen=new Set())=>(children.get(parent)||[]).sort((a,b)=>a.sort_order-b.sort_order).map(node=>{
+        if(seen.has(node.code))return "";
+        const next=new Set(seen);next.add(node.code);
+        return '<div class="programme-preview-node" style="--tree-depth:'+depth+'"><span>'+escapeHtml(node.node_type)+'</span><b>'+escapeHtml(node.title||"Intitulé à définir")+'</b><small>'+escapeHtml(node.code)+'</small></div>'+render(node.code,depth+1,next);
+      }).join("");
+      const html=render("",0);
+      preview.innerHTML='<span class="eyebrow">APERÇU DE L’ARBORESCENCE</span>'+(html||'<p class="muted">Ajoute des niveaux pour visualiser la structure.</p>');
+    };
     const refreshParentOptions=()=>{
       const rows=[...nodeList.querySelectorAll("[data-program-node-row]")];
       const rank={CYCLE:1,YEAR:2,SEMESTER:3,BLOCK:4,MODULE:5,UNIT:6};
@@ -1230,11 +1244,11 @@ function render() {
         if([...select.options].some(option=>option.value===current))select.value=current;
       });
     };
-    nodeList.addEventListener("input",refreshParentOptions);
-    nodeList.addEventListener("change",refreshParentOptions);
+    nodeList.addEventListener("input",()=>{refreshParentOptions();refreshHierarchyPreview();});
+    nodeList.addEventListener("change",()=>{refreshParentOptions();refreshHierarchyPreview();});
     nodeList.addEventListener("click",event=>{
       const remove=event.target.closest("[data-program-node-remove]");
-      if(remove){remove.closest("[data-program-node-row]").remove();refreshParentOptions();}
+      if(remove){remove.closest("[data-program-node-row]").remove();refreshParentOptions();refreshHierarchyPreview();}
     });
     programmeForm.querySelector("#add-programme-node")?.addEventListener("click",()=>{
       const count=nodeList.querySelectorAll("[data-program-node-row]").length;
