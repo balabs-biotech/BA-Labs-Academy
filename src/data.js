@@ -60,13 +60,17 @@ export async function loadAcademyData() {
         }, accessToken),
         readTable("academy_memberships", {
           select: "role,membership_status"
+        }, accessToken),
+        readTable("academy_path_item_progress", {
+          select: "path_item_id,progress_status,progress_percent,started_at,completed_at,last_accessed_at",
+          order: "last_accessed_at.desc"
         }, accessToken)
-      ]).then(([enrollments, progress, memberships]) => ({
-        enrollments, progress, membership: memberships[0] || null, error: null
+      ]).then(([enrollments, progress, memberships, pathItemProgress]) => ({
+        enrollments, progress, pathItemProgress, membership: memberships[0] || null, error: null
       })).catch((error) => ({
-        enrollments: [], progress: [], membership: null, error: error.message
+        enrollments: [], progress: [], pathItemProgress: [], membership: null, error: error.message
       }))
-    : Promise.resolve({ enrollments: [], progress: [], membership: null, error: null });
+    : Promise.resolve({ enrollments: [], progress: [], pathItemProgress: [], membership: null, error: null });
   const [departments, domains, content, departmentLinks, domainLinks, learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies, rawNodes, edges, memberRecords] = await Promise.all([
     readTable("departments", {
       select: "code,slug,title,summary,color_token,sort_order",
@@ -126,12 +130,12 @@ export async function loadAcademyData() {
     }),
     memberData
   ]);
-  const { enrollments, progress, membership, error: memberError } = memberRecords;
+  const { enrollments, progress, pathItemProgress, membership, error: memberError } = memberRecords;
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
     learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies,
-    enrollments, progress, membership, memberError, nodes, edges
+    enrollments, progress, pathItemProgress, membership, memberError, nodes, edges
   };
 }
 
@@ -180,4 +184,26 @@ export async function saveResourceProgress(contentId, completed = true) {
     completed_at: completed ? now : null,
     last_accessed_at: now
   }, "user_id,content_id");
+}
+
+export async function savePathItemProgress(pathItemId, completed = true) {
+  const accessToken = await getAccessToken();
+  if (!accessToken) throw new Error("Connecte-toi pour enregistrer ta progression.");
+  const response = await fetch(`${API}/rpc/academy_record_path_item_progress`, {
+    method: "POST",
+    headers: {
+      ...headers,
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      p_path_item_id: pathItemId,
+      p_completed: completed
+    })
+  });
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new Error(`Validation de l’étape impossible (HTTP ${response.status})${detail ? `: ${detail.slice(0, 180)}` : ""}`);
+  }
+  return response.json();
 }
