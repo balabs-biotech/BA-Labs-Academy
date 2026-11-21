@@ -72,7 +72,6 @@ export function buildAcademyGraph(departments, domains, pathways) {
   const sectionNodes = new Map();
   const rootItems = [
     ...departments.map((department) => ({ ...department, kind: "department" })),
-    ...domains.map((axis) => ({ ...axis, kind: "domain" })),
     ...pathways.map((pathway) => ({ ...pathway, kind: "pathway" }))
   ];
 
@@ -118,10 +117,11 @@ export function buildAcademyGraph(departments, domains, pathways) {
       const sway = depth > 1 ? lateral * Math.min(22, distance * 0.16) : 0;
       const x = parent.x + Math.cos(angle) * bend - Math.sin(angle) * sway;
       const y = parent.y + Math.sin(angle) * bend + Math.cos(angle) * sway;
-      const entityType = item.kind === "section" ? "SECTION" : "MODULE";
+      const entityType = item.kind === "section" ? "SECTION" : item.kind === "domain" ? "DOMAIN" : "MODULE";
       const node = addNode(makeNode(item, parent, rootId, depth, x, y, angle, entityType));
       addEdge(parent, node);
       if (item.kind === "section") sectionNodes.set(item.code, node);
+      if (item.kind === "domain") domainNodes.set(item.code, node);
       if (item.children?.length) {
         const nextDrift = Math.sin((node.x + node.y) * 0.0017 + seed * 0.000001) * 0.16;
         walk(item.children, node, rootId, depth + 1, angle + fraction * 0.22 + jitter * 0.45 + nextDrift);
@@ -169,7 +169,14 @@ export function buildAcademyGraph(departments, domains, pathways) {
     }
 
     if (item.kind === "department" || item.kind === "domain") {
-      const children = (item.sections || []).map((section) => ({
+      const domainChildren = domains.filter((domain) => domain.department_code === item.code).map((domain) => ({
+        ...domain,
+        id: "domain:" + domain.code,
+        kind: "domain",
+        route: "#/domaines/" + domain.slug,
+        children: []
+      }));
+      const sectionChildren = (item.sections || []).map((section) => ({
         ...section,
         route: "#/sections/" + section.code.toLowerCase(),
         id: "section:" + section.code,
@@ -182,7 +189,7 @@ export function buildAcademyGraph(departments, domains, pathways) {
           kind: "module"
         }))
       }));
-      walk(children, root, rootId, 1, angle);
+      walk([...domainChildren, ...sectionChildren], root, rootId, 1, angle);
     }
   });
 
