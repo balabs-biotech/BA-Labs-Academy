@@ -620,3 +620,24 @@
   .academy-atlas .atlas-stage{min-height:560px;height:72vh}
   .academy-atlas .atlas-stage:before{inset:16% 4%;}
 }
+
+
+/* Distinct orbital identities for the nine disciplinary constellations */
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:MIC"]{--orbit-color:#80aeb8;--orbit-wash:rgba(128,174,184,.12)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:MYC"]{--orbit-color:#c88773;--orbit-wash:rgba(200,135,115,.14)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:BIO"]{--orbit-color:#79a991;--orbit-wash:rgba(121,169,145,.12)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:AGR"]{--orbit-color:#c19b73;--orbit-wash:rgba(193,155,115,.12)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:BPR"]{--orbit-color:#d4a36f;--orbit-wash:rgba(212,163,111,.12)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:BMT"]{--orbit-color:#b18a83;--orbit-wash:rgba(177,138,131,.12)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:PHY"]{--orbit-color:#b5b58d;--orbit-wash:rgba(181,181,141,.12)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:INF"]{--orbit-color:#8da8b5;--orbit-wash:rgba(141,168,181,.12)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:GEN"]{--orbit-color:#7eaaa3;--orbit-wash:rgba(126,170,163,.12)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip{border-color:color-mix(in srgb,var(--orbit-color) 24%,transparent)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip small{color:var(--orbit-color)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip:hover,
+.academy-atlas .atlas-root-group--departments .atlas-root-chip.is-active{border-color:var(--orbit-color);background:var(--orbit-wash);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--orbit-color) 16%,transparent)}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:MYC"]{background:linear-gradient(110deg,rgba(200,135,115,.14),rgba(117,200,189,.09))}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:MYC"] small{background:linear-gradient(90deg,#e2a17c,#80c9be);background-clip:text;color:transparent}
+@supports not (color:color-mix(in srgb,white,black)){
+ .academy-atlas .atlas-root-group--departments .atlas-root-chip{border-color:#52665b}
+}
