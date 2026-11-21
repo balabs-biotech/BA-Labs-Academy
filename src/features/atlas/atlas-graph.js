@@ -143,8 +143,8 @@ export function buildAcademyGraph(departments, axes, pathways) {
     const shortTitle = item.kind === "pathway"
       ? (PATHWAY_LABELS[item.code] || item.title)
       : item.kind === "axis"
-        ? item.code
-        : item.code;
+        ? (AXIS_LABELS[item.code] || item.title)
+        : (DEPARTMENT_LABELS[item.code] || item.title);
     const entityType = item.kind === "pathway"
       ? "PATHWAY"
       : item.kind === "axis"
@@ -214,6 +214,17 @@ export function buildAcademyGraph(departments, axes, pathways) {
         verified: true,
         basis: "academy-axis",
         label: "Axe transversal mobilisé"
+      });
+    }
+    for (const sectionCode of pathway.sectionCodes || []) {
+      const target = sectionNodes.get(sectionCode);
+      if (target) addEdge(source, target, {
+        id: "pathway-section:" + pathway.code + ":" + sectionCode,
+        relationType: "USES_SECTION",
+        cross: true,
+        verified: true,
+        basis: "academy-pathway",
+        label: "Section mobilisée"
       });
     }
   });
