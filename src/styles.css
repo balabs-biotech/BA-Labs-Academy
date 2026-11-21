@@ -183,3 +183,10 @@
 .assessment-competency-row select,.assessment-competency-row input[type="number"]{width:100%;min-width:0;padding:8px;border:1px solid var(--line);background:#111a16;color:var(--text);font:inherit;font-size:10px}
 .assessment-competency-row input:disabled,.assessment-competency-row select:disabled{opacity:.35}
 @media(max-width:680px){.competency-domain-grid{grid-template-columns:1fr}.assessment-competency-row{grid-template-columns:1fr 1fr}.assessment-competency-row>label:first-child{grid-column:1/-1}}
+
+.competency-prerequisite-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.competency-prerequisite-list>label{display:flex;align-items:flex-start;gap:9px;padding:11px;border:1px solid var(--line);background:var(--surface);font-size:11px}
+.competency-prerequisite-list input{accent-color:var(--accent);margin-top:2px}
+.competency-prerequisite-list span{display:grid;gap:3px}
+.competency-prerequisite-list small{color:var(--muted);font-size:9px}
+@media(max-width:680px){.competency-prerequisite-list{grid-template-columns:1fr}}
