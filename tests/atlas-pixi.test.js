@@ -104,3 +104,18 @@ test("each pathway connects to every declared section", () => {
     }
   }
 });
+
+test("each pathway is connected to every declared transversal domain", () => {
+  for (const pathway of cataloguePathways) {
+    for (const domainCode of pathway.domainCodes) {
+      assert.ok(
+        graph.edges.some((edge) =>
+          edge.id === "pathway-domain:" + pathway.code + ":" + domainCode &&
+          edge.relation_type === "USES" &&
+          edge.verified
+        ),
+        pathway.code + " must connect to domain " + domainCode
+      );
+    }
+  }
+});
