@@ -23,10 +23,18 @@ ACADEMY
             │       └── Semestre (facultatif)
             │           └── Bloc pédagogique
             │               └── Module
-            │                   └── Unité d’apprentissage
+            │                   └── Unité d’enseignement
+            │                       └── Chapitre
+            │                           └── Séquence
+            │                               └── Leçon
+            │                                   └── Activité pédagogique
             └── Bloc pédagogique (racine alternative)
                 └── Module
-                    └── Unité d’apprentissage
+                    └── Unité d’enseignement
+                        └── Chapitre
+                            └── Séquence
+                                └── Leçon
+                                    └── Activité pédagogique
 ```
 
 Les niveaux intermédiaires sont facultatifs. Un cursus court peut commencer par un bloc ; un cursus long peut être structuré en cycles, années et semestres.
@@ -38,13 +46,17 @@ Types de nœuds pris en charge :
 - `SEMESTER`
 - `BLOCK`
 - `MODULE`
-- `UNIT`\n- `CHAPTER`\n- `SEQUENCE`\n- `LESSON`\n- `ACTIVITY`
+- `UNIT`
+- `CHAPTER`
+- `SEQUENCE`
+- `LESSON`
+- `ACTIVITY`
 
 Les racines autorisées sont `CYCLE` et `BLOCK`. Chaque nœud possède un code unique dans son programme, un parent éventuel, un ordre parmi ses frères, un indicateur obligatoire/facultatif et une durée indicative facultative.
 
 La base impose :
 - parent dans le même programme ;
-- progression vers un niveau inférieur dans la hiérarchie (cycle → année → semestre → bloc → module → unité → chapitre → séquence → leçon → activité) ;
+- progression vers un niveau inférieur dans la hiérarchie ;
 - absence de parent manquant ou de cycle ;
 - unicité des codes et de l’ordre parmi les frères ;
 - un rattachement disciplinaire principal par programme.
