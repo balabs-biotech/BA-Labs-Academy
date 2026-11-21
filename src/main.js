@@ -99,7 +99,7 @@ function departmentDetail(slug) {
   const sections = department.sections || [];
   return `<section class="page-intro"><span class="eyebrow"><a href="#/departements">DÉPARTEMENTS</a> / ${escapeHtml(department.code)}</span><h1>${escapeHtml(department.title)}</h1><p>${escapeHtml(department.description || department.summary)}</p></section>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">STRUCTURE THÉMATIQUE</span><h2>Sections cartographiées</h2></div><span class="resource-level">${sections.length} section(s)</span></div>
-      <div class="domain-list">${sections.length ? sections.map((section) => `<a class="domain-row domain-link" href="#/domaines/${encodeURIComponent(section.code.toLowerCase())}"><span>${escapeHtml(section.code)}</span><div><h3>${escapeHtml(section.title)}</h3><p>${escapeHtml(section.description)}</p><small>${section.modules.length} modules prévus</small></div><b>↗</b></a>`).join("") : emptyState("Sections en préparation", "Les sections de ce département seront ajoutées à la cartographie.")}</div>
+      <div class="domain-list">${sections.length ? sections.map((section) => `<a class="domain-row domain-link" href="#/sections/${encodeURIComponent(section.code.toLowerCase())}"><span>${escapeHtml(section.code)}</span><div><h3>${escapeHtml(section.title)}</h3><p>${escapeHtml(section.description)}</p><small>${section.modules.length} modules prévus</small></div><b>↗</b></a>`).join("") : emptyState("Sections en préparation", "Les sections de ce département seront ajoutées à la cartographie.")}</div>
       <div class="section-heading"><div><span class="eyebrow">RESSOURCES VALIDÉES</span><h2>Pour approfondir</h2></div></div>
       <div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource publiée", "Les ressources validées seront reliées à ce département au fil des publications.")}</div>
     </section>`;
@@ -189,17 +189,19 @@ function safeExternalUrl(value) {
 
 function domainDetail(slug) {
   const domain = data.domains.find((item) => item.slug === slug);
-  if (domain) {
-    const department = data.departments.find((item) => item.code === domain.department_code);
-    const contentIds = new Set(data.domainLinks.filter((link) => link.domain_code === domain.code).map((link) => link.content_id));
-    const resources = data.content.filter((item) => contentIds.has(item.id));
-    return `<section class="page-intro"><span class="eyebrow"><a href="#/departements">DÉPARTEMENTS</a> / DOMAINE</span><h1>${escapeHtml(domain.title)}</h1><p>${escapeHtml(domain.summary)}</p></section>
-      <div class="detail-meta"><span>${escapeHtml(domain.code)}</span>${department ? `<a href="#/departements/${encodeURIComponent(department.slug)}">${escapeHtml(department.title)} ↗</a>` : ""}</div>
-      <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RESSOURCES ASSOCIÉES</span><h2>Pour approfondir</h2></div></div><div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource associée", "Les ressources validées seront reliées à ce domaine au fil des publications.")}</div></section>`;
-  }
+  if (!domain) return notFound("Domaine indisponible", "Ce domaine du référentiel scientifique n’est pas publié ou n’existe pas.");
+  const department = data.departments.find((item) => item.code === domain.department_code);
+  const contentIds = new Set(data.domainLinks.filter((link) => link.domain_code === domain.code).map((link) => link.content_id));
+  const resources = data.content.filter((item) => contentIds.has(item.id));
+  return `<section class="page-intro"><span class="eyebrow"><a href="#/departements">RÉFÉRENTIEL DISCIPLINAIRE</a> / DOMAINE</span><h1>${escapeHtml(domain.title)}</h1><p>${escapeHtml(domain.summary)}</p></section>
+    <div class="detail-meta"><span>${escapeHtml(domain.code)}</span>${department ? `<a href="#/departements/${encodeURIComponent(department.slug)}">${escapeHtml(department.title)} ↗</a>` : ""}</div>
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RESSOURCES ASSOCIÉES</span><h2>Pour approfondir</h2></div></div><div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource associée", "Les ressources validées seront reliées à ce domaine au fil des publications.")}</div></section>`;
+}
+
+function sectionDetail(slug) {
   const mapped = catalogueMap.flatMap((department) => department.sections.map((section) => ({ ...section, department })))
     .find((section) => section.code.toLowerCase() === slug);
-  if (!mapped) return notFound("Domaine indisponible", "Cette entrée n’existe pas dans la cartographie actuelle.");
+  if (!mapped) return notFound("Section indisponible", "Cette section n’existe pas dans la cartographie actuelle.");
   return `<section class="page-intro"><span class="eyebrow"><a href="#/departements/${mapped.department.code.toLowerCase()}">${escapeHtml(mapped.department.title)}</a> / SECTION</span><h1>${escapeHtml(mapped.title)}</h1><p>${escapeHtml(mapped.description)}</p></section>
     <div class="detail-meta"><span>${escapeHtml(mapped.code)}</span><span>${mapped.modules.length} modules cartographiés</span><span>Fiches non rédigées</span></div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">MODULES ASSOCIÉS</span><h2>Connaissances à développer</h2></div></div>
@@ -229,7 +231,7 @@ function cataloguePathwayCard(path) {
     <span class="eyebrow">PARCOURS · CARTOGRAPHIÉ · ${escapeHtml(path.code)}</span>
     <h3>${escapeHtml(path.title)}</h3>
     <p>${escapeHtml(path.summary)}</p>
-    <span class="pathway-meta">${path.domainCodes.length} domaines mobilisés · séquence à construire <b>↗</b></span>
+    <span class="pathway-meta">${path.sectionCodes.length} domaines mobilisés · séquence à construire <b>↗</b></span>
   </a>`;
 }
 
@@ -279,13 +281,13 @@ function learningPathDetail(slug) {
   if (!path) {
     const planned = cataloguePathways.find((item) => item.slug === slug);
     if (!planned) return notFound("Parcours indisponible", "Ce parcours n’existe pas dans la cartographie actuelle.");
-    const domains = planned.domainCodes.map((code) => catalogueMap.flatMap((department) => department.sections).find((section) => section.code === code)).filter(Boolean);
+    const sections = planned.sectionCodes.map((code) => catalogueMap.flatMap((department) => department.sections).find((section) => section.code === code)).filter(Boolean);
     const departments = planned.departmentCodes.map((code) => mappedDepartments().find((item) => item.code === code)).filter(Boolean);
     return `<section class="page-intro"><span class="eyebrow"><a href="#/parcours">PARCOURS</a> / ${escapeHtml(planned.code)} · CARTOGRAPHIÉ</span><h1>${escapeHtml(planned.title)}</h1><p>${escapeHtml(planned.summary)}</p></section>
-      <div class="pathway-overview"><span>Finalité pratique</span><span>${domains.length} domaines mobilisés</span><span>Séquence à construire</span></div>
+      <div class="pathway-overview"><span>Finalité pratique</span><span>${sections.length} sections mobilisées</span><span>Séquence à construire</span></div>
       <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PUBLIC VISÉ</span><h2>À qui s’adresse ce parcours ?</h2></div></div><p class="taxonomy-intro">${escapeHtml(planned.target)}</p></section>
       <section class="section-block"><div class="section-heading"><div><span class="eyebrow">ANCRAGE DISCIPLINAIRE</span><h2>Départements reliés</h2></div></div><div class="competency-list">${departments.map((item)=>`<a class="competency-chip" href="#/departements/${encodeURIComponent(item.slug)}"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.code)}</span></a>`).join("")}</div></section>
-      <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PÉRIMÈTRE SCIENTIFIQUE</span><h2>Domaines mobilisés</h2></div></div><div class="domain-list">${domains.map((item)=>`<a class="domain-row domain-link" href="#/domaines/${encodeURIComponent(item.code.toLowerCase())}"><span>${escapeHtml(item.code)}</span><div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div><b>↗</b></a>`).join("")}</div></section>
+      <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PÉRIMÈTRE SCIENTIFIQUE</span><h2>Sections mobilisées</h2></div></div><div class="domain-list">${sections.map((item)=>`<a class="domain-row domain-link" href="#/sections/${encodeURIComponent(item.code.toLowerCase())}"><span>${escapeHtml(item.code)}</span><div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div><b>↗</b></a>`).join("")}</div></section>
       <p class="progress-note">Ce parcours est une entrée de cartographie, pas une formation ouverte. Les étapes, prérequis, évaluations et ressources seront définis après validation des modules.</p>`;
   }
   const rawItems = data.pathItems.filter((item) => item.path_id === path.id);
@@ -871,7 +873,7 @@ function updateNavigation(route) {
   document.querySelectorAll("[data-route]").forEach((link) => {
     const target = link.dataset.route;
     const active = (route === "" && target === "home") ||
-      (["departements", "domaines"].includes(route) && target === "departements") ||
+      (["departements", "domaines", "sections"].includes(route) && target === "departements") ||
       (["catalogue", "ressource"].includes(route) && target === "catalogue") ||
       (route === "recherche" && target === "recherche") ||
       (route === "atlas" && target === "atlas") ||
@@ -904,6 +906,7 @@ function render() {
     "": homeView,
     "departements": () => slug ? departmentDetail(slug) : departmentsView(),
     "domaines": () => domainDetail(slug),
+    "sections": () => sectionDetail(slug),
     "catalogue": catalogueView,
     "formations": trainingCatalogView,
     "recherche": () => searchResultsView(new URLSearchParams(query).get("q") || ""),
