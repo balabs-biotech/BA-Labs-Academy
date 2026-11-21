@@ -120,7 +120,8 @@ test("unverified or evidence-free editorial relations never become knowledge edg
 
 test("Atlas inspector exposes parent and immediate-child navigation for hierarchical drill-down", () => {
   const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
-  assert.ok(source.includes('className = "atlas-branch-navigation"'));
+  const selectionSource = readFileSync(new URL("../src/features/atlas/atlas-selection.js", import.meta.url), "utf8");
+  assert.ok(selectionSource.includes('className = "atlas-branch-navigation"'));
   assert.ok(source.includes('className = "atlas-branch-parent"'));
   assert.ok(source.includes('className = "atlas-branch-children"'));
   assert.ok(source.includes('node.parent === navigation.selected.id'));

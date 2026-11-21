@@ -127,8 +127,6 @@ export function renderAtlasSelectionPanel({ selection, selected, nodes, byId, ed
         link.textContent = "Ouvrir la fiche ↗";
         body.append(link);
       }
-      selection.append(body);
-      selection.hidden = false;
   selection.append(body);
   selection.hidden = false;
 }
