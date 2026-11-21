@@ -79,3 +79,40 @@ test("Atlas exposes accessible filters for typed pedagogical flows", () => {
     assert.ok(source.includes(label), type + " visible label");
   }
 });
+
+
+test("graph node identifiers are unique and all parent references resolve", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const ids = graph.nodes.map((node) => node.id);
+  assert.equal(new Set(ids).size, ids.length, "node IDs must be unique");
+  const byId = new Map(graph.nodes.map((node) => [node.id, node]));
+  for (const node of graph.nodes) {
+    if (node.parent) {
+      assert.ok(byId.has(node.parent), "unresolved parent for " + node.id);
+      assert.ok(node.level > byId.get(node.parent).level, "child level must exceed parent level");
+    }
+  }
+});
+
+test("hierarchy edges preserve parent-child identity without dangling endpoints", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const ids = new Set(graph.nodes.map((node) => node.id));
+  for (const edge of graph.edges) {
+    assert.ok(ids.has(edge.a.id), "unknown source node " + edge.a.id);
+    assert.ok(ids.has(edge.b.id), "unknown target node " + edge.b.id);
+    if (edge.basis === "academy-hierarchy") {
+      assert.equal(edge.b.parent, edge.a.id, "hierarchy edge must match the child's parent");
+      assert.equal(edge.cross, false);
+    }
+  }
+});
+
+test("unverified or evidence-free editorial relations never become knowledge edges", () => {
+  const relations = [
+    { source: "module:MYC-01:01", target: "module:MIC-03:01", type: "PREREQUISITE", evidence: "Pending review", status: "draft" },
+    { source: "module:MYC-01:01", target: "module:MIC-03:01", type: "PREREQUISITE", evidence: "", status: "verified" },
+    { source: "module:MYC-01:01", target: "module:MIC-03:01", type: "PREREQUISITE", evidence: " ", status: "verified" }
+  ];
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways, relations);
+  assert.equal(graph.edges.filter((edge) => edge.basis === "academy-knowledge-relation").length, 0);
+});
