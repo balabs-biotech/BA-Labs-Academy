@@ -180,7 +180,7 @@ export async function loadAcademyData() {
         readTable("academy_competency_prerequisites", { select: "competency_id,prerequisite_competency_id" }, accessToken).catch(() => [])
       ])
     : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
-  const [trainingPartners, trainingAgreements, trainingOfferings, trainingSessions, trainingEnrollments, trainingAttendance, trainingDocuments, trainingBilling, publicTrainingOfferings, publicTrainingSessions] = accessToken
+  const [trainingPartners, trainingAgreements, trainingOfferings, trainingSessions, trainingEnrollments, trainingAttendance, trainingDocuments, trainingBilling] = accessToken
     ? await Promise.all([
         readTable("academy_training_partners", { select: "id,partner_code,legal_name,approval_number,approval_authority,approval_valid_from,approval_valid_until,approved_specialties,approved_delivery_modes,status", order: "legal_name.asc" }, accessToken).catch(() => []),
         readTable("academy_training_agreements", { select: "id,partner_id,agreement_code,agreement_title,status,valid_from,valid_until,permitted_specialties,permitted_venues,permitted_delivery_modes,billing_responsibility,document_issuer,signed_at", order: "agreement_code.asc" }, accessToken).catch(() => []),
