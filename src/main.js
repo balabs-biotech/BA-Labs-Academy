@@ -895,6 +895,7 @@ function render() {
       if (node.entity_type === "DEPARTMENT") {
         const item = data.departments.find((entry) => entry.code === node.entity_key);
         if (item) location.hash = `#/departements/${encodeURIComponent(item.slug)}`;
+        else location.hash = "#/catalogue";
       } else if (node.entity_type === "SECTION") {
         location.hash = "#/catalogue";
       } else if (node.entity_type === "DOMAIN") {
