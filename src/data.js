@@ -145,7 +145,7 @@ export async function loadAcademyData() {
   ]);
   const { enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, error: memberError } = memberRecords;
   const editorialMembers = accessToken && ['OWNER','ADMIN'].includes(membership?.role) ? await callEditorialRpc('academy_list_members', {}, 'Chargement des membres impossible').catch(() => []) : [];
-  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialCompetencyDomains, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialContentAssets, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys, editorialAssessmentCompetencies, editorialCompetencyPrerequisites, editorialPrograms, editorialProgramDepartments, editorialProgramDomains, editorialProgramNodes, editorialPrograms, editorialProgramDepartments, editorialProgramDomains, editorialProgramNodes] = accessToken
+  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialCompetencyDomains, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialContentAssets, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys, editorialAssessmentCompetencies, editorialCompetencyPrerequisites, editorialPrograms, editorialProgramDepartments, editorialProgramDomains, editorialProgramNodes] = accessToken
     ? await Promise.all([
         readTable("academy_learning_paths", {
           select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
@@ -207,7 +207,7 @@ export async function loadAcademyData() {
     pathItems, pathPrerequisites, competencies, contentCompetencies,
     enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, memberError, editorialMembers, nodes, edges,
     assessments, assessmentQuestions, assessmentOptions, pathAssessments,
-    editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentCompetencies, editorialCompetencyPrerequisites,
+    editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentCompetencies, editorialCompetencyPrerequisites, editorialPrograms, editorialProgramDepartments, editorialProgramDomains, editorialProgramNodes,
     trainingPartners, trainingAgreements, trainingOfferings, trainingSessions, trainingEnrollments, trainingAttendance, trainingDocuments, trainingBilling
   };
 }
