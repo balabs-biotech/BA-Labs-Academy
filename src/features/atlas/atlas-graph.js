@@ -8,7 +8,7 @@ const hash = (value) => {
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-// Organic field: seven departments, three transversal domains, ten pathways.
+// Organic field: nine disciplinary departments, ten pathways and their linked sections/modules.
 const ROOT_ANCHORS = [
   [-690, -310], [-360, -520], [80, -610], [520, -420], [790, -60],
   [620, 390], [210, 620],
@@ -28,12 +28,6 @@ const DEPARTMENT_LABELS = {
   PHY: "Sciences physiques & chimiques",
   INF: "Informatique et données",
   GEN: "Génie biologique et instrumentation"
-};
-
-const DOMAIN_LABELS = {
-  BPR: "Bioprocédés",
-  BMT: "Biomatériaux",
-  PHY: "Sciences physiques & chimiques"
 };
 
 const PATHWAY_LABELS = {
