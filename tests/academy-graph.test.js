@@ -159,7 +159,7 @@ test("Graph edges never infer scientific relations from spatial proximity", () =
   );
   assert.equal(synthetic.length, 0);
   const allowedBases = new Set([
-    "hierarchy",
+    "academy-hierarchy",
     "academy-pathway",
     "academy-domain",
     "academy-pathway-flow",
