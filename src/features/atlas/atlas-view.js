@@ -18,6 +18,7 @@ const escapeAtlasText = (value = "") => String(value).replace(/[&<>"']/g, (char)
 export function renderAcademyAtlas(graph) {
   const { departments, axes, pathways, sections, modules } = graph.stats;
   const departmentRoots = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.level === 0);
+  const axisRoots = graph.nodes.filter((node) => node.entity_type === "TRANSVERSAL" && node.level === 0);
   const pathwayRoots = graph.nodes.filter((node) => node.entity_type === "PATHWAY" && node.level === 0);
   const rootNavigation = (items, kind, label) => `
     <div class="atlas-root-group atlas-root-group--${kind}">
@@ -31,7 +32,7 @@ export function renderAcademyAtlas(graph) {
     <section class="page-intro atlas-page-intro">
       <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
       <h1>Atlas des connaissances</h1>
-      <p>Un réseau unique : départements, sections, modules et parcours transversaux. Approche-toi pour révéler les ramifications, sélectionne un nœud pour en lire la fiche.</p>
+      <p>Un réseau unique : sept départements, trois axes transversaux, sections, modules et parcours pratiques. Approche-toi pour révéler les ramifications, sélectionne un nœud pour en lire la fiche.</p>
     </section>
     <section class="academy-atlas" id="academy-atlas">
       <div class="atlas-topline">
@@ -41,8 +42,9 @@ export function renderAcademyAtlas(graph) {
         </div>
         <span class="atlas-engine-state" id="atlas-engine-state">Initialisation du moteur…</span>
       </div>
-      <nav class="atlas-root-navigation" aria-label="Accès direct aux départements et parcours">
+      <nav class="atlas-root-navigation" aria-label="Accès direct aux départements, axes transversaux et parcours">
         ${rootNavigation(departmentRoots, "departments", "DÉPARTEMENTS")}
+        ${rootNavigation(axisRoots, "axes", "AXES TRANSVERSAUX")}
         ${rootNavigation(pathwayRoots, "pathways", "PARCOURS PRATIQUES")}
       </nav>
       <div class="atlas-stage" id="academy-atlas-stage">
@@ -130,10 +132,14 @@ export function mountAcademyAtlas(container, graph) {
     const ys = roots.map((node) => node.y);
     const padX = Math.min(150, Math.max(72, width * 0.11));
     const padY = Math.min(125, Math.max(70, height * 0.13));
-    const spanX = Math.max(...xs) - Math.min(...xs) + 230;
-    const spanY = Math.max(...ys) - Math.min(...ys) + 220;
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    const spanX = maxX - minX + 230;
+    const spanY = maxY - minY + 220;
     targetScale = clamp(Math.min((width - padX * 2) / spanX, (height - padY * 2) / spanY), 0.28, 0.82);
-    targetOffset = { x: 0, y: 0 };
+    targetOffset = { x: -((minX + maxX) / 2) * targetScale, y: -((minY + maxY) / 2) * targetScale };
   };
 
   const updateBreadcrumbs = () => {
