@@ -50,6 +50,7 @@ test("learner and editorial UIs manage assessments and certificates",()=>{
 
 const competencyGraph=await readFile(new URL("../supabase/migrations/20261122010000_academy_competency_evidence_graph_v1.sql",import.meta.url),"utf8");
 const competencyAtlas=await readFile(new URL("../supabase/migrations/20261122011000_academy_competency_atlas_anchor_integrity_v1.sql",import.meta.url),"utf8");
+const competencyPrerequisites=await readFile(new URL("../supabase/migrations/20261122012000_academy_competency_prerequisite_graph_v1.sql",import.meta.url),"utf8");
 test("competencies can be anchored to multiple domains and assessments",()=>{
  assert.match(competencyGraph,/academy_competency_domains/);
  assert.match(competencyGraph,/academy_save_competency_domains/);
@@ -74,4 +75,14 @@ test("editorial UI configures disciplinary anchors and assessment competency thr
 test("competency disciplinary anchors synchronize to Atlas and are required for publication",()=>{
  assert.match(competencyAtlas,/relation_type=''BELONGS_TO''/);
  assert.match(competencyAtlas,/At least one disciplinary domain anchor is required/);
+});
+
+test("competency prerequisites are cycle-checked and represented in Atlas",()=>{
+ assert.match(competencyPrerequisites,/academy_competency_prerequisites/);
+ assert.match(competencyPrerequisites,/Competency prerequisite cycle detected/);
+ assert.match(competencyPrerequisites,/relation_type='REQUIRES'/);
+ assert.match(competencyPrerequisites,/All competency prerequisites must be published first/);
+ assert.match(main,/data-competency-prerequisite/);
+ assert.match(main,/saveCompetencyPrerequisites\(id, prerequisiteIds\)/);
+ assert.match(data,/export function saveCompetencyPrerequisites/);
 });
