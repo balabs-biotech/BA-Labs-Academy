@@ -131,16 +131,27 @@ export async function loadAcademyData() {
     memberData
   ]);
   const { enrollments, progress, pathItemProgress, membership, error: memberError } = memberRecords;
-  const editorialPaths = accessToken
-    ? await readTable("academy_learning_paths", {
-        select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
-        order: "updated_at.desc"
-      }, accessToken).catch(() => [])
-    : [];
+  const [editorialPaths, editorialDepartments, editorialDomains] = accessToken
+    ? await Promise.all([
+        readTable("academy_learning_paths", {
+          select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
+          order: "updated_at.desc"
+        }, accessToken).catch(() => []),
+        readTable("departments", {
+          select: "code,slug,title,summary,color_token,sort_order,status,visibility",
+          order: "sort_order.asc"
+        }, accessToken).catch(() => []),
+        readTable("domains", {
+          select: "code,slug,department_code,title,summary,sort_order,status,visibility",
+          order: "sort_order.asc"
+        }, accessToken).catch(() => [])
+      ])
+    : [[], [], []];
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
-    learningPaths, editorialPaths, pathItems, pathPrerequisites, competencies, contentCompetencies,
+    learningPaths, editorialPaths, editorialDepartments, editorialDomains,
+    pathItems, pathPrerequisites, competencies, contentCompetencies,
     enrollments, progress, pathItemProgress, membership, memberError, nodes, edges
   };
 }
@@ -242,6 +253,19 @@ export function saveLearningPath(path) {
     p_version_label: path.versionLabel || "0.1",
     p_items: path.items || []
   }, "Enregistrement du parcours impossible");
+}
+
+
+export function publishDepartment(code, visibility = "PUBLIC", note = "") {
+  return callEditorialRpc("academy_publish_department", {
+    p_department_code: code, p_visibility: visibility, p_note: note
+  }, "Publication du département impossible");
+}
+
+export function publishDomain(code, visibility = "PUBLIC", note = "") {
+  return callEditorialRpc("academy_publish_domain", {
+    p_domain_code: code, p_visibility: visibility, p_note: note
+  }, "Publication du domaine impossible");
 }
 
 export function publishLearningPath(pathId, note = "") {
