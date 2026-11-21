@@ -231,7 +231,7 @@ function cataloguePathwayCard(path) {
     <span class="eyebrow">PARCOURS · CARTOGRAPHIÉ · ${escapeHtml(path.code)}</span>
     <h3>${escapeHtml(path.title)}</h3>
     <p>${escapeHtml(path.summary)}</p>
-    <span class="pathway-meta">${path.sectionCodes.length} domaines mobilisés · séquence à construire <b>↗</b></span>
+    <span class="pathway-meta">${path.sectionCodes.length} sections mobilisées · séquence à construire <b>↗</b></span>
   </a>`;
 }
 
