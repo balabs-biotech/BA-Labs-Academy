@@ -43,7 +43,7 @@ create table if not exists public.academy_program_nodes (
  program_id uuid not null references public.academy_programs(id) on delete cascade,
  parent_node_id uuid,
  code text not null,
- node_type text not null check(node_type in ('CYCLE','YEAR','SEMESTER','BLOCK','MODULE','UNIT')),
+ node_type text not null check(node_type in ('CYCLE','YEAR','SEMESTER','BLOCK','MODULE','UNIT','CHAPTER','SEQUENCE','LESSON','ACTIVITY')),
  title text not null,
  summary text not null default '',
  sort_order integer not null check(sort_order>0),
@@ -109,7 +109,7 @@ begin
  select node_type into v_parent_type from public.academy_program_nodes
   where id=new.parent_node_id and program_id=new.program_id;
  if v_parent_type is null then raise exception 'Parent node must exist in the same programme' using errcode='23503'; end if;
- v_parent_rank:=case v_parent_type when 'CYCLE' then 1 when 'YEAR' then 2 when 'SEMESTER' then 3 when 'BLOCK' then 4 when 'MODULE' then 5 when 'UNIT' then 6 else 0 end;
+ v_parent_rank:=case v_parent_type when 'CYCLE' then 1 when 'YEAR' then 2 when 'SEMESTER' then 3 when 'BLOCK' then 4 when 'MODULE' then 5 when 'UNIT' then 6 when 'CHAPTER' then 7 when 'SEQUENCE' then 8 when 'LESSON' then 9 when 'ACTIVITY' then 10 else 0 end;
  v_child_rank:=case new.node_type when 'CYCLE' then 1 when 'YEAR' then 2 when 'SEMESTER' then 3 when 'BLOCK' then 4 when 'MODULE' then 5 when 'UNIT' then 6 else 0 end;
  if v_child_rank<=v_parent_rank then raise exception 'Programme hierarchy cannot move to the same or a higher level' using errcode='23514'; end if;
  return new;
@@ -169,7 +169,7 @@ begin
  for v_item in select value from jsonb_array_elements(p_nodes) loop
   if nullif(btrim(v_item->>'code'),'') is null or upper(btrim(v_item->>'code')) !~ '^[A-Z0-9][A-Z0-9_-]*$'
    or nullif(btrim(v_item->>'title'),'') is null
-   or coalesce(v_item->>'node_type','') not in ('CYCLE','YEAR','SEMESTER','BLOCK','MODULE','UNIT')
+   or coalesce(v_item->>'node_type','') not in ('CYCLE','YEAR','SEMESTER','BLOCK','MODULE','UNIT','CHAPTER','SEQUENCE','LESSON','ACTIVITY')
    or coalesce((v_item->>'sort_order')::integer,0)<=0 then
    raise exception 'Invalid programme hierarchy node' using errcode='22023';
   end if;
