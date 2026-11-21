@@ -10,7 +10,7 @@ export const cataloguePathways = [
     target: "Producteurs de champignons, techniciens mycologues et porteurs de projets de production",
     sectionCodes: ["MYC-01", "MYC-03", "MYC-04", "MYC-05", "MIC-03"],
     departmentCodes: ["MYC", "MIC", "GEN"],
-    axisCodes: ["BPR"],
+    domainCodes: ["BPR"],
     status: "Cartographié"
   },
   {
@@ -22,7 +22,7 @@ export const cataloguePathways = [
     target: "Opérateurs de laboratoire, techniciens de production et personnes en perfectionnement mycologique",
     sectionCodes: ["MYC-03", "MYC-04", "MYC-05", "MIC-03", "GEN-01"],
     departmentCodes: ["MYC", "MIC", "GEN"],
-    axisCodes: ["BPR"],
+    domainCodes: ["BPR"],
     status: "Cartographié"
   },
   {
@@ -34,7 +34,7 @@ export const cataloguePathways = [
     target: "Techniciens, ingénieurs et concepteurs de procédés de bioproduction",
     sectionCodes: ["MYC-02", "MYC-04", "BPR-01", "BPR-03", "GEN-04", "PHY-03"],
     departmentCodes: ["MYC", "MIC", "GEN"],
-    axisCodes: ["BPR", "PHY"],
+    domainCodes: ["BPR", "PHY"],
     status: "Cartographié"
   },
   {
@@ -46,7 +46,7 @@ export const cataloguePathways = [
     target: "Techniciens, agronomes et expérimentateurs en microbiologie environnementale et végétale",
     sectionCodes: ["MIC-04", "MIC-05", "AGR-01", "AGR-02", "BIO-04", "BIO-05"],
     departmentCodes: ["MIC", "AGR", "BIO"],
-    axisCodes: ["PHY"],
+    domainCodes: ["PHY"],
     status: "Cartographié"
   },
   {
@@ -58,7 +58,7 @@ export const cataloguePathways = [
     target: "Développeurs de biostimulants, agronomes, techniciens et responsables d'essais",
     sectionCodes: ["BIO-04", "BIO-05", "MIC-05", "AGR-02", "PHY-01", "PHY-04"],
     departmentCodes: ["BIO", "MIC", "AGR"],
-    axisCodes: ["PHY"],
+    domainCodes: ["PHY"],
     status: "Cartographié"
   },
   {
@@ -70,7 +70,7 @@ export const cataloguePathways = [
     target: "Responsables de laboratoire, techniciens, concepteurs et porteurs de projets",
     sectionCodes: ["GEN-01", "GEN-02", "GEN-03", "GEN-04", "GEN-05", "GEN-06", "PHY-02"],
     departmentCodes: ["GEN", "MIC", "MYC"],
-    axisCodes: ["PHY"],
+    domainCodes: ["PHY"],
     status: "Cartographié"
   },
   {
@@ -82,7 +82,7 @@ export const cataloguePathways = [
     target: "Producteurs, techniciens de culture et concepteurs de systèmes automatisés",
     sectionCodes: ["GEN-01", "GEN-02", "GEN-04", "GEN-05", "INF-06", "PHY-03"],
     departmentCodes: ["GEN", "INF", "AGR"],
-    axisCodes: ["PHY"],
+    domainCodes: ["PHY"],
     status: "Cartographié"
   },
   {
@@ -94,7 +94,7 @@ export const cataloguePathways = [
     target: "Techniciens de bioprocédés, responsables de valorisation et porteurs de projets biosourcés",
     sectionCodes: ["BPR-02", "BPR-04", "AGR-02", "BMT-02", "MIC-05"],
     departmentCodes: ["AGR", "BIO", "MIC"],
-    axisCodes: ["BPR", "BMT", "PHY"],
+    domainCodes: ["BPR", "BMT", "PHY"],
     status: "Cartographié"
   },
   {
@@ -106,7 +106,7 @@ export const cataloguePathways = [
     target: "Concepteurs, makers, mycologues et techniciens matériaux",
     sectionCodes: ["BMT-01", "BMT-02", "BMT-03", "BMT-04", "MYC-06", "GEN-03"],
     departmentCodes: ["MYC", "GEN", "AGR"],
-    axisCodes: ["BMT", "PHY"],
+    domainCodes: ["BMT", "PHY"],
     status: "Cartographié"
   },
   {
@@ -118,7 +118,7 @@ export const cataloguePathways = [
     target: "Scientifiques, responsables de laboratoire, analystes et développeurs d'outils métiers",
     sectionCodes: ["INF-01", "INF-02", "INF-03", "INF-04", "INF-05", "INF-06", "INF-07", "GEN-02", "PHY-04"],
     departmentCodes: ["INF", "GEN", "AGR"],
-    axisCodes: ["PHY"],
+    domainCodes: ["PHY"],
     status: "Cartographié"
   }
 ];
