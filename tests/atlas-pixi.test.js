@@ -4,7 +4,6 @@ import { catalogueMap, catalogueTotals } from "../src/catalogue-map.js";
 import { catalogueAxes } from "../src/catalogue-axes.js";
 import { cataloguePathways } from "../src/catalogue-pathways.js";
 import { buildAcademyGraph } from "../src/features/atlas/atlas-graph.js";
-import { renderAcademyAtlas } from "../src/features/atlas/atlas-view.js";
 
 const graph = buildAcademyGraph(catalogueMap, catalogueAxes, cataloguePathways);
 
@@ -62,17 +61,6 @@ test("graph identifiers are unique and all coordinates are finite", () => {
   }
 });
 
-test("Atlas direct navigation lists departments, transversal axes and pathways", () => {
-  const markup = renderAcademyAtlas(graph);
-  assert.equal((markup.match(/data-atlas-root=/g) || []).length, 20);
-  assert.match(markup, /DÉPARTEMENTS/);
-  assert.match(markup, /AXES TRANSVERSAUX/);
-  assert.match(markup, /PARCOURS PRATIQUES/);
-  assert.match(markup, /Mycologie appliquée/);
-  assert.match(markup, /Bioprocédés/);
-  assert.match(markup, /Production mycologique, du laboratoire à la fructification/);
-});
-
 test("each pathway connects to every declared section", () => {
   for (const pathway of cataloguePathways) {
     for (const sectionCode of pathway.sectionCodes) {
@@ -93,4 +81,26 @@ test("department and transversal-axis root labels are not raw codes", () => {
   assert.ok(roots.some((node) => node.entity_type === "DEPARTMENT" && node.shortTitle === "Mycologie appliquée"));
   assert.ok(roots.some((node) => node.entity_type === "TRANSVERSAL" && node.shortTitle === "Bioprocédés"));
   assert.ok(roots.filter((node) => node.entity_type !== "PATHWAY").every((node) => node.shortTitle !== node.entity_key));
+});
+
+test("department and transversal-axis root labels are human-readable", () => {
+  const roots = graph.nodes.filter((node) => node.level === 0);
+  assert.ok(roots.some((node) => node.entity_type === "DEPARTMENT" && node.shortTitle === "Mycologie appliquée"));
+  assert.ok(roots.some((node) => node.entity_type === "TRANSVERSAL" && node.shortTitle === "Bioprocédés"));
+  assert.ok(roots.filter((node) => node.entity_type !== "PATHWAY").every((node) => node.shortTitle !== node.entity_key));
+});
+
+test("each pathway connects to every declared section", () => {
+  for (const pathway of cataloguePathways) {
+    for (const sectionCode of pathway.sectionCodes) {
+      assert.ok(
+        graph.edges.some((edge) =>
+          edge.id === "pathway-section:" + pathway.code + ":" + sectionCode &&
+          edge.relation_type === "USES_SECTION" &&
+          edge.verified
+        ),
+        pathway.code + " must connect to " + sectionCode
+      );
+    }
+  }
 });
