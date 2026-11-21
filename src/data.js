@@ -64,14 +64,23 @@ export async function loadAcademyData() {
         readTable("academy_path_item_progress", {
           select: "path_item_id,progress_status,progress_percent,started_at,completed_at,last_accessed_at",
           order: "last_accessed_at.desc"
+        }, accessToken),
+        readTable("academy_assessment_attempts", {
+          select: "id,assessment_id,attempt_number,assessment_version,status,score,passed,question_count,correct_count,started_at,submitted_at",
+          order: "started_at.desc"
+        }, accessToken),
+        readTable("academy_certificates", {
+          select: "id,certificate_code,path_id,path_version,certificate_title,result_snapshot,issued_at,revoked_at",
+          order: "issued_at.desc"
         }, accessToken)
-      ]).then(([enrollments, progress, memberships, pathItemProgress]) => ({
-        enrollments, progress, pathItemProgress, membership: memberships[0] || null, error: null
+      ]).then(([enrollments, progress, memberships, pathItemProgress, assessmentAttempts, certificates]) => ({
+        enrollments, progress, pathItemProgress, assessmentAttempts, certificates,
+        membership: memberships[0] || null, error: null
       })).catch((error) => ({
-        enrollments: [], progress: [], pathItemProgress: [], membership: null, error: error.message
+        enrollments: [], progress: [], pathItemProgress: [], assessmentAttempts: [], certificates: [], membership: null, error: error.message
       }))
     : Promise.resolve({ enrollments: [], progress: [], pathItemProgress: [], membership: null, error: null });
-  const [departments, domains, content, departmentLinks, domainLinks, learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies, rawNodes, edges, memberRecords] = await Promise.all([
+  const [departments, domains, content, departmentLinks, domainLinks, learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies, rawNodes, edges, memberRecords, assessments, assessmentQuestions, assessmentOptions, pathAssessments] = await Promise.all([
     readTable("departments", {
       select: "code,slug,title,summary,color_token,sort_order",
       status: "eq.PUBLISHED",
@@ -128,11 +137,15 @@ export async function loadAcademyData() {
       select: "id,source_node_id,target_node_id,relation_type,rationale",
       status: "eq.PUBLISHED"
     }),
-    memberData
+    memberData,
+    readTable("academy_assessments", { select: "id,code,title,description,pass_score,max_attempts,time_limit_minutes,version_label,published_at", status: "eq.PUBLISHED", visibility: "eq.PUBLIC", order: "title.asc" }),
+    readTable("academy_assessment_questions", { select: "id,assessment_id,prompt,sort_order,question_type", order: "sort_order.asc" }),
+    readTable("academy_assessment_options", { select: "id,question_id,option_text,sort_order", order: "sort_order.asc" }),
+    readTable("academy_path_assessments", { select: "path_id,assessment_id,sort_order,is_required,minimum_score", order: "sort_order.asc" })
   ]);
-  const { enrollments, progress, pathItemProgress, membership, error: memberError } = memberRecords;
+  const { enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, error: memberError } = memberRecords;
   const editorialMembers = accessToken && ['OWNER','ADMIN'].includes(membership?.role) ? await callEditorialRpc('academy_list_members', {}, 'Chargement des membres impossible').catch(() => []) : [];
-  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialContent, editorialDepartmentLinks, editorialDomainLinks] = accessToken
+  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments] = accessToken
     ? await Promise.all([
         readTable("academy_learning_paths", {
           select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
@@ -155,15 +168,21 @@ export async function loadAcademyData() {
         }, accessToken).catch(() => []),
         readTable("content_items", { select: "id,business_id,slug,title,summary,resource_type,language_code,learning_level,editorial_status,status,visibility,updated_at", order: "updated_at.desc" }, accessToken).catch(() => []),
         readTable("content_department_links", { select: "content_id,department_code,is_primary" }, accessToken).catch(() => []),
-        readTable("content_domain_links", { select: "content_id,domain_code" }, accessToken).catch(() => [])
+        readTable("content_domain_links", { select: "content_id,domain_code" }, accessToken).catch(() => []),
+        readTable("academy_assessments", { select: "id,code,title,description,pass_score,max_attempts,time_limit_minutes,version_label,status,visibility,published_at,updated_at", order: "updated_at.desc" }, accessToken).catch(() => []),
+        readTable("academy_assessment_questions", { select: "id,assessment_id,prompt,sort_order,question_type", order: "sort_order.asc" }, accessToken).catch(() => []),
+        readTable("academy_assessment_options", { select: "id,question_id,option_text,sort_order", order: "sort_order.asc" }, accessToken).catch(() => []),
+        readTable("academy_path_assessments", { select: "path_id,assessment_id,sort_order,is_required,minimum_score" }, accessToken).catch(() => [])
       ])
-    : [[], [], [], [], [], [], [], []];
+    : [[], [], [], [], [], [], [], [], [], [], [], []];
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
     learningPaths, editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialContent, editorialDepartmentLinks, editorialDomainLinks,
     pathItems, pathPrerequisites, competencies, contentCompetencies,
-    enrollments, progress, pathItemProgress, membership, memberError, editorialMembers, nodes, edges
+    enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, memberError, editorialMembers, nodes, edges,
+    assessments, assessmentQuestions, assessmentOptions, pathAssessments,
+    editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments
   };
 }
 
