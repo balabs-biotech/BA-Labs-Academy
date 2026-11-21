@@ -58,8 +58,9 @@ export async function loadAcademyData() {
           select: "content_id,progress_status,progress_percent,started_at,completed_at,last_accessed_at",
           order: "last_accessed_at.desc"
         }, accessToken)
-      ])
-    : Promise.resolve([[], []]);
+      ]).then(([enrollments, progress]) => ({ enrollments, progress, error: null }))
+        .catch((error) => ({ enrollments: [], progress: [], error: error.message }))
+    : Promise.resolve({ enrollments: [], progress: [], error: null });
   const [departments, domains, content, departmentLinks, domainLinks, learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies, rawNodes, edges, memberRecords] = await Promise.all([
     readTable("departments", {
       select: "code,slug,title,summary,color_token,sort_order",
@@ -119,12 +120,12 @@ export async function loadAcademyData() {
     }),
     memberData
   ]);
-  const [enrollments, progress] = memberRecords;
+  const { enrollments, progress, error: memberError } = memberRecords;
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
     learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies,
-    enrollments, progress, nodes, edges
+    enrollments, progress, memberError, nodes, edges
   };
 }
 
@@ -154,7 +155,9 @@ export async function enrollInPath(pathId) {
   return writeMemberRecord("academy_path_enrollments", {
     user_id: user.id,
     path_id: pathId,
-    enrollment_status: "ACTIVE"
+    enrollment_status: "ACTIVE",
+    completed_at: null,
+    updated_at: new Date().toISOString()
   }, "user_id,path_id");
 }
 
