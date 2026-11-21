@@ -772,7 +772,7 @@ function programmeEditorView(programId="nouveau") {
  '<label>Durée globale indicative (heures)<input name="duration_hours" type="number" min="0.5" step="0.5" value="'+(program?.estimated_duration_hours??'')+'" placeholder="Facultatif"></label>'+
  '<label>Version<input name="version_label" maxlength="24" value="'+escapeHtml(program?.version_label||'0.1')+'"></label>'+
  '</div></section>'+
- '<section class="programme-editor-section"><span class="eyebrow">02 · ANCRAGE DISCIPLINAIRE</span><h2>Départements associés</h2><p>Un programme peut être transversal. Un seul département est désigné comme rattachement principal.</p>'+
+ '<section class="programme-editor-section"><span class="eyebrow">02 · ANCRAGE DISCIPLINAIRE</span><h2>Départements associés</h2><p>Un programme peut être transversal. La mycologie peut constituer l’axe principal ou être associée aux autres disciplines. Un seul département reste le rattachement principal.</p>'+
  '<div class="programme-check-grid">'+departments.map(x=>'<label><input type="checkbox" data-program-department value="'+escapeHtml(x.code)+'" '+(departmentLinks.some(y=>y.department_code===x.code)?'checked':'')+'><span><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.code)+'</small></span></label>').join('')+'</div>'+
  '<label>Département principal<select name="primary_department"><option value="">Choisir après sélection</option>'+departments.map(x=>'<option value="'+escapeHtml(x.code)+'" '+(primary===x.code?'selected':'')+'>'+escapeHtml(x.title)+'</option>').join('')+'</select></label>'+
  '<h2>Domaines concernés</h2><p>Les domaines doivent appartenir à l’un des départements sélectionnés.</p>'+
