@@ -33,13 +33,13 @@ export function renderAcademyAtlas(graph) {
           <p>Glisser pour déplacer · Pincer ou molette pour zoomer · Toucher un nœud pour le centrer</p>
         </div>
         <nav class="atlas-controls" aria-label="Contrôles de la carte">
-          <button type="button" data-atlas-action="in" aria-label="Zoom avant">＋</button>
-          <button type="button" data-atlas-action="out" aria-label="Zoom arrière">−</button>
-          <button type="button" data-atlas-action="reset" aria-label="Recentrer la carte">⌖</button>
-          <button type="button" data-atlas-action="back" aria-label="Vue précédente" disabled>↶</button>
+          <button type="button" class="btn btn-square btn-sm" data-atlas-action="in" aria-label="Zoom avant">＋</button>
+          <button type="button" class="btn btn-square btn-sm" data-atlas-action="out" aria-label="Zoom arrière">−</button>
+          <button type="button" class="btn btn-square btn-sm" data-atlas-action="reset" aria-label="Recentrer la carte">⌖</button>
+          <button type="button" class="btn btn-square btn-sm" data-atlas-action="back" aria-label="Vue précédente" disabled>↶</button>
         </nav>
         <div class="atlas-breadcrumbs" id="academy-atlas-breadcrumbs" aria-live="polite">BA Labs Academy / Vue générale</div>
-        <aside class="atlas-selection" id="academy-atlas-selection" aria-live="polite" hidden></aside>
+        <aside class="atlas-selection card" id="academy-atlas-selection" aria-live="polite" hidden></aside>
         <nav class="atlas-accessible-nodes" id="academy-atlas-accessible" aria-label="Navigation textuelle des nœuds"></nav>
         <div class="atlas-loading" id="academy-atlas-loading"><span class="atlas-loading-pulse"></span><p>Déploiement du réseau de connaissances…</p></div>
       </div>
@@ -138,6 +138,8 @@ export function mountAcademyAtlas(container, graph) {
       selection.hidden = true;
       return;
     }
+    const body = document.createElement("div");
+    body.className = "card-body";
     const heading = document.createElement("div");
     heading.className = "atlas-selection-heading";
     const type = document.createElement("span");
@@ -146,11 +148,11 @@ export function mountAcademyAtlas(container, graph) {
     const title = document.createElement("h3");
     title.textContent = selected.title;
     heading.append(type, title);
-    selection.append(heading);
+    body.append(heading);
 
     const description = document.createElement("p");
     description.textContent = selected.summary || "Fiche descriptive à compléter.";
-    selection.append(description);
+    body.append(description);
 
     if (selected.entity_type === "PATHWAY" && Array.isArray(selected.data.domainCodes)) {
       const domains = document.createElement("div");
@@ -160,10 +162,10 @@ export function mountAcademyAtlas(container, graph) {
         tag.textContent = code;
         domains.append(tag);
       });
-      selection.append(domains);
+      body.append(domains);
       const status = document.createElement("small");
       status.textContent = "Parcours cartographié · séquence et ressources à construire";
-      selection.append(status);
+      body.append(status);
     } else if (selected.entity_type === "MODULE") {
       const status = document.createElement("small");
       status.textContent = "Module prévu · fiche pédagogique non rédigée";
@@ -179,8 +181,9 @@ export function mountAcademyAtlas(container, graph) {
       link.className = "atlas-selection-link";
       link.href = selected.data.route;
       link.textContent = "Ouvrir la fiche ↗";
-      selection.append(link);
+      body.append(link);
     }
+    selection.append(body);
     selection.hidden = false;
   };
 
