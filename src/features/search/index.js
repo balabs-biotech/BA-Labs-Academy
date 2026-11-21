@@ -56,9 +56,13 @@ export function buildAcademySearchIndex(data) {
   for (const item of data.competencies || []) {
     const linkedResources = (data.contentCompetencies || [])
       .filter((link) => link.competency_id === item.id)
-      .map((link) => (data.content || []).find((entry) => entry.id === link.content_id)?.title);
-    entries.push(makeEntry("COMPETENCY", item, "#/catalogue", [
-      item.code, item.competency_level, ...linkedResources
+      .map((link) => (data.content || []).find((entry) => entry.id === link.content_id))
+      .filter(Boolean);
+    const destination = linkedResources[0]
+      ? `#/ressource/${encodeURIComponent(linkedResources[0].slug)}`
+      : `#/recherche/?q=${encodeURIComponent(item.title)}`;
+    entries.push(makeEntry("COMPETENCY", item, destination, [
+      item.code, item.competency_level, ...linkedResources.map((resource) => resource.title)
     ]));
   }
   return entries;
