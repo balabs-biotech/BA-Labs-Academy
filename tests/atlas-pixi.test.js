@@ -290,3 +290,45 @@ test("Atlas view centralizes cleanup and observes stage resizing", () => {
   assert.ok(source.includes('lifecycle.listen(canvas, "pointerdown", onPointerDown)'));
   assert.ok(source.includes("return () => lifecycle.dispose()"));
 });
+
+
+test("Atlas pointer controller pans with one pointer and selects on tap", async () => {
+  const { createAtlasPointerController } = await import("../src/features/atlas/atlas-interaction.js");
+  const classes = new Set();
+  const canvas = {
+    setPointerCapture() {},
+    classList: { add: (name) => classes.add(name), remove: (name) => classes.delete(name) },
+    getBoundingClientRect: () => ({ left: 10, top: 20 })
+  };
+  let offset = { x: 4, y: 8 };
+  const selected = [];
+  const controller = createAtlasPointerController({
+    canvas, getOffset: () => offset, setOffset: (next) => { offset = next; },
+    isReducedMotion: () => false, zoom() {}, hit: (x, y) => x === 5 && y === 6 ? { id: "node" } : null,
+    focusNode: (node) => selected.push(node.id)
+  });
+  controller.onPointerDown({ pointerId: 1, clientX: 30, clientY: 40 });
+  controller.onPointerMove({ pointerId: 1, clientX: 50, clientY: 55 });
+  assert.deepEqual(offset, { x: 24, y: 23 });
+  controller.onPointerUp({ pointerId: 1, clientX: 50, clientY: 55 });
+  assert.deepEqual(selected, []);
+  controller.onPointerDown({ pointerId: 2, clientX: 15, clientY: 26 });
+  controller.onPointerUp({ pointerId: 2, clientX: 15, clientY: 26 });
+  assert.deepEqual(selected, ["node"]);
+  assert.equal(classes.has("is-dragging"), false);
+});
+
+test("Atlas pointer controller zooms around the midpoint of a two-pointer pinch", async () => {
+  const { createAtlasPointerController } = await import("../src/features/atlas/atlas-interaction.js");
+  const canvas = { setPointerCapture() {}, classList: { add() {}, remove() {} }, getBoundingClientRect: () => ({ left: 10, top: 20 }) };
+  const zooms = [];
+  const controller = createAtlasPointerController({
+    canvas, getOffset: () => ({ x: 0, y: 0 }), setOffset() {}, isReducedMotion: () => false,
+    zoom: (...args) => zooms.push(args), hit: () => null, focusNode() {}
+  });
+  controller.onPointerDown({ pointerId: 1, clientX: 30, clientY: 40 });
+  controller.onPointerDown({ pointerId: 2, clientX: 50, clientY: 40 });
+  controller.onPointerMove({ pointerId: 2, clientX: 70, clientY: 40 });
+  assert.equal(zooms.length, 1);
+  assert.deepEqual(zooms[0], [2, 40, 20]);
+});

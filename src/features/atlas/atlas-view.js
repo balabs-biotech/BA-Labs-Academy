@@ -2,6 +2,7 @@ import { createPixiRenderer } from "./pixi-renderer.js";
 import { createAtlasNavigation, getAtlasBreadcrumbPath } from "./atlas-navigation.js";
 import { atlasScreenPoint, fitAtlasCamera, zoomAtlasCamera, interpolateAtlasCamera } from "./atlas-camera.js";
 import { createAtlasLifecycle } from "./atlas-lifecycle.js";
+import { createAtlasPointerController } from "./atlas-interaction.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -122,11 +123,6 @@ export function mountAcademyAtlas(container, graph) {
   let offset = { x: 0, y: 0 };
   let targetOffset = { x: 0, y: 0 };
   const navigation = createAtlasNavigation(nodes);
-  const pointers = new Map();
-  let gesture = null;
-  let dragged = false;
-  let lastPinchDistance = 0;
-  let lastClick = null;
   let relationFilter = "all";
 
   const screen = (node) => atlasScreenPoint(node, { width, height, scale, offset });
@@ -386,79 +382,21 @@ export function mountAcademyAtlas(container, graph) {
     draw();
   };
 
-  const onPointerDown = (event) => {
-    canvas.setPointerCapture(event.pointerId);
-    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    dragged = false;
-    gesture = { x: event.clientX, y: event.clientY, ox: targetOffset.x, oy: targetOffset.y };
-    canvas.classList.add("is-dragging");
-  };
-
-  const onPointerMove = (event) => {
-    if (!pointers.has(event.pointerId)) return;
-    pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    if (pointers.size === 1 && gesture) {
-      const dx = event.clientX - gesture.x;
-      const dy = event.clientY - gesture.y;
-      if (Math.abs(dx) + Math.abs(dy) > 5) dragged = true;
-      if (dragged) {
-        targetOffset.x = gesture.ox + dx;
-        targetOffset.y = gesture.oy + dy;
-        if (reduced) {
-          offset = { ...targetOffset };
-          draw();
-        }
+  const pointerController = createAtlasPointerController({
+    canvas,
+    getOffset: () => targetOffset,
+    setOffset: (nextOffset) => {
+      targetOffset = nextOffset;
+      if (reduced) {
+        offset = { ...targetOffset };
+        draw();
       }
-    } else if (pointers.size === 2) {
-      const points = [...pointers.values()];
-      const distance = Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y);
-      if (lastPinchDistance) {
-        const rect = canvas.getBoundingClientRect();
-        zoom(distance / lastPinchDistance,
-          (points[0].x + points[1].x) / 2 - rect.left,
-          (points[0].y + points[1].y) / 2 - rect.top);
-      }
-      lastPinchDistance = distance;
-      dragged = true;
-    }
-  };
-
-  const onPointerUp = (event) => {
-    pointers.delete(event.pointerId);
-    canvas.classList.remove("is-dragging");
-    if (!pointers.size) {
-      if (!dragged) {
-        const rect = canvas.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        const node = hit(x, y);
-        if (node) {
-          const now = performance.now();
-          const previous = lastClick;
-          if (previous && now - previous.time < 420 && Math.hypot(x - previous.x, y - previous.y) < 22) {
-            focusNode(node);
-            lastClick = null;
-          } else {
-            focusNode(node);
-            lastClick = { time: now, x, y, node };
-          }
-        }
-      }
-      gesture = null;
-      lastPinchDistance = 0;
-    } else if (pointers.size === 1) {
-      const point = [...pointers.values()][0];
-      gesture = { x: point.x, y: point.y, ox: targetOffset.x, oy: targetOffset.y };
-      lastPinchDistance = 0;
-      dragged = true;
-    }
-  };
-
-  const onWheel = (event) => {
-    event.preventDefault();
-    const rect = canvas.getBoundingClientRect();
-    zoom(event.deltaY < 0 ? 1.16 : 0.86, event.clientX - rect.left, event.clientY - rect.top);
-  };
+    },
+    isReducedMotion: () => reduced,
+    zoom,
+    hit,
+    focusNode
+  });
 
   const onRootNavigation = (event) => {
     const button = event.target.closest("[data-atlas-root]");
@@ -507,10 +445,10 @@ export function mountAcademyAtlas(container, graph) {
     }
   };
 
-  lifecycle.listen(canvas, "pointerdown", onPointerDown);
-  lifecycle.listen(canvas, "pointermove", onPointerMove);
-  lifecycle.listen(canvas, "pointerup", onPointerUp);
-  lifecycle.listen(canvas, "pointercancel", onPointerUp);
+  lifecycle.listen(canvas, "pointerdown", pointerController.onPointerDown);
+  lifecycle.listen(canvas, "pointermove", pointerController.onPointerMove);
+  lifecycle.listen(canvas, "pointerup", pointerController.onPointerUp);
+  lifecycle.listen(canvas, "pointercancel", pointerController.onPointerUp);
   lifecycle.listen(canvas, "wheel", onWheel, { passive: false });
   lifecycle.listen(container, "click", onControls);
   lifecycle.listen(container, "click", onRelationFilter);
