@@ -298,9 +298,9 @@ begin
  v_code:=upper(substr(replace(gen_random_uuid()::text,'-',''),1,20));
  v_snapshot:=jsonb_build_object('path_code',v_path.code,'path_title',v_path.title,'path_version',v_path.version_label,
   'required_steps', (select count(*) from public.academy_learning_path_items where path_id=p_path_id and is_required),
-  'assessment_results',(select coalesce(jsonb_agg(jsonb_build_object('assessment_id',pa.assessment_id,'minimum_score',pa.minimum_score,
-   'best_score',(select max(a.score) from public.academy_assessment_attempts a where a.user_id=v_user and a.assessment_id=pa.assessment_id and a.status='SUBMITTED')), '[]'::jsonb)
-   from public.academy_path_assessments pa where pa.path_id=p_path_id and pa.is_required));
+  'assessment_results',coalesce((select jsonb_agg(jsonb_build_object('assessment_id',pa.assessment_id,'minimum_score',pa.minimum_score,
+   'best_score',(select max(a.score) from public.academy_assessment_attempts a where a.user_id=v_user and a.assessment_id=pa.assessment_id and a.status='SUBMITTED')))
+   from public.academy_path_assessments pa where pa.path_id=p_path_id and pa.is_required),'[]'::jsonb));
  insert into public.academy_certificates(certificate_code,user_id,path_id,path_version,certificate_title,result_snapshot)
  values(v_code,v_user,p_path_id,v_path.version_label,v_path.title,v_snapshot)
  on conflict(user_id,path_id,path_version) do update set revoked_at=null
