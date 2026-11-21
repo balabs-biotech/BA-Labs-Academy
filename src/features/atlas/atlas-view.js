@@ -16,7 +16,7 @@ export function renderAcademyAtlas(graph) {
     <section class="page-intro atlas-page-intro">
       <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
       <h1>Atlas des connaissances</h1>
-      <p>Un réseau unique : départements, domaines, modules et parcours transversaux. Approche-toi pour révéler les ramifications, sélectionne un nœud pour en lire la fiche.</p>
+      <p>Un réseau unique : départements, sections, modules et parcours transversaux. Approche-toi pour révéler les ramifications, sélectionne un nœud pour en lire la fiche.</p>
     </section>
     <section class="academy-atlas" id="academy-atlas">
       <div class="atlas-topline">
@@ -157,7 +157,7 @@ export function mountAcademyAtlas(container, graph) {
     if (selected.entity_type === "PATHWAY" && Array.isArray(selected.data.sectionCodes)) {
       const domains = document.createElement("div");
       domains.className = "atlas-selection-tags";
-      selected.data.domainCodes.forEach((code) => {
+      selected.data.sectionCodes.forEach((code) => {
         const tag = document.createElement("span");
         tag.textContent = code;
         domains.append(tag);
