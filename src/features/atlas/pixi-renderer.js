@@ -48,15 +48,27 @@ export async function createPixiRenderer(canvas){
    const bend=Math.min(58,len*.19)*side*(.62+((seed>>>5)&63)/100);
    const drift=(((seed>>>12)&255)/255-.5)*Math.min(24,len*.09);
    const cx=(a.x+b.x)/2-dy/len*bend+dx/len*drift,cy=(a.y+b.y)/2+dx/len*bend+dy/len*drift;
-   const color=PALETTE[e.a.rootId]||0x91a99b,widthBase=e.verified?1.2:e.cross?.55:Math.max(.45,(e.depth===1?1.5:e.depth===2?1.15:.85));
+   const color=PALETTE[e.a.rootId]||0x91a99b,widthBase=e.basis==="academy-pathway-flow"?1.05:e.verified?1.2:e.cross?.55:Math.max(.45,(e.depth===1?1.5:e.depth===2?1.15:.85));
    if(!e.cross&&depth<=2&&len>34)filaments.moveTo(a.x,a.y).quadraticCurveTo(cx,cy,b.x,b.y).stroke({color,alpha:alpha*.12,width:widthBase*3.1,cap:"round"});
-   filaments.moveTo(a.x,a.y).quadraticCurveTo(cx,cy,b.x,b.y).stroke({color:e.verified?(e.basis==="notion-link"?0xb96b4d:e.basis==="academy-pathway"?0xa9a0d4:e.basis==="academy-domain"?0xb5b58d:e.basis==="academy-hierarchy"?color:0x7eaaa3):e.cross?0xb96b4d:color,alpha:alpha*(e.verified?.82:e.cross?.34:depth>=3?.42:depth===2?.62:.78),width:widthBase,cap:"round"});
+   filaments.moveTo(a.x,a.y).quadraticCurveTo(cx,cy,b.x,b.y).stroke({color:e.basis==="academy-pathway-flow"?0xe8c99d:e.verified?(e.basis==="notion-link"?0xb96b4d:e.basis==="academy-pathway"?0xa9a0d4:e.basis==="academy-domain"?0xb5b58d:e.basis==="academy-hierarchy"?color:0x7eaaa3):e.cross?0xb96b4d:color,alpha:alpha*(e.basis==="academy-pathway-flow"?.72:e.verified?.82:e.cross?.34:depth>=3?.42:depth===2?.62:.78),width:widthBase,cap:"round"});
    if(e.verified)junctions.circle(cx,cy,Math.max(1.25,1.8/Math.sqrt(scale))).fill({color:e.basis==="notion-link"?0xb96b4d:e.basis==="academy-pathway"?0xa9a0d4:e.basis==="academy-axis"?0xc88773:0x7eaaa3,alpha:.9});
    if(!e.cross&&len>24&&depth<5){
     const count=depth===1?4:depth===2?3:2,nx=-dy/len,ny=dx/len;
     for(let i=0;i<count;i++){const u=(i+1)/(count+1),x=(1-u)*(1-u)*a.x+2*(1-u)*u*cx+u*u*b.x,y=(1-u)*(1-u)*a.y+2*(1-u)*u*cy+u*u*b.y,side=((e.seed+i)%2?1:-1),reach=Math.min(28,Math.max(7,len*(.13-depth*.012))),ex=x+dx/len*reach*.35+nx*side*reach,ey=y+dy/len*reach*.35+ny*side*reach,mx=(x+ex)/2+nx*side*reach*.2,my=(y+ey)/2+ny*side*reach*.2;filaments.moveTo(x,y).quadraticCurveTo(mx,my,ex,ey).stroke({color,alpha:alpha*.43,width:Math.max(.38,.78-depth*.08),cap:"round"});}
    }
-   if(!reduced&&!e.cross&&alpha>.2){const particleCount=depth<=2&&len>150?3:depth<=2&&len>72?2:1;for(let particle=0;particle<particleCount;particle++){const phase=time*.00012+(seed%100)*.013+particle/particleCount,q=(phase*(depth===1?.7:.48))%1,u=1-q,x=u*u*a.x+2*u*q*cx+q*q*b.x,y=u*u*a.y+2*u*q*cy+q*q*b.y;filaments.circle(x,y,Math.max(.8,1.2*scale**.15)).fill({color:0xdce5d9,alpha:particleCount===1?.82:.68});}}
+   if(!reduced&&alpha>.2&&(!e.cross||e.basis==="academy-pathway-flow")){
+    const transfer=e.basis==="academy-pathway-flow";
+    const particleCount=transfer?3:depth<=2&&len>150?3:depth<=2&&len>72?2:1;
+    for(let particle=0;particle<particleCount;particle++){
+     const phase=time*(transfer?.000085:.00012)+(seed%100)*.013+particle/particleCount;
+     const q=(phase*(transfer?.34:depth===1?.7:.48))%1,u=1-q;
+     const x=u*u*a.x+2*u*q*cx+q*q*b.x,y=u*u*a.y+2*u*q*cy+q*q*b.y;
+     const particleColor=transfer?0xe8c99d:0xdce5d9;
+     const radius=transfer?Math.max(1.15,1.65*scale**.12):Math.max(.8,1.2*scale**.15);
+     filaments.circle(x,y,radius*2.1).fill({color:particleColor,alpha:transfer?.16:.08});
+     filaments.circle(x,y,radius).fill({color:particleColor,alpha:transfer?.94:particleCount===1?.82:.68});
+    }
+   }
   }
   for(const n of nodes){
    let alpha=alphaFor(n.level);if(alpha<.015)continue;

@@ -672,3 +672,22 @@
 .knowledge-module-link h4{color:#d8e2da}
 @media(max-width:760px){.module-detail-layout{grid-template-columns:1fr}.module-detail-aside{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.module-detail-aside>.eyebrow{grid-column:1/-1}.module-detail-aside>a,.module-detail-aside>div{padding-bottom:9px}.module-identity-strip{gap:8px;padding:11px}.module-status{margin-left:0;width:100%}}
 @media(max-width:480px){.module-detail-main,.module-detail-aside{padding:17px}.module-placeholder-grid{grid-template-columns:1fr}.module-placeholder-grid>div{min-height:82px}.module-neighbor-nav{grid-template-columns:1fr}.module-neighbor-next{text-align:left}}
+
+
+/* Atlas spatial scale and navigation clarity */
+.academy-atlas .atlas-stage{overflow:hidden}
+.academy-atlas .atlas-root-navigation{display:grid;gap:8px}
+.academy-atlas .atlas-root-group--departments .atlas-root-items{display:flex;flex-wrap:wrap;gap:6px}
+.academy-atlas .atlas-root-group--pathways .atlas-root-items{display:flex;flex-wrap:wrap;gap:6px}
+.academy-atlas .atlas-root-chip{transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+.academy-atlas .atlas-root-chip.is-active{transform:translateY(-1px);box-shadow:0 0 0 1px currentColor,0 5px 22px rgba(0,0,0,.18)}
+.academy-atlas .atlas-zoom-readout{align-self:center;min-width:78px;padding:5px 8px;border:1px solid rgba(166,195,177,.18);border-radius:4px;background:rgba(12,22,20,.82);color:#b9c9bd;font-size:9px;letter-spacing:.06em;text-align:center}
+.academy-atlas .atlas-legend .legend-flow{color:#e8c99d}
+.academy-atlas .atlas-legend .legend-flow:before{background:#e8c99d;box-shadow:0 0 8px rgba(232,201,157,.65)}
+@media(max-width:700px){
+ .academy-atlas .atlas-root-navigation{gap:5px}
+ .academy-atlas .atlas-root-group--departments .atlas-root-items,
+ .academy-atlas .atlas-root-group--pathways .atlas-root-items{flex-wrap:nowrap;overflow-x:auto;padding:2px 1px 6px;scrollbar-width:thin;overscroll-behavior-x:contain}
+ .academy-atlas .atlas-root-chip{flex:0 0 auto}
+ .academy-atlas .atlas-zoom-readout{display:none}
+}

@@ -93,10 +93,10 @@ export function buildAcademyGraph(departments, domains, pathways) {
       ? Math.PI * 1.72
       : Math.min(2.5, 1.08 + Math.log2(items.length + 1) * 0.4);
     const distance = depth === 1
-      ? 245 + Math.sqrt(items.length) * 15
+      ? 390 + Math.sqrt(items.length) * 22
       : depth === 2
-        ? 180 + Math.sqrt(items.length) * 18
-        : Math.max(34, 64 - depth * 3);
+        ? 285 + Math.sqrt(items.length) * 26
+        : Math.max(58, 92 - depth * 4);
     items.forEach((item, index) => {
       const seed = hash(item.id);
       const fraction = items.length === 1 ? 0 : index / (items.length - 1) - 0.5;
@@ -140,11 +140,11 @@ export function buildAcademyGraph(departments, domains, pathways) {
     } else if (item.kind === "department") {
       const orbitIndex = satelliteDepartments.findIndex((department) => department.code === item.code);
       angle = -Math.PI / 2 + orbitIndex * (Math.PI * 2 / satelliteDepartments.length);
-      radius = 660;
+      radius = 1540;
     } else {
       const orbitIndex = pathwayItems.findIndex((pathway) => pathway.code === item.code);
       angle = -Math.PI / 2 + (orbitIndex + 0.5) * (Math.PI * 2 / pathwayItems.length);
-      radius = 1110;
+      radius = 2520;
     }
     const jitter = item.kind === "department" && item.code === "MYC" ? 0 : (((seed >>> 8) & 255) / 255 - 0.5) * 16;
     const x = item.kind === "department" && item.code === "MYC" ? 0 : Math.cos(angle) * (radius + jitter);
@@ -254,6 +254,21 @@ export function buildAcademyGraph(departments, domains, pathways) {
         verified: true,
         basis: "academy-pathway",
         label: "Section mobilisée"
+      });
+    }
+    // Ordered section links expose the transfer sequence defined by each pathway.
+    const orderedSections = (pathway.sectionCodes || []).map((code) => sectionNodes.get(code)).filter(Boolean);
+    for (let index = 0; index < orderedSections.length - 1; index += 1) {
+      const from = orderedSections[index];
+      const to = orderedSections[index + 1];
+      if (from.id === to.id) continue;
+      addEdge(from, to, {
+        id: "pathway-flow:" + pathway.code + ":" + from.entity_key + ":" + to.entity_key,
+        relationType: "TRANSFERS_TO",
+        cross: true,
+        verified: true,
+        basis: "academy-pathway-flow",
+        label: "Transfert pédagogique · " + pathway.code
       });
     }
   });

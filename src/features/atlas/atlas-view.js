@@ -55,7 +55,8 @@ export function renderAcademyAtlas(graph) {
         <nav class="atlas-controls" aria-label="Contrôles de la carte">
           <button type="button" class="btn btn-square btn-sm" data-atlas-action="in" aria-label="Zoom avant">＋</button>
           <button type="button" class="btn btn-square btn-sm" data-atlas-action="out" aria-label="Zoom arrière">−</button>
-          <button type="button" class="btn btn-square btn-sm" data-atlas-action="reset" aria-label="Recentrer la carte">⌖</button>
+          <button type="button" class="btn btn-square btn-sm" data-atlas-action="reset" aria-label="Vue générale">⌖</button>
+          <span class="atlas-zoom-readout" id="atlas-zoom-readout" aria-live="polite">Vue globale</span>
           <button type="button" class="btn btn-square btn-sm" data-atlas-action="back" aria-label="Vue précédente" disabled>↶</button>
         </nav>
         <div class="atlas-breadcrumbs" id="academy-atlas-breadcrumbs" aria-live="polite">BA Labs Academy / Vue générale</div>
@@ -70,6 +71,7 @@ export function renderAcademyAtlas(graph) {
         <span class="legend-section">Section</span>
         <span class="legend-module">Module</span>
         <span class="legend-link">Relation entre disciplines</span>
+        <span class="legend-flow">Transfert de parcours · flux animé</span>
       </div>
     </section>`;
 }
@@ -81,6 +83,7 @@ export function mountAcademyAtlas(container, graph) {
   const selection = container.querySelector("#academy-atlas-selection");
   const breadcrumbs = container.querySelector("#academy-atlas-breadcrumbs");
   const engineState = container.querySelector("#atlas-engine-state");
+  const zoomReadout = container.querySelector("#atlas-zoom-readout");
   const backButton = container.querySelector('[data-atlas-action="back"]');
   if (!canvas || !stage || !loading || !selection) return () => {};
 
@@ -138,11 +141,12 @@ export function mountAcademyAtlas(container, graph) {
     const maxY = Math.max(...ys);
     const spanX = maxX - minX + 230;
     const spanY = maxY - minY + 220;
-    targetScale = clamp(Math.min((width - padX * 2) / spanX, (height - padY * 2) / spanY), 0.12, 0.82);
+    targetScale = clamp(Math.min((width - padX * 2) / spanX, (height - padY * 2) / spanY), 0.075, 0.82);
     targetOffset = { x: -((minX + maxX) / 2) * targetScale, y: -((minY + maxY) / 2) * targetScale };
   };
 
   const updateBreadcrumbs = () => {
+    if (zoomReadout) zoomReadout.textContent = targetScale < 0.3 ? "Vue globale" : targetScale < 1.25 ? "Constellations" : targetScale < 3 ? "Sections" : "Modules";
     if (!selected) {
       breadcrumbs.textContent = "BA Labs Academy / Vue générale";
       return;
@@ -252,8 +256,8 @@ export function mountAcademyAtlas(container, graph) {
       history.push({ scale: targetScale, offset: { ...targetOffset }, selected });
       if (history.length > 80) history.shift();
     }
-    const zoomLevel = zoomTo ?? (node.level === 0 ? 0.88 : node.level === 1 ? 1.8 : 3.6);
-    targetScale = clamp(zoomLevel, 0.12, 12);
+    const zoomLevel = zoomTo ?? (node.level === 0 ? 0.96 : node.level === 1 ? 2.15 : 4.1);
+    targetScale = clamp(zoomLevel, 0.075, 12);
     targetOffset = { x: -node.x * targetScale, y: -node.y * targetScale };
     selected = node;
     updateSelection();
@@ -261,7 +265,7 @@ export function mountAcademyAtlas(container, graph) {
   };
 
   const zoom = (factor, x = width / 2, y = height / 2) => {
-    const next = clamp(targetScale * factor, 0.12, 12);
+    const next = clamp(targetScale * factor, 0.075, 12);
     const ratio = next / targetScale;
     targetOffset.x = (x - width / 2) - (x - width / 2 - targetOffset.x) * ratio;
     targetOffset.y = (y - height / 2) - (y - height / 2 - targetOffset.y) * ratio;

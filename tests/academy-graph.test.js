@@ -73,3 +73,20 @@ test("Every module node has a stable route and canonical section identity", () =
     assert.ok(node.data.moduleIndex > 0);
   }
 });
+
+
+test("The Academy universe separates disciplinary territories and pathway transfers", () => {
+  const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
+  const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
+  const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
+  const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
+  assert.ok(meanDepartmentRadius > 1450 && meanDepartmentRadius < 1650);
+  assert.ok(meanPathwayRadius > 2400 && meanPathwayRadius < 2650);
+  const transfers = graph.edges.filter((edge) => edge.relation_type === "TRANSFERS_TO");
+  assert.ok(transfers.length > 0);
+  assert.ok(transfers.every((edge) => edge.verified && edge.basis === "academy-pathway-flow"));
+  for (const edge of transfers) {
+    assert.equal(edge.a.entity_type, "SECTION");
+    assert.equal(edge.b.entity_type, "SECTION");
+  }
+});
