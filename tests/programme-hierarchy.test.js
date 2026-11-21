@@ -8,6 +8,8 @@ const migration=await readFile(new URL("../supabase/migrations/20261122018000_ac
 const depthMigration=await readFile(new URL("../supabase/migrations/20261122018200_academy_programme_hierarchy_depth_v1.sql",import.meta.url),"utf8");
 const curriculumMigration=await readFile(new URL("../supabase/migrations/20261122019500_academy_programme_curriculum_mapping_v1.sql",import.meta.url),"utf8");
 const pathMappingMigration=await readFile(new URL("../supabase/migrations/20261122019600_academy_programme_node_paths_v1.sql",import.meta.url),"utf8");
+const identityMigration=await readFile(new URL("../supabase/migrations/20261122018300_academy_programme_node_identity_preservation_v1.sql",import.meta.url),"utf8");
+
 
 
 test("programme hierarchy has its own curriculum entity and ordered tree",()=>{
@@ -84,4 +86,11 @@ test("curriculum mapping tables are protected by RLS and read-only outside contr
 test("programme hierarchy preview is refreshed after initial load and structural edits",()=>{
  assert.match(main,/programme-hierarchy-preview/);
  assert.match(main,/refreshHierarchyPreview/);
+});
+
+test("editing a programme preserves stable node IDs for future curriculum links",()=>{
+ assert.match(identityMigration,/select n\.id into v_node_id/);
+ assert.match(identityMigration,/update public\.academy_program_nodes set parent_node_id/);
+ assert.match(identityMigration,/stable node identifiers preserved/);
+ assert.doesNotMatch(identityMigration,/delete from public\.academy_program_nodes where program_id=v_id/);
 });
