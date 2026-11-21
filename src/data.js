@@ -17,10 +17,17 @@ async function readTable(table, params) {
   return response.json();
 }
 
-function resolveAtlasTitles(nodes, departments, domains, content) {
+function resolveAtlasTitles(nodes, departments, domains, content, learningPaths, competencies) {
   const titles = new Map();
   for (const item of departments) titles.set(`DEPARTMENT:${item.code}`, item.title);
   for (const item of domains) titles.set(`DOMAIN:${item.code}`, item.title);
+  for (const item of learningPaths) {
+    titles.set(`PATHWAY:${item.code}`, item.title);
+    titles.set(`PATHWAY:${item.slug}`, item.title);
+  }
+  for (const item of competencies) {
+    titles.set(`SKILL:${item.code}`, item.title);
+  }
   for (const item of content) {
     titles.set(`CONTENT:${item.business_id}`, item.title);
     titles.set(`MODULE:${item.business_id}`, item.title);
@@ -93,7 +100,7 @@ export async function loadAcademyData() {
       status: "eq.PUBLISHED"
     })
   ]);
-  const nodes = resolveAtlasTitles(rawNodes, departments, domains, content);
+  const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
     learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies,
