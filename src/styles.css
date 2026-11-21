@@ -264,3 +264,8 @@
 .training-billing-list>div{display:grid;gap:.45rem}
 .training-billing-list>div>span{font-size:.78rem;color:var(--muted)}
 .training-billing-list .training-inline-form{padding-top:.4rem;border-top:1px dashed var(--line)}
+
+.training-qr{display:flex;justify-content:center;align-items:center;width:260px;max-width:100%;min-height:260px;padding:10px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.training-qr canvas,.training-qr img{display:block;max-width:100%;height:auto}
+.training-issued-result details{font-size:.8rem;color:var(--muted)}
+.training-issued-result summary{cursor:pointer}
