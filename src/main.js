@@ -1,13 +1,14 @@
 import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, saveProgramDraft, publishProgram, publishDepartment, publishDomain, saveCompetency, saveCompetencyDomains, saveCompetencyPrerequisites, publishCompetency, saveContentEditorial, saveContentAssets, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, enrollInTrainingSession, saveTrainingOffering, saveTrainingSession, setTrainingStatus, recordTrainingAttendance, setTrainingEnrollmentStatus, issueTrainingDocument, revokeTrainingDocument, verifyTrainingDocument, saveTrainingPartner, saveTrainingAgreement, setTrainingReferenceStatus, saveTrainingBillingRecord, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, saveAssessmentCompetencies, publishAssessment, savePathAssessments } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
-import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
+import { renderAcademyAtlas, mountAcademyAtlas } from "./features/atlas/atlas-view.js";
+import { buildAcademyGraph } from "./features/atlas/atlas-graph.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
 import { renderKnowledgeMap } from "./features/catalogue/render.js";
 import { catalogueMap } from "./catalogue-map.js";
-import { buildCatalogueAtlas } from "./features/catalogue/atlas.js";
+import { cataloguePathways } from "./catalogue-pathways.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
@@ -19,24 +20,42 @@ let data = {
 let loadError = null;
 let unbindAtlas = () => {};
 let currentSession = null;
-let atlasViewNodes = [];
-let atlasViewEdges = [];
 
 function emptyState(title, description) {
   return `<div class="empty-state"><span class="empty-symbol">＋</span><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></div>`;
 }
 
+function mappedDepartments() {
+  return catalogueMap.map((item) => {
+    const published = data.departments.find((entry) => entry.code === item.code);
+    return {
+      ...item,
+      slug: published?.slug || item.code.toLowerCase(),
+      summary: published?.summary || item.description,
+      isPublished: Boolean(published)
+    };
+  });
+}
+
 function departmentCard(item) {
-  const count = data.domains.filter((domain) => domain.department_code === item.code).length;
+  const count = item.sections?.length ?? data.domains.filter((domain) => domain.department_code === item.code).length;
+  const label = item.sections ? "section(s) cartographiée(s)" : "domaine(s) publié(s)";
   return `<a class="department-card" href="#/departements/${encodeURIComponent(item.slug)}">
     <span class="card-index">${escapeHtml(item.code)}</span>
     <h3>${escapeHtml(item.title)}</h3>
-    <p>${escapeHtml(item.summary || "Présentation en préparation.")}</p>
-    <span class="card-meta">${count} domaine${count > 1 ? "s" : ""} <b>↗</b></span>
+    <p>${escapeHtml(item.summary || item.description || "Présentation en préparation.")}</p>
+    <span class="card-meta">${count} ${label} <b>↗</b></span>
   </a>`;
 }
 
 function homeView() {
+  const departments = mappedDepartments();
+  const publishedPaths = data.learningPaths;
+  const plannedPaths = cataloguePathways.filter((path) => !publishedPaths.some((item) => item.code === path.code));
+  const pathCards = [
+    ...publishedPaths.slice(0, 3).map(pathwayCard),
+    ...plannedPaths.slice(0, Math.max(0, 3 - Math.min(3, publishedPaths.length))).map(cataloguePathwayCard)
+  ];
   return `<section class="hero">
     <div class="hero-copy">
       <span class="eyebrow"><i></i> SCIENCE · TRANSMISSION · EXPLORATION</span>
@@ -52,32 +71,38 @@ function homeView() {
     </div>
   </section>
   <section class="section-block">
-    <div class="section-heading"><div><span class="eyebrow">STRUCTURE ACADÉMIQUE</span><h2>Départements</h2></div><a class="text-link" href="#/departements">Voir la structure <span>→</span></a></div>
-    ${data.departments.length ? `<div class="card-grid">${data.departments.slice(0, 4).map(departmentCard).join("")}</div>` : emptyState("Les départements seront bientôt ouverts", "La structure académique est configurée. Les fiches publiques apparaîtront après validation éditoriale.")}
+    <div class="section-heading"><div><span class="eyebrow">STRUCTURE ACADÉMIQUE</span><h2>Départements</h2></div><a class="text-link" href="#/departements">Voir les 9 départements <span>→</span></a></div>
+    <div class="card-grid">${departments.slice(0, 4).map(departmentCard).join("")}</div>
+    <p class="taxonomy-intro">Référentiel cartographié. Les fiches disciplinaires restent en préparation éditoriale.</p>
   </section>
   <section class="section-block">
-    <div class="section-heading"><div><span class="eyebrow">APPRENTISSAGE STRUCTURÉ</span><h2>Parcours pédagogiques</h2></div><a class="text-link" href="#/parcours">Voir les parcours <span>→</span></a></div>
-    ${data.learningPaths.length ? `<div class="pathway-grid">${data.learningPaths.slice(0, 3).map(pathwayCard).join("")}</div>` : emptyState("Parcours en préparation", "Les séquences, prérequis et compétences sont prêts à accueillir les futurs parcours validés.")}
+    <div class="section-heading"><div><span class="eyebrow">APPRENTISSAGE PAR OBJECTIF</span><h2>Parcours pratiques</h2></div><a class="text-link" href="#/parcours">Voir les parcours <span>→</span></a></div>
+    ${pathCards.length ? `<div class="pathway-grid">${pathCards.join("")}</div>` : emptyState("Parcours en préparation", "Les parcours seront ajoutés au fur et à mesure de la cartographie.")}
   </section>
-  <section class="section-block feature-strip"><div><span class="eyebrow">EXPLORATION TRANSVERSALE</span><h2>L’Atlas des connaissances</h2><p>Visualiser les liens entre disciplines, domaines, ressources et parcours.</p></div><a class="button button-outline" href="#/atlas">Explorer l’Atlas <span>↗</span></a></section>`;
+  <section class="section-block feature-strip"><div><span class="eyebrow">EXPLORATION TRANSVERSALE</span><h2>L’Atlas des connaissances</h2><p>Un réseau navigable qui relie les départements, les domaines, les modules et les parcours.</p></div><a class="button button-outline" href="#/atlas">Explorer l’Atlas <span>↗</span></a></section>`;
 }
 
 function departmentsView() {
-  return `<section class="page-intro"><span class="eyebrow">ORGANISATION DES SAVOIRS</span><h1>Départements</h1><p>Les grands pôles scientifiques de BA Labs Academy.</p></section>
-  ${data.departments.length ? `<div class="card-grid">${data.departments.map(departmentCard).join("")}</div>` : emptyState("Aucun département publié", "Les départements existent dans le référentiel interne, mais aucun n’est encore publié pour le public.")}`;
+  const departments = mappedDepartments();
+  return `<section class="page-intro"><span class="eyebrow">ORGANISATION DES SAVOIRS · CARTOGRAPHIE DE TRAVAIL</span><h1>Départements</h1><p>Neuf pôles disciplinaires sont déjà identifiés. Leur présence dans cette cartographie ne signifie pas que leurs cours sont publiés.</p></section>
+    <div class="knowledge-catalogue-stats"><div><strong>${departments.length}</strong><span>départements cartographiés</span></div><div><strong>${catalogueMap.reduce((sum, item) => sum + item.sections.length, 0)}</strong><span>sections thématiques</span></div><div><strong>${catalogueMap.reduce((sum, item) => sum + item.sections.reduce((n, section) => n + section.modules.length, 0), 0)}</strong><span>modules prévus</span></div></div>
+    <div class="card-grid">${departments.map(departmentCard).join("")}</div>`;
 }
 
 function departmentDetail(slug) {
-  const department = data.departments.find((item) => item.slug === slug);
-  if (!department) return notFound("Département indisponible", "Ce département n’est pas publié ou n’existe pas dans le catalogue public.");
-  const domains = data.domains.filter((item) => item.department_code === department.code);
-  const contentIds = new Set(data.departmentLinks.filter((link) => link.department_code === department.code).map((link) => link.content_id));
-  const resources = data.content.filter((item) => contentIds.has(item.id));
-  return `<section class="page-intro"><span class="eyebrow"><a href="#/departements">DÉPARTEMENTS</a> / ${escapeHtml(department.code)}</span><h1>${escapeHtml(department.title)}</h1><p>${escapeHtml(department.summary)}</p></section>
-  <section class="section-block"><div class="section-heading"><div><span class="eyebrow">STRUCTURE DISCIPLINAIRE</span><h2>Domaines associés</h2></div><span class="resource-level">${domains.length} domaine(s) publié(s)</span></div>
-  <div class="domain-list">${domains.length ? domains.map((domain) => `<a class="domain-row domain-link" href="#/domaines/${encodeURIComponent(domain.slug)}"><span>${escapeHtml(domain.code)}</span><div><h3>${escapeHtml(domain.title)}</h3><p>${escapeHtml(domain.summary)}</p></div><b>↗</b></a>`).join("") : emptyState("Domaines en préparation", "Les domaines de ce département ne sont pas encore publiés.")}</div>
-  <div class="section-heading"><div><span class="eyebrow">RESSOURCES PUBLIÉES</span><h2>Pour approfondir</h2></div></div>
-  <div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource associée", "Les ressources validées seront reliées à ce département au fil des publications.")}</div></section>`;
+  const department = mappedDepartments().find((item) => item.slug === slug || item.code.toLowerCase() === slug);
+  if (!department) return notFound("Département indisponible", "Ce département n’existe pas dans la cartographie actuelle.");
+  const resources = data.content.filter((item) => {
+    const links = data.departmentLinks.filter((link) => link.content_id === item.id);
+    return links.some((link) => link.department_code === department.code);
+  });
+  const sections = department.sections || [];
+  return `<section class="page-intro"><span class="eyebrow"><a href="#/departements">DÉPARTEMENTS</a> / ${escapeHtml(department.code)}</span><h1>${escapeHtml(department.title)}</h1><p>${escapeHtml(department.description || department.summary)}</p></section>
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">STRUCTURE THÉMATIQUE</span><h2>Sections cartographiées</h2></div><span class="resource-level">${sections.length} section(s)</span></div>
+      <div class="domain-list">${sections.length ? sections.map((section) => `<a class="domain-row domain-link" href="#/domaines/${encodeURIComponent(section.code.toLowerCase())}"><span>${escapeHtml(section.code)}</span><div><h3>${escapeHtml(section.title)}</h3><p>${escapeHtml(section.description)}</p><small>${section.modules.length} modules prévus</small></div><b>↗</b></a>`).join("") : emptyState("Sections en préparation", "Les sections de ce département seront ajoutées à la cartographie.")}</div>
+      <div class="section-heading"><div><span class="eyebrow">RESSOURCES VALIDÉES</span><h2>Pour approfondir</h2></div></div>
+      <div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource publiée", "Les ressources validées seront reliées à ce département au fil des publications.")}</div>
+    </section>`;
 }
 
 function resourceCards(items) {
@@ -164,14 +189,22 @@ function safeExternalUrl(value) {
 
 function domainDetail(slug) {
   const domain = data.domains.find((item) => item.slug === slug);
-  if (!domain) return notFound("Domaine indisponible", "Ce domaine n’est pas publié ou n’existe pas dans le catalogue public.");
-  const department = data.departments.find((item) => item.code === domain.department_code);
-  const contentIds = new Set(data.domainLinks.filter((link) => link.domain_code === domain.code).map((link) => link.content_id));
-  const resources = data.content.filter((item) => contentIds.has(item.id));
-  return `<section class="page-intro"><span class="eyebrow"><a href="#/departements">DÉPARTEMENTS</a> / DOMAINE</span><h1>${escapeHtml(domain.title)}</h1><p>${escapeHtml(domain.summary)}</p></section>
-  <div class="detail-meta"><span>${escapeHtml(domain.code)}</span>${department ? `<a href="#/departements/${encodeURIComponent(department.slug)}">${escapeHtml(department.title)} ↗</a>` : ""}</div>
-  <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RESSOURCES ASSOCIÉES</span><h2>Pour approfondir</h2></div></div>
-  <div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource associée", "Les ressources validées seront reliées à ce domaine au fil des publications.")}</div></section>`;
+  if (domain) {
+    const department = data.departments.find((item) => item.code === domain.department_code);
+    const contentIds = new Set(data.domainLinks.filter((link) => link.domain_code === domain.code).map((link) => link.content_id));
+    const resources = data.content.filter((item) => contentIds.has(item.id));
+    return `<section class="page-intro"><span class="eyebrow"><a href="#/departements">DÉPARTEMENTS</a> / DOMAINE</span><h1>${escapeHtml(domain.title)}</h1><p>${escapeHtml(domain.summary)}</p></section>
+      <div class="detail-meta"><span>${escapeHtml(domain.code)}</span>${department ? `<a href="#/departements/${encodeURIComponent(department.slug)}">${escapeHtml(department.title)} ↗</a>` : ""}</div>
+      <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RESSOURCES ASSOCIÉES</span><h2>Pour approfondir</h2></div></div><div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource associée", "Les ressources validées seront reliées à ce domaine au fil des publications.")}</div></section>`;
+  }
+  const mapped = catalogueMap.flatMap((department) => department.sections.map((section) => ({ ...section, department })))
+    .find((section) => section.code.toLowerCase() === slug);
+  if (!mapped) return notFound("Domaine indisponible", "Cette entrée n’existe pas dans la cartographie actuelle.");
+  return `<section class="page-intro"><span class="eyebrow"><a href="#/departements/${mapped.department.code.toLowerCase()}">${escapeHtml(mapped.department.title)}</a> / SECTION</span><h1>${escapeHtml(mapped.title)}</h1><p>${escapeHtml(mapped.description)}</p></section>
+    <div class="detail-meta"><span>${escapeHtml(mapped.code)}</span><span>${mapped.modules.length} modules cartographiés</span><span>Fiches non rédigées</span></div>
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">MODULES ASSOCIÉS</span><h2>Connaissances à développer</h2></div></div>
+      <div class="knowledge-module-grid">${mapped.modules.map((module,index)=>`<article class="knowledge-module"><span>${escapeHtml(mapped.code)} · ${String(index+1).padStart(2,"0")}</span><h4>${escapeHtml(module)}</h4><small>Module cartographié · fiche à développer</small></article>`).join("")}</div>
+    </section>`;
 }
 
 function pathwayCard(path) {
@@ -182,9 +215,7 @@ function pathwayCard(path) {
     INTERMEDIATE: "Intermédiaire",
     ADVANCED: "Avancé"
   }[path.difficulty_level] || path.difficulty_level;
-  const duration = path.estimated_duration_minutes
-    ? `${path.estimated_duration_minutes} min`
-    : "Durée à définir";
+  const duration = path.estimated_duration_minutes ? `${path.estimated_duration_minutes} min` : "Durée à définir";
   return `<a class="pathway-card" href="#/parcours/${encodeURIComponent(path.slug)}">
     <span class="eyebrow">PARCOURS · ${escapeHtml(difficulty)}</span>
     <h3>${escapeHtml(path.title)}</h3>
@@ -193,13 +224,24 @@ function pathwayCard(path) {
   </a>`;
 }
 
-function learningPathsView() {
-  return `<section class="page-intro"><span class="eyebrow">PROGRESSION PÉDAGOGIQUE</span><h1>Parcours</h1><p>Des séquences structurées avec objectifs, ressources et prérequis explicites.</p></section>
-  ${data.learningPaths.length
-    ? `<div class="pathway-grid">${data.learningPaths.map(pathwayCard).join("")}</div>`
-    : emptyState("Les parcours sont en préparation", "Le moteur de parcours, les prérequis et le modèle de progression sont configurés. Les parcours seront visibles après leur validation éditoriale.")}`;
+function cataloguePathwayCard(path) {
+  return `<a class="pathway-card catalogue-pathway-card" href="#/parcours/${encodeURIComponent(path.slug)}">
+    <span class="eyebrow">PARCOURS · CARTOGRAPHIÉ · ${escapeHtml(path.code)}</span>
+    <h3>${escapeHtml(path.title)}</h3>
+    <p>${escapeHtml(path.summary)}</p>
+    <span class="pathway-meta">${path.domainCodes.length} domaines mobilisés · séquence à construire <b>↗</b></span>
+  </a>`;
 }
 
+function learningPathsView() {
+  const published = data.learningPaths;
+  const planned = cataloguePathways.filter((path) => !published.some((item) => item.code === path.code));
+  return `<section class="page-intro"><span class="eyebrow">PROGRESSION PAR OBJECTIF</span><h1>Parcours</h1><p>Des itinéraires souples orientés vers une capacité pratique. Les parcours cartographiés ne sont pas encore des formations ouvertes : leur séquence sera construite à partir des modules et ressources validés.</p></section>
+    <div class="knowledge-catalogue-stats"><div><strong>${published.length}</strong><span>parcours publiés</span></div><div><strong>${planned.length}</strong><span>parcours cartographiés</span></div><div><strong>${planned.reduce((sum,path)=>sum+path.domainCodes.length,0)}</strong><span>rattachements disciplinaires</span></div></div>
+    ${published.length ? `<section class="section-block"><div class="section-heading"><div><span class="eyebrow">PARCOURS OUVERTS</span><h2>Formations disponibles</h2></div></div><div class="pathway-grid">${published.map(pathwayCard).join("")}</div></section>` : ""}
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">CARTOGRAPHIE ÉDITORIALE</span><h2>Parcours à construire</h2></div></div>
+      ${planned.length ? `<div class="pathway-grid">${planned.map(cataloguePathwayCard).join("")}</div>` : emptyState("Tous les parcours cartographiés sont publiés", "La cartographie initiale a été transformée en parcours ouverts.")}</section>`;
+}
 
 function assessmentDetail(assessmentId, attemptId = "") {
   if (!currentSession?.user) return loginView();
@@ -234,76 +276,52 @@ function certificateView(code = "") {
 
 function learningPathDetail(slug) {
   const path = data.learningPaths.find((item) => item.slug === slug);
-  if (!path) return notFound("Parcours indisponible", "Ce parcours n’est pas publié ou n’existe pas dans le catalogue public.");
+  if (!path) {
+    const planned = cataloguePathways.find((item) => item.slug === slug);
+    if (!planned) return notFound("Parcours indisponible", "Ce parcours n’existe pas dans la cartographie actuelle.");
+    const domains = planned.domainCodes.map((code) => catalogueMap.flatMap((department) => department.sections).find((section) => section.code === code)).filter(Boolean);
+    const departments = planned.departmentCodes.map((code) => mappedDepartments().find((item) => item.code === code)).filter(Boolean);
+    return `<section class="page-intro"><span class="eyebrow"><a href="#/parcours">PARCOURS</a> / ${escapeHtml(planned.code)} · CARTOGRAPHIÉ</span><h1>${escapeHtml(planned.title)}</h1><p>${escapeHtml(planned.summary)}</p></section>
+      <div class="pathway-overview"><span>Finalité pratique</span><span>${domains.length} domaines mobilisés</span><span>Séquence à construire</span></div>
+      <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PUBLIC VISÉ</span><h2>À qui s’adresse ce parcours ?</h2></div></div><p class="taxonomy-intro">${escapeHtml(planned.target)}</p></section>
+      <section class="section-block"><div class="section-heading"><div><span class="eyebrow">ANCRAGE DISCIPLINAIRE</span><h2>Départements reliés</h2></div></div><div class="competency-list">${departments.map((item)=>`<a class="competency-chip" href="#/departements/${encodeURIComponent(item.slug)}"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.code)}</span></a>`).join("")}</div></section>
+      <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PÉRIMÈTRE SCIENTIFIQUE</span><h2>Domaines mobilisés</h2></div></div><div class="domain-list">${domains.map((item)=>`<a class="domain-row domain-link" href="#/domaines/${encodeURIComponent(item.code.toLowerCase())}"><span>${escapeHtml(item.code)}</span><div><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p></div><b>↗</b></a>`).join("")}</div></section>
+      <p class="progress-note">Ce parcours est une entrée de cartographie, pas une formation ouverte. Les étapes, prérequis, évaluations et ressources seront définis après validation des modules.</p>`;
+  }
   const rawItems = data.pathItems.filter((item) => item.path_id === path.id);
-  const sequence = resolvePathItems(
-    rawItems,
-    data.pathPrerequisites.filter((relation) => relation.path_id === path.id),
-    data.pathItemProgress
-  );
+  const sequence = resolvePathItems(rawItems, data.pathPrerequisites.filter((relation) => relation.path_id === path.id), data.pathItemProgress);
   const contentById = new Map(data.content.map((item) => [item.id, item]));
-  const competencyIds = new Set(
-    data.contentCompetencies
-      .filter((relation) => rawItems.some((item) => item.content_id === relation.content_id))
-      .map((relation) => relation.competency_id)
-  );
+  const competencyIds = new Set(data.contentCompetencies.filter((relation) => rawItems.some((item) => item.content_id === relation.content_id)).map((relation) => relation.competency_id));
   const competencies = data.competencies.filter((item) => competencyIds.has(item.id));
   const pathProgress = buildPathProgress(rawItems, data.pathItemProgress);
   const requiredAssessments = (data.pathAssessments || []).filter((item)=>item.path_id===path.id);
   const assessmentsComplete = requiredAssessments.filter((item)=>item.is_required).every((item)=>(data.assessmentAttempts||[]).some((attempt)=>attempt.assessment_id===item.assessment_id && attempt.status==="SUBMITTED" && attempt.passed && Number(attempt.score)>=Number(item.minimum_score)));
+  const enrolled = data.enrollments.some((record) => record.path_id === path.id);
   const certificateReady = currentSession && enrolled && pathProgress.percent>=100 && assessmentsComplete;
   const certificate = (data.certificates||[]).find((item)=>item.path_id===path.id && !item.revoked_at);
-  const difficulty = {
-    INTRODUCTORY: "Initiation",
-    FOUNDATION: "Fondamental",
-    INTERMEDIATE: "Intermédiaire",
-    ADVANCED: "Avancé"
-  }[path.difficulty_level] || path.difficulty_level;
-  const enrolled = data.enrollments.some((record) => record.path_id === path.id);
+  const difficulty = { INTRODUCTORY:"Initiation", FOUNDATION:"Fondamental", INTERMEDIATE:"Intermédiaire", ADVANCED:"Avancé" }[path.difficulty_level] || path.difficulty_level;
   const steps = sequence.map((step, index) => {
     const resource = contentById.get(step.content_id);
     const title = resource?.title || "Ressource indisponible";
     const description = resource?.summary || "Description à compléter.";
     const state = step.progressStatus === "COMPLETED" ? "Validée" : step.isLocked ? "Prérequis à valider" : "Accessible";
-    const body = `<span class="path-step-index">${String(index + 1).padStart(2, "0")}</span>
-      <div class="path-step-copy"><span class="eyebrow">${step.is_required ? "ÉTAPE OBLIGATOIRE" : "ÉTAPE COMPLÉMENTAIRE"} · ${escapeHtml(state)}</span>
-      <h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></div>
-      <span class="path-step-status">${step.progressStatus === "COMPLETED" ? "Acquis ✓" : step.isLocked ? "Verrouillé ⌑" : "Ouvrir ↗"}</span>`;
-    return step.isLocked || !resource
-      ? `<div class="path-step is-locked">${body}</div>`
-      : `<a class="path-step" href="#/ressource/${encodeURIComponent(resource.slug)}?pathItem=${encodeURIComponent(step.id)}">${body}</a>`;
+    const body = `<span class="path-step-index">${String(index + 1).padStart(2, "0")}</span><div class="path-step-copy"><span class="eyebrow">${step.is_required ? "ÉTAPE OBLIGATOIRE" : "ÉTAPE COMPLÉMENTAIRE"} · ${escapeHtml(state)}</span><h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></div><span class="path-step-status">${step.progressStatus === "COMPLETED" ? "Acquis ✓" : step.isLocked ? "Verrouillé ⌑" : "Ouvrir ↗"}</span>`;
+    return step.isLocked || !resource ? `<div class="path-step is-locked">${body}</div>` : `<a class="path-step" href="#/ressource/${encodeURIComponent(resource.slug)}?pathItem=${encodeURIComponent(step.id)}">${body}</a>`;
   }).join("");
   return `<section class="page-intro"><span class="eyebrow"><a href="#/parcours">PARCOURS</a> / ${escapeHtml(path.code)}</span><h1>${escapeHtml(path.title)}</h1><p>${escapeHtml(path.summary)}</p></section>
     <div class="pathway-overview"><span>${escapeHtml(difficulty)}</span><span>${sequence.length} étape(s)</span><span>${path.estimated_duration_minutes ? `${path.estimated_duration_minutes} minutes estimées` : "Durée à définir"}</span>${currentSession && enrolled ? `<span>${pathProgress.percent}% acquis</span>` : ""}</div>
-    ${currentSession
-      ? enrolled ? `<p class="enrollment-state">Inscription active à ce parcours.</p>` : `<button class="button button-primary" id="enroll-path" data-path-id="${escapeHtml(path.id)}">S’inscrire à ce parcours ↗</button>`
-      : `<p class="progress-note"><a href="#/espace">Connecte-toi</a> pour t’inscrire et suivre tes acquis.</p>`}
-    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">SÉQUENCE D’APPRENTISSAGE</span><h2>Étapes et prérequis</h2></div></div>
-    <div class="path-sequence">${steps || emptyState("Séquence en préparation", "Les ressources seront ajoutées au parcours après validation.")}</div></section>
-    ${requiredAssessments.length ? `<section class="section-block"><div class="section-heading"><div><span class="eyebrow">CONTRÔLE DES ACQUIS</span><h2>Évaluations du parcours</h2></div></div><div class="assessment-path-list">${requiredAssessments.map((item)=>{const assessment=(data.assessments||[]).find((entry)=>entry.id===item.assessment_id);const attempt=(data.assessmentAttempts||[]).filter((entry)=>entry.assessment_id===item.assessment_id&&entry.status==="SUBMITTED").sort((a,b)=>b.attempt_number-a.attempt_number)[0];return assessment?`<article class="assessment-path-row"><div><b>${escapeHtml(assessment.title)}</b><small>${item.is_required?"OBLIGATOIRE":"COMPLÉMENTAIRE"} · Seuil ${item.minimum_score}%</small></div><span>${attempt?.passed&&Number(attempt.score)>=Number(item.minimum_score)?"Validée ✓":attempt?`${Number(attempt.score).toFixed(0)} % · à repasser`:"À effectuer"}</span><a class="text-link" href="#/evaluations/${encodeURIComponent(assessment.id)}">Ouvrir ↗</a></article>`:''}).join("")}</div></section>` : ""}
-    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RÉSULTATS D’APPRENTISSAGE</span><h2>Compétences visées</h2></div></div>
-    ${competencies.length ? `<div class="competency-list">${competencies.map((item) => `<div class="competency-chip"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.competency_level)}</span></div>`).join("")}</div>` : emptyState("Compétences en cours de définition", "Les compétences seront associées aux ressources du parcours.")}</section>
+    ${currentSession ? enrolled ? `<p class="enrollment-state">Inscription active à ce parcours.</p>` : `<button class="button button-primary" id="enroll-path" data-path-id="${escapeHtml(path.id)}">S’inscrire à ce parcours ↗</button>` : `<p class="progress-note"><a href="#/espace">Connecte-toi</a> pour t’inscrire et suivre tes acquis.</p>`}
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">SÉQUENCE D’APPRENTISSAGE</span><h2>Étapes et prérequis</h2></div></div><div class="path-sequence">${steps || emptyState("Séquence en préparation", "Les ressources seront ajoutées au parcours après validation.")}</div></section>
+    ${requiredAssessments.length ? `<section class="section-block"><div class="section-heading"><div><span class="eyebrow">CONTRÔLE DES ACQUIS</span><h2>Évaluations du parcours</h2></div></div><div class="assessment-path-list">${requiredAssessments.map((item)=>{const assessment=(data.assessments||[]).find((entry)=>entry.id===item.assessment_id);const attempt=(data.assessmentAttempts||[]).filter((entry)=>entry.assessment_id===item.assessment_id&&entry.status==="SUBMITTED").sort((a,b)=>b.attempt_number-a.attempt_number)[0];return assessment?`<article class="assessment-path-row"><div><b>${escapeHtml(assessment.title)}</b><small>${item.is_required?"OBLIGATOIRE":"COMPLÉMENTAIRE"} · Seuil ${item.minimum_score}%</small></div><span>${attempt?.passed&&Number(attempt.score)>=Number(item.minimum_score)?"Validée ✓":attempt?`${Number(attempt.score).toFixed(0)} % · à repasser`:"À effectuer"}</span><a class="text-link" href="#/evaluations/${encodeURIComponent(assessment.id)}">Ouvrir ↗</a></article>`:""}).join("")}</div></section>` : ""}
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RÉSULTATS D’APPRENTISSAGE</span><h2>Compétences visées</h2></div></div>${competencies.length ? `<div class="competency-list">${competencies.map((item) => `<div class="competency-chip"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.competency_level)}</span></div>`).join("")}</div>` : emptyState("Compétences en cours de définition", "Les compétences seront associées aux ressources du parcours.")}</section>
     ${certificate ? `<section class="certificate-issued"><span class="eyebrow">CERTIFICATION OBTENUE</span><b>${escapeHtml(certificate.certificate_title)}</b><a class="text-link" href="#/certificat/${encodeURIComponent(certificate.certificate_code)}">Consulter le certificat · ${escapeHtml(certificate.certificate_code)} ↗</a></section>` : certificateReady ? `<section class="certificate-ready"><span class="eyebrow">PARCOURS VALIDÉ</span><h2>Conditions de certification remplies</h2><button class="button button-primary" id="issue-path-certificate" data-path-id="${escapeHtml(path.id)}">Émettre mon certificat ↗</button></section>` : ""}
     <p class="progress-note">${currentSession ? "Ta progression est synchronisée avec ton compte apprenant." : "Connecte-toi à l’espace apprenant pour enregistrer tes acquis et déverrouiller les étapes suivantes."}</p>`;
 }
 
-function atlasView(sectionCode = "") {
-  const section = sectionCode
-    ? catalogueMap.flatMap((department) => department.sections.map((item) => ({ ...item, department }))).find((item) => item.code === sectionCode)
-    : null;
-  const graph = buildCatalogueAtlas(catalogueMap, section?.code || null);
-  atlasViewNodes = graph.nodes;
-  atlasViewEdges = graph.edges;
-  const heading = section
-    ? '<span class="eyebrow"><a href="#/atlas">ATLAS 2D</a> / ' + escapeHtml(section.department.title) + '</span><h1>' + escapeHtml(section.title) + '</h1><p>' + escapeHtml(section.description) + ' Sélectionne un module pour afficher son statut de préparation.</p>'
-    : '<span class="eyebrow">CARTOGRAPHIE DES CONNAISSANCES</span><h1>Atlas 2D</h1><p>Vue générale des départements et de leurs sections. Sélectionne une section pour ouvrir ses modules, déplace la carte et utilise la molette pour explorer.</p>';
-  const back = section ? '<a class="button button-outline atlas-back" href="#/atlas">← Vue générale</a>' : '';
-  const legend = section
-    ? '<div class="atlas-legend"><span class="legend-section">Section</span><span class="legend-content">Module prévu · fiche à développer</span></div>'
-    : '<div class="atlas-legend"><span class="legend-department">Département</span><span class="legend-section">Section</span></div>';
-  return '<section class="page-intro">' + heading + '</section>' + back +
-    '<div class="atlas-panel"><div class="atlas-toolbar"><span><b>' + atlasViewNodes.length + '</b> nœuds visibles</span><span>' + atlasViewEdges.length + ' relations · ' + (section ? 'vue détaillée' : 'vue générale') + '</span></div>' + renderAtlasGraph(atlasViewNodes, atlasViewEdges) + '</div>' + legend;
+function atlasView(graph) {
+  return renderAcademyAtlas(graph);
 }
+
 function loginView() {
   return `<section class="page-intro"><span class="eyebrow">ESPACE PERSONNEL</span><h1>Espace apprenant</h1><p>Connecte-toi pour t’inscrire aux parcours et conserver ton historique d’apprentissage.</p></section>
     <section class="auth-panel"><form id="login-form" class="auth-form">
@@ -871,6 +889,7 @@ function render() {
   const [route = "", routeTail = ""] = path.split("/");
   const [slug = "", query = ""] = routeTail.split("?");
   const [subroute = "", subId = ""] = slug.split("/");
+  const atlasGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, cataloguePathways) : null;
   const pathItemId = new URLSearchParams(query).get("pathItem") || "";
   updateNavigation(route);
   if (loadError) {
@@ -895,41 +914,12 @@ function render() {
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "espace": learnerView,
     "administration": () => subroute === "programmes" ? programmeEditorView(subId) : subroute === "parcours" ? learningPathEditorView(subId) : subroute === "competences" ? competencyEditorView(subId) : subroute === "ressources" ? contentEditorView(subId) : subroute === "evaluations" ? assessmentEditorView(subId) : administrationView(),
-    "atlas": () => atlasView(slug),
+    "atlas": () => atlasView(atlasGraph),
     "apropos": aboutView
   };
   root.innerHTML = (routes[route] || (() => notFound("Page introuvable", "Cette adresse ne correspond à aucune page publique de l’Academy.")))();
-  if (route === "atlas" && atlasViewNodes.length) {
-    unbindAtlas = bindAtlasGraph(root, atlasViewNodes, (node) => {
-      if (node.entity_type === "DEPARTMENT") {
-        const item = data.departments.find((entry) => entry.code === node.entity_key);
-        if (item) location.hash = `#/departements/${encodeURIComponent(item.slug)}`;
-        else location.hash = "#/catalogue";
-      } else if (node.entity_type === "SECTION") {
-        const isSectionDetail = location.hash.includes(encodeURIComponent(node.entity_key));
-        if (!isSectionDetail) location.hash = `#/atlas/${encodeURIComponent(node.entity_key)}`;
-      } else if (node.entity_type === "DOMAIN") {
-        const item = data.domains.find((entry) => entry.code === node.entity_key);
-        if (item) location.hash = `#/domaines/${encodeURIComponent(item.slug)}`;
-      } else if (node.entity_type === "PATHWAY") {
-        const item = data.learningPaths.find((entry) =>
-          entry.code === node.entity_key || entry.slug === node.entity_key
-        );
-        if (item) location.hash = `#/parcours/${encodeURIComponent(item.slug)}`;
-      } else if (node.entity_type === "SKILL") {
-        const item = data.competencies.find((entry) => entry.code === node.entity_key);
-        if (item) {
-          const relation = data.contentCompetencies.find((entry) => entry.competency_id === item.id);
-          const resource = data.content.find((entry) => entry.id === relation?.content_id);
-          if (resource) location.hash = `#/ressource/${encodeURIComponent(resource.slug)}`;
-        }
-      } else if (["CONTENT", "MODULE", "LESSON"].includes(node.entity_type)) {
-        const item = data.content.find((entry) =>
-          entry.business_id === node.entity_key || entry.slug === node.entity_key
-        );
-        if (item) location.hash = `#/ressource/${encodeURIComponent(item.slug)}`;
-      }
-    });
+  if (route === "atlas" && atlasGraph) {
+    unbindAtlas = mountAcademyAtlas(root, atlasGraph);
   }
   if (route === "formations") {
     document.querySelectorAll("[data-training-enroll]").forEach((form)=>{
