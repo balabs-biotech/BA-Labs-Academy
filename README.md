@@ -93,6 +93,10 @@ Les fiches partenaires et conventions sont créées en brouillon par Owner/Admin
 
 La clôture d'une inscription exige désormais une présence validée pour chaque journée calendaire de la session (heure locale d'Algérie). L'émission d'un document applique la même règle. Après clôture ou émission d'un document actif, les preuves de présence sont verrouillées pour éviter leur altération rétroactive. L'interface d'émission demande explicitement l'émetteur et sa référence pour les documents relevant d'un partenaire ou d'une autorité ; les ateliers privés restent limités aux attestations BA Labs.
 
+### Inscription publique aux sessions
+
+Le catalogue public propose une demande d’inscription aux sessions ouvertes pour les apprenants déjà connectés. Le nom et le profil sont saisis dans le formulaire ; l’adresse e-mail provient du compte authentifié et est contrôlée à nouveau par la RPC PostgreSQL. Les personnes non connectées sont redirigées vers l’espace apprenant : aucune création publique de compte n’est activée. Les doublons, fenêtres d’inscription et capacités sont contrôlés côté serveur ; les demandes excédentaires passent en liste d’attente. Une demande acceptée reste au statut PENDING jusqu’à confirmation par l’administration.
+
 ### Catalogue public des formations
 
 Une page publique `#/formations` présente uniquement les offres au statut ACTIVE et les sessions au statut OPEN. Les politiques RLS permettent la lecture publique de ces deux ensembles sans exposer les partenaires, conventions, participants, présences ou documents internes. Le catalogue ne publie ni capacité, ni code de lieu, ni données personnelles.
