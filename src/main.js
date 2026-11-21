@@ -916,6 +916,16 @@ function render() {
     verifyForm.addEventListener("submit",(event)=>{event.preventDefault();verify(new FormData(verifyForm).get("code").trim());});
     if(verifyForm.elements.code.value.trim())verify(verifyForm.elements.code.value.trim());
   }
+  document.querySelectorAll("[data-training-billing]").forEach(form=>form.addEventListener("submit",async(event)=>{
+    event.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;const v=new FormData(form);
+    try{const amount=Number(v.get("amount_da"));if(!Number.isFinite(amount)||amount<0)throw new Error("Montant invalide.");await saveTrainingBillingRecord({enrollment_id:form.dataset.trainingBilling,billing_owner:v.get("billing_owner"),external_invoice_reference:v.get("external_invoice_reference").trim(),currency_code:"DZD",amount_minor_units:Math.round(amount*100),payment_status:v.get("payment_status"),accounting_note:v.get("accounting_note")});await refresh();}
+    catch(error){window.alert(error.message||"Enregistrement de la facture impossible.");button.disabled=false;}
+  }));
+  document.querySelectorAll("[data-training-billing-update]").forEach(form=>form.addEventListener("submit",async(event)=>{
+    event.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;const v=new FormData(form);
+    try{await saveTrainingBillingRecord({id:form.dataset.trainingBillingUpdate,enrollment_id:v.get("enrollment_id"),billing_owner:v.get("billing_owner"),external_invoice_reference:v.get("external_invoice_reference"),currency_code:v.get("currency_code"),amount_minor_units:v.get("amount_minor_units"),payment_status:v.get("payment_status"),accounting_note:v.get("accounting_note")});await refresh();}
+    catch(error){window.alert(error.message||"Mise à jour du règlement impossible.");button.disabled=false;}
+  }));
   document.querySelector("#training-partner-form")?.addEventListener("submit",async(event)=>{
     event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button[type="submit"]');const feedback=document.querySelector("#training-partner-feedback");const v=new FormData(form);button.disabled=true;feedback.textContent="Enregistrement du partenaire en brouillon…";
     const list=(value)=>value.split(",").map(x=>x.trim()).filter(Boolean);
