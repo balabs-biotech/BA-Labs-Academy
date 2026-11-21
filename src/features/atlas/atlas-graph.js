@@ -139,7 +139,7 @@ export function buildAcademyGraph(departments, domains, pathways) {
     const shortTitle = item.kind === "pathway"
       ? (PATHWAY_LABELS[item.code] || item.title)
       : item.kind === "domain"
-        ? (DOMAIN_LABELS[item.code] || item.title)
+        ? item.title
         : (DEPARTMENT_LABELS[item.code] || item.title);
     const entityType = item.kind === "pathway"
       ? "PATHWAY"
