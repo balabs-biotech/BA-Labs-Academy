@@ -180,7 +180,7 @@ export async function loadAcademyData() {
         readTable("academy_competency_prerequisites", { select: "competency_id,prerequisite_competency_id" }, accessToken).catch(() => [])
       ])
     : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
-  const [trainingPartners, trainingAgreements, trainingOfferings, trainingSessions, trainingEnrollments, trainingAttendance, trainingDocuments, trainingBilling] = accessToken
+  const [trainingPartners, trainingAgreements, trainingOfferings, trainingSessions, trainingEnrollments, trainingAttendance, trainingDocuments, trainingBilling, publicTrainingOfferings, publicTrainingSessions] = accessToken
     ? await Promise.all([
         readTable("academy_training_partners", { select: "id,partner_code,legal_name,approval_number,approval_authority,approval_valid_from,approval_valid_until,approved_specialties,approved_delivery_modes,status", order: "legal_name.asc" }, accessToken).catch(() => []),
         readTable("academy_training_agreements", { select: "id,partner_id,agreement_code,agreement_title,status,valid_from,valid_until,permitted_specialties,permitted_venues,permitted_delivery_modes,billing_responsibility,document_issuer,signed_at", order: "agreement_code.asc" }, accessToken).catch(() => []),
@@ -192,6 +192,10 @@ export async function loadAcademyData() {
         readTable("academy_training_billing_records", { select: "id,enrollment_id,billing_owner,external_invoice_reference,currency_code,amount_minor_units,payment_status,accounting_note,recorded_at", order: "recorded_at.desc" }, accessToken).catch(() => [])
       ])
     : [[], [], [], [], [], [], [], []];
+  const [publicTrainingOfferings, publicTrainingSessions] = await Promise.all([
+    readTable("academy_training_offerings", { select: "id,offering_code,title,description,specialty_code,audience_profile,delivery_regime,default_duration_days", status: "eq.ACTIVE", order: "title.asc" }).catch(() => []),
+    readTable("academy_training_sessions", { select: "id,offering_id,session_code,starts_at,ends_at,delivery_mode,registration_opens_at,registration_closes_at", status: "eq.OPEN", order: "starts_at.asc" }).catch(() => [])
+  ]);
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
