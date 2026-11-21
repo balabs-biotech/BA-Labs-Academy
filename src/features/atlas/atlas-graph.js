@@ -8,12 +8,38 @@ const hash = (value) => {
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+// Irregular biological field inspired by the BA Labs continuous explorer.
 const ROOT_ANCHORS = [
-  [-560, -270], [-280, -330], [25, -285], [340, -320], [635, -205],
-  [590, 155], [285, 310], [-65, 330], [-430, 215],
-  [-565, 65], [-285, 15], [30, 60], [340, 15], [640, 85],
-  [560, 395], [270, 520], [-80, 520], [-430, 420], [15, 665]
+  [-690, -310], [-360, -520], [80, -610], [520, -420], [790, -60],
+  [620, 390], [210, 620], [-310, 570], [-760, 230],
+  [-510, -20], [-90, -260], [310, -90], [570, 180], [140, 310],
+  [-160, 60], [-430, 350], [20, 800], [470, 650], [880, 410]
 ];
+
+const DEPARTMENT_LABELS = {
+  MYC: "Mycologie",
+  MIC: "Microbiologie",
+  BIO: "Sciences végétales",
+  AGR: "Sols & écosystèmes",
+  BPR: "Bioprocédés",
+  BMT: "Biomatériaux",
+  GEN: "Ingénierie",
+  INF: "Sciences numériques",
+  PHY: "Physique & chimie"
+};
+
+const PATHWAY_LABELS = {
+  "MYC-PAR-001": "Production mycologique",
+  "MYC-PAR-002": "Technicien fongique",
+  "BPR-PAR-001": "Bioprocédés fongiques",
+  "MIC-PAR-001": "Microbiologie sols/plantes",
+  "BIO-PAR-001": "Biostimulants",
+  "GEN-PAR-001": "Conception labo bio",
+  "GEN-PAR-002": "Automatisation culture",
+  "BPR-PAR-002": "Valorisation biomasses",
+  "BMT-PAR-001": "Mycomatériaux",
+  "INF-PAR-001": "Données & intelligence"
+};
 
 function makeNode(item, parent, rootId, level, x, y, angle, entityType) {
   return {
@@ -107,7 +133,13 @@ export function buildAcademyGraph(departments, pathways) {
     const angle = Math.atan2(y, x) + (((seed >>> 16) & 255) / 255 - 0.5) * 0.24;
     const rootId = item.kind === "pathway" ? "pathways" : item.code.toLowerCase();
     const root = addNode(makeNode(
-      { ...item, id: item.kind + ":" + item.code, shortTitle: item.kind === "pathway" ? "P·" + item.departmentCode : item.code },
+      {
+        ...item,
+        id: item.kind + ":" + item.code,
+        shortTitle: item.kind === "pathway"
+          ? (PATHWAY_LABELS[item.code] || item.title)
+          : (DEPARTMENT_LABELS[item.code] || item.title)
+      },
       null,
       rootId,
       0,
