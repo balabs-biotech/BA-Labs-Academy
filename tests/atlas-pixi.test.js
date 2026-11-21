@@ -287,7 +287,7 @@ test("Atlas view centralizes cleanup and observes stage resizing", () => {
   const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
   assert.ok(source.includes("createAtlasLifecycle()"));
   assert.ok(source.includes("new ResizeObserver(resize)"));
-  assert.ok(source.includes('lifecycle.listen(canvas, "pointerdown", onPointerDown)'));
+  assert.ok(source.includes('lifecycle.listen(canvas, "pointerdown", pointerController.onPointerDown)'));
   assert.ok(source.includes("return () => lifecycle.dispose()"));
 });
 
@@ -304,7 +304,7 @@ test("Atlas pointer controller pans with one pointer and selects on tap", async 
   const selected = [];
   const controller = createAtlasPointerController({
     canvas, getOffset: () => offset, setOffset: (next) => { offset = next; },
-    isReducedMotion: () => false, zoom() {}, hit: (x, y) => x === 5 && y === 6 ? { id: "node" } : null,
+    zoom() {}, hit: (x, y) => x === 5 && y === 6 ? { id: "node" } : null,
     focusNode: (node) => selected.push(node.id)
   });
   controller.onPointerDown({ pointerId: 1, clientX: 30, clientY: 40 });
@@ -323,7 +323,7 @@ test("Atlas pointer controller zooms around the midpoint of a two-pointer pinch"
   const canvas = { setPointerCapture() {}, classList: { add() {}, remove() {} }, getBoundingClientRect: () => ({ left: 10, top: 20 }) };
   const zooms = [];
   const controller = createAtlasPointerController({
-    canvas, getOffset: () => ({ x: 0, y: 0 }), setOffset() {}, isReducedMotion: () => false,
+    canvas, getOffset: () => ({ x: 0, y: 0 }), setOffset() {},
     zoom: (...args) => zooms.push(args), hit: () => null, focusNode() {}
   });
   controller.onPointerDown({ pointerId: 1, clientX: 30, clientY: 40 });
