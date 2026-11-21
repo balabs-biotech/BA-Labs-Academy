@@ -64,6 +64,18 @@ try {
     const accessibleCount = await page.locator("#academy-atlas-accessible button").count();
     assert.equal(accessibleCount, 331, "All 331 mapped nodes must be keyboard-accessible");
     assert.equal(await page.locator(".atlas-root-chip").count(), 20, "All 20 roots must have direct navigation");
+    assert.equal(await page.locator(".atlas-root-group--departments [data-atlas-root]").count(), 7);
+    assert.equal(await page.locator(".atlas-root-group--axes [data-atlas-root]").count(), 3);
+    assert.equal(await page.locator(".atlas-root-group--pathways [data-atlas-root]").count(), 10);
+
+    await page.locator('[data-atlas-root="department:MYC"]').click();
+    await page.waitForFunction(
+      () => document.querySelector("#academy-atlas-selection")?.textContent.includes("Mycologie appliquée")
+    );
+    await page.locator('[data-atlas-root="pathway:MYC-PAR-001"]').click();
+    await page.waitForFunction(
+      () => document.querySelector("#academy-atlas-selection")?.textContent.includes("Production mycologique, du laboratoire à la fructification")
+    );
 
     const pathway = page.locator("#academy-atlas-accessible button").filter({
       hasText: "Production mycologique, du laboratoire à la fructification"
