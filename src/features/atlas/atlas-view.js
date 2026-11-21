@@ -5,13 +5,13 @@ const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)"
 
 const typeLabels = {
   DEPARTMENT: "Département",
-  DOMAIN: "Domaine",
+  SECTION: "Section",
   MODULE: "Module",
   PATHWAY: "Parcours"
 };
 
 export function renderAcademyAtlas(graph) {
-  const { departments, pathways, domains, modules } = graph.stats;
+  const { departments, pathways, sections, modules } = graph.stats;
   return `
     <section class="page-intro atlas-page-intro">
       <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
@@ -22,7 +22,7 @@ export function renderAcademyAtlas(graph) {
       <div class="atlas-topline">
         <div class="atlas-topline-copy">
           <span class="eyebrow">EXPLORATEUR 2D · PIXIJS / WEBGL</span>
-          <strong>${departments} départements <i>·</i> ${pathways} parcours <i>·</i> ${domains} domaines <i>·</i> ${modules} modules</strong>
+          <strong>${departments} départements <i>·</i> ${pathways} parcours <i>·</i> ${sections} sections <i>·</i> ${modules} modules</strong>
         </div>
         <span class="atlas-engine-state" id="atlas-engine-state">Initialisation du moteur…</span>
       </div>
@@ -46,7 +46,7 @@ export function renderAcademyAtlas(graph) {
       <div class="atlas-legend">
         <span class="legend-department">Département</span>
         <span class="legend-pathway">Parcours transversal</span>
-        <span class="legend-domain">Domaine</span>
+        <span class="legend-section">Section</span>
         <span class="legend-module">Module</span>
         <span class="legend-link">Relation entre disciplines</span>
       </div>
@@ -154,7 +154,7 @@ export function mountAcademyAtlas(container, graph) {
     description.textContent = selected.summary || "Fiche descriptive à compléter.";
     body.append(description);
 
-    if (selected.entity_type === "PATHWAY" && Array.isArray(selected.data.domainCodes)) {
+    if (selected.entity_type === "PATHWAY" && Array.isArray(selected.data.sectionCodes)) {
       const domains = document.createElement("div");
       domains.className = "atlas-selection-tags";
       selected.data.domainCodes.forEach((code) => {
@@ -170,7 +170,7 @@ export function mountAcademyAtlas(container, graph) {
       const status = document.createElement("small");
       status.textContent = "Module prévu · fiche pédagogique non rédigée";
       body.append(status);
-    } else if (selected.entity_type === "DEPARTMENT" || selected.entity_type === "DOMAIN") {
+    } else if (selected.entity_type === "DEPARTMENT" || selected.entity_type === "SECTION") {
       const status = document.createElement("small");
       status.textContent = "Référentiel cartographié · publication éditoriale distincte";
       selection.append(status);
