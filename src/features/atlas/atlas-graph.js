@@ -165,7 +165,7 @@ export function buildAcademyGraph(departments, domains, pathways) {
       root.data.route = "#/departements/" + item.code.toLowerCase();
       departmentNodes.set(item.code, root);
     } else if (item.kind === "domain") {
-      root.data.route = "#/domains/" + item.code.toLowerCase();
+      root.data.route = "#/domaines/" + item.code.toLowerCase();
       domainNodes.set(item.code, root);
     } else {
       root.data.route = "#/parcours/" + item.slug;
@@ -208,7 +208,7 @@ export function buildAcademyGraph(departments, domains, pathways) {
     for (const domainCode of pathway.domainCodes || []) {
       const target = domainNodes.get(domainCode);
       if (target) addEdge(source, target, {
-        id: "pathway-axis:" + pathway.code + ":" + domainCode,
+        id: "pathway-domain:" + pathway.code + ":" + domainCode,
         relationType: "USES",
         cross: true,
         verified: true,
