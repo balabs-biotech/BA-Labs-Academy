@@ -69,3 +69,6 @@ Les domaines existants sont conservés autant que possible. L’ancienne classif
 ## Référentiel de compétences et preuves d’acquisition
 
 Les compétences peuvent être rattachées à plusieurs domaines disciplinaires, avec un ancrage principal. Une même évaluation peut mesurer plusieurs compétences et définir, pour chacune, un niveau attendu et un seuil de validation. La soumission d’une tentative produit côté serveur une preuve append-only par compétence, avec niveau, score et statut de démonstration. La vue `academy_learner_competency_mastery` agrège les niveaux démontrés et l’historique des preuves ; aucune preuve ne peut être créée ou modifiée directement par le navigateur.
+
+
+Les compétences peuvent aussi déclarer des prérequis. Le moteur rejette les dépendances cycliques, exige que les prérequis soient publiés avant la compétence dépendante et représente les relations `REQUIRES` dans l’Atlas. Cette progression par compétences est indépendante de l’ordre des ressources dans un parcours.
