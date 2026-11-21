@@ -259,6 +259,17 @@
 .training-public-sessions>div{display:flex;justify-content:space-between;gap:.8rem;font-size:.82rem}
 .training-public-sessions small{color:var(--muted)}
 @media(max-width:760px){.training-public-grid{grid-template-columns:1fr}}
+.training-public-session{display:grid;gap:.7rem;padding:.7rem 0;border-top:1px solid var(--line)}
+.training-public-session>div{display:flex;justify-content:space-between;align-items:flex-start;gap:.8rem;font-size:.82rem}
+.training-public-session small,.training-account-email{color:var(--muted);font-size:.76rem}
+.training-public-enroll-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;padding:.75rem;border:1px solid var(--line);background:var(--surface,transparent)}
+.training-public-enroll-form label{display:grid;gap:.35rem;font-size:.78rem;color:var(--muted)}
+.training-public-enroll-form input,.training-public-enroll-form select{width:100%;min-width:0}
+.training-public-enroll-form .training-account-email,.training-public-enroll-form button,.training-public-enroll-form .training-enroll-feedback{grid-column:1/-1;margin:0}
+.training-enrollment-state{margin:0;padding:.6rem .7rem;border-left:2px solid var(--accent);background:var(--surface,transparent);font-size:.82rem}
+.training-enroll-feedback{font-size:.78rem;color:var(--muted)}
+@media(max-width:520px){.training-public-enroll-form{grid-template-columns:1fr}}
+
 
 .training-billing-list{display:grid;gap:.5rem;margin:.5rem 0;padding:.6rem;border:1px solid var(--line);background:var(--panel)}
 .training-billing-list>div{display:grid;gap:.45rem}
