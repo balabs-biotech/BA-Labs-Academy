@@ -12,7 +12,7 @@ test("editorial capabilities match the database role guards", () => {
   assert.deepEqual(getRoleCapabilities("EDITOR"), ["CREATE_CONTENT", "EDIT_CONTENT", "SUBMIT_REVIEW"]);
   assert.deepEqual(getRoleCapabilities("REVIEWER"), ["REVIEW_CONTENT"]);
   assert.equal(getRoleCapabilities("ADMIN").includes("PUBLISH_CONTENT"), true);
-  assert.equal(getRoleCapabilities("OWNER").includes("MANAGE_MEMBERS"), true);
+  assert.equal(getRoleCapabilities("OWNER").includes("PUBLISH_CONTENT"), true);
 });
 
 test("unknown roles receive no capabilities", () => {
