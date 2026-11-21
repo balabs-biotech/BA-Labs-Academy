@@ -28,7 +28,7 @@ test("private BA Labs attestations cannot be confused with state-recognized cert
 
 test("training records are private and browser writes are revoked", () => {
   assert.match(migration, /enable row level security/);
-  assert.match(migration, /revoke all on public\\.%I from anon, authenticated/);
+  assert.ok(migration.includes("revoke all on public.%I from anon, authenticated"));
   assert.match(migration, /Academy editorial members can read training operations/);
   assert.match(migration, /Learners can read own training enrollment/);
 });
@@ -36,5 +36,5 @@ test("training records are private and browser writes are revoked", () => {
 test("billing stores accounting references rather than replacing accounting", () => {
   assert.match(migration, /external_invoice_reference/);
   assert.match(migration, /amount_minor_units/);
-  assert.match(migration, /currency_code char\\(3\\)/);
+  assert.ok(migration.includes("currency_code char(3)"));
 });
