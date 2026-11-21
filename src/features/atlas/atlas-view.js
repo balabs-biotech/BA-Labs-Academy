@@ -155,14 +155,14 @@ export function mountAcademyAtlas(container, graph) {
     body.append(description);
 
     if (selected.entity_type === "PATHWAY" && Array.isArray(selected.data.sectionCodes)) {
-      const domains = document.createElement("div");
-      domains.className = "atlas-selection-tags";
+      const sections = document.createElement("div");
+      sections.className = "atlas-selection-tags";
       selected.data.sectionCodes.forEach((code) => {
         const tag = document.createElement("span");
         tag.textContent = code;
-        domains.append(tag);
+        sections.append(tag);
       });
-      body.append(domains);
+      body.append(sections);
       const status = document.createElement("small");
       status.textContent = "Parcours cartographié · séquence et ressources à construire";
       body.append(status);
@@ -173,7 +173,7 @@ export function mountAcademyAtlas(container, graph) {
     } else if (selected.entity_type === "DEPARTMENT" || selected.entity_type === "SECTION") {
       const status = document.createElement("small");
       status.textContent = "Référentiel cartographié · publication éditoriale distincte";
-      selection.append(status);
+      body.append(status);
     }
 
     if (selected.data.route) {
