@@ -1,4 +1,4 @@
-import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent, manageAcademyMembership } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
@@ -197,6 +197,38 @@ function learningPathsView() {
     : emptyState("Les parcours sont en préparation", "Le moteur de parcours, les prérequis et le modèle de progression sont configurés. Les parcours seront visibles après leur validation éditoriale.")}`;
 }
 
+
+function assessmentDetail(assessmentId, attemptId = "") {
+  if (!currentSession?.user) return loginView();
+  const assessment = (data.assessments || []).find((item) => item.id === assessmentId);
+  if (!assessment) return notFound("Évaluation indisponible", "Cette évaluation n’est pas publiée ou n’existe pas.");
+  const attempt = (data.assessmentAttempts || []).find((item) => item.id === attemptId && item.assessment_id === assessmentId);
+  const questions = (data.assessmentQuestions || []).filter((item) => item.assessment_id === assessmentId).sort((a,b)=>a.sort_order-b.sort_order);
+  const options = data.assessmentOptions || [];
+  if (attempt?.status === "SUBMITTED" || attempt?.status === "EXPIRED") {
+    return `<section class="page-intro"><span class="eyebrow">ÉVALUATION · RÉSULTAT</span><h1>${escapeHtml(assessment.title)}</h1><p>Tentative ${attempt.attempt_number} · version ${escapeHtml(attempt.assessment_version)}</p></section>
+      <section class="assessment-result ${attempt.passed ? "is-passed" : "is-failed"}"><span class="eyebrow">${attempt.status === "EXPIRED" ? "TEMPS ÉCOULÉ" : attempt.passed ? "SEUIL ATTEINT" : "SEUIL NON ATTEINT"}</span><strong>${attempt.status === "EXPIRED" ? "0 %" : `${Number(attempt.score).toFixed(1)} %`}</strong><p>${attempt.status === "EXPIRED" ? "La durée autorisée a été dépassée." : `${attempt.correct_count}/${attempt.question_count} réponse(s) correcte(s) · seuil requis : ${assessment.pass_score}%`}</p><a class="button button-outline" href="#/parcours">Retour aux parcours</a></section>`;
+  }
+  if (attempt?.status === "IN_PROGRESS") {
+    return `<section class="page-intro"><span class="eyebrow">ÉVALUATION · TENTATIVE ${attempt.attempt_number}</span><h1>${escapeHtml(assessment.title)}</h1><p>${escapeHtml(assessment.description || "Réponds à chaque question puis soumets ta tentative.")}</p><div class="pathway-overview"><span>Seuil : ${assessment.pass_score}%</span><span>${questions.length} question(s)</span><span>${assessment.time_limit_minutes ? `${assessment.time_limit_minutes} min` : "Sans limite de temps"}</span></div></section>
+      <form id="assessment-answer-form" class="assessment-form" data-attempt-id="${escapeHtml(attempt.id)}">
+        ${questions.map((question,index)=>`<fieldset class="assessment-question"><legend><span class="eyebrow">QUESTION ${String(index+1).padStart(2,"0")}</span><b>${escapeHtml(question.prompt)}</b></legend><div class="assessment-options">${options.filter((option)=>option.question_id===question.id).sort((a,b)=>a.sort_order-b.sort_order).map((option)=>`<label><input type="radio" name="question_${escapeHtml(question.id)}" value="${escapeHtml(option.id)}" required><span>${escapeHtml(option.option_text)}</span></label>`).join("")}</div></fieldset>`).join("")}
+        <button class="button button-primary" type="submit">Soumettre mes réponses ↗</button><p id="assessment-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
+      </form>`;
+  }
+  const attempts = (data.assessmentAttempts || []).filter((item)=>item.assessment_id===assessmentId);
+  return `<section class="page-intro"><span class="eyebrow">ÉVALUATION</span><h1>${escapeHtml(assessment.title)}</h1><p>${escapeHtml(assessment.description || "Évaluation des acquis.")}</p></section>
+    <section class="assessment-start"><div class="pathway-overview"><span>Seuil de réussite : ${assessment.pass_score}%</span><span>${questions.length} question(s)</span><span>${assessment.time_limit_minutes ? `${assessment.time_limit_minutes} min` : "Sans limite de temps"}</span><span>${assessment.max_attempts ? `${Math.max(0,assessment.max_attempts-attempts.length)} tentative(s) restante(s)` : "Tentatives illimitées"}</span></div>
+    <p>La correction est effectuée côté serveur. Les réponses correctes ne sont jamais transmises au navigateur.</p>
+    ${assessment.max_attempts && attempts.length>=assessment.max_attempts ? '<p class="progress-note">Nombre maximal de tentatives atteint.</p>' : '<button class="button button-primary" id="start-assessment" data-assessment-id="'+escapeHtml(assessmentId)+'">Commencer l’évaluation ↗</button>'}</section>`;
+}
+
+function certificateView(code = "") {
+  return `<section class="page-intro"><span class="eyebrow">REGISTRE DE CERTIFICATION</span><h1>Vérifier un certificat</h1><p>Vérification publique de l’authenticité et du statut d’un certificat BA Labs Academy.</p></section>
+    <form id="certificate-verify-form" class="certificate-verify-form"><label for="certificate-code">Code du certificat</label><input id="certificate-code" name="code" value="${escapeHtml(code)}" required maxlength="40" placeholder="CODE-CERTIFICAT"><button class="button button-primary" type="submit">Vérifier ↗</button></form>
+    <div id="certificate-verification-result" aria-live="polite"></div>`;
+}
+
 function learningPathDetail(slug) {
   const path = data.learningPaths.find((item) => item.slug === slug);
   if (!path) return notFound("Parcours indisponible", "Ce parcours n’est pas publié ou n’existe pas dans le catalogue public.");
@@ -214,6 +246,10 @@ function learningPathDetail(slug) {
   );
   const competencies = data.competencies.filter((item) => competencyIds.has(item.id));
   const pathProgress = buildPathProgress(rawItems, data.pathItemProgress);
+  const requiredAssessments = (data.pathAssessments || []).filter((item)=>item.path_id===path.id);
+  const assessmentsComplete = requiredAssessments.filter((item)=>item.is_required).every((item)=>(data.assessmentAttempts||[]).some((attempt)=>attempt.assessment_id===item.assessment_id && attempt.status==="SUBMITTED" && attempt.passed && Number(attempt.score)>=Number(item.minimum_score)));
+  const certificateReady = currentSession && enrolled && pathProgress.percent>=100 && assessmentsComplete;
+  const certificate = (data.certificates||[]).find((item)=>item.path_id===path.id && !item.revoked_at);
   const difficulty = {
     INTRODUCTORY: "Initiation",
     FOUNDATION: "Fondamental",
@@ -241,8 +277,10 @@ function learningPathDetail(slug) {
       : `<p class="progress-note"><a href="#/espace">Connecte-toi</a> pour t’inscrire et suivre tes acquis.</p>`}
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">SÉQUENCE D’APPRENTISSAGE</span><h2>Étapes et prérequis</h2></div></div>
     <div class="path-sequence">${steps || emptyState("Séquence en préparation", "Les ressources seront ajoutées au parcours après validation.")}</div></section>
+    ${requiredAssessments.length ? `<section class="section-block"><div class="section-heading"><div><span class="eyebrow">CONTRÔLE DES ACQUIS</span><h2>Évaluations du parcours</h2></div></div><div class="assessment-path-list">${requiredAssessments.map((item)=>{const assessment=(data.assessments||[]).find((entry)=>entry.id===item.assessment_id);const attempt=(data.assessmentAttempts||[]).filter((entry)=>entry.assessment_id===item.assessment_id&&entry.status==="SUBMITTED").sort((a,b)=>b.attempt_number-a.attempt_number)[0];return assessment?`<article class="assessment-path-row"><div><b>${escapeHtml(assessment.title)}</b><small>${item.is_required?"OBLIGATOIRE":"COMPLÉMENTAIRE"} · Seuil ${item.minimum_score}%</small></div><span>${attempt?.passed&&Number(attempt.score)>=Number(item.minimum_score)?"Validée ✓":attempt?`${Number(attempt.score).toFixed(0)} % · à repasser`:"À effectuer"}</span><a class="text-link" href="#/evaluations/${encodeURIComponent(assessment.id)}">Ouvrir ↗</a></article>`:''}).join("")}</div></section>` : ""}
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RÉSULTATS D’APPRENTISSAGE</span><h2>Compétences visées</h2></div></div>
     ${competencies.length ? `<div class="competency-list">${competencies.map((item) => `<div class="competency-chip"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.competency_level)}</span></div>`).join("")}</div>` : emptyState("Compétences en cours de définition", "Les compétences seront associées aux ressources du parcours.")}</section>
+    ${certificate ? `<section class="certificate-issued"><span class="eyebrow">CERTIFICATION OBTENUE</span><b>${escapeHtml(certificate.certificate_title)}</b><a class="text-link" href="#/certificat/${encodeURIComponent(certificate.certificate_code)}">Consulter le certificat · ${escapeHtml(certificate.certificate_code)} ↗</a></section>` : certificateReady ? `<section class="certificate-ready"><span class="eyebrow">PARCOURS VALIDÉ</span><h2>Conditions de certification remplies</h2><button class="button button-primary" id="issue-path-certificate" data-path-id="${escapeHtml(path.id)}">Émettre mon certificat ↗</button></section>` : ""}
     <p class="progress-note">${currentSession ? "Ta progression est synchronisée avec ton compte apprenant." : "Connecte-toi à l’espace apprenant pour enregistrer tes acquis et déverrouiller les étapes suivantes."}</p>`;
 }
 
@@ -595,6 +633,8 @@ function render() {
     "catalogue": catalogueView,
     "recherche": () => searchResultsView(new URLSearchParams(query).get("q") || ""),
     "ressource": () => resourceDetail(slug, pathItemId),
+    "evaluations": () => assessmentDetail(slug, new URLSearchParams(query).get("attempt") || ""),
+    "certificat": () => certificateView(slug),
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "espace": learnerView,
     "administration": () => subroute === "parcours" ? learningPathEditorView(subId) : subroute === "competences" ? competencyEditorView(subId) : subroute === "ressources" ? contentEditorView(subId) : administrationView(),
@@ -690,6 +730,32 @@ function render() {
   }
 
 
+
+  document.querySelector("#start-assessment")?.addEventListener("click",async(event)=>{
+    const button=event.currentTarget;button.disabled=true;button.textContent="Initialisation…";
+    try{const attemptId=await startAssessment(button.dataset.assessmentId);location.hash="#/evaluations/"+encodeURIComponent(button.dataset.assessmentId)+"?attempt="+encodeURIComponent(attemptId);await refresh();}
+    catch(error){window.alert(error.message||"Démarrage impossible.");button.disabled=false;button.textContent="Commencer l’évaluation ↗";}
+  });
+  document.querySelector("#assessment-answer-form")?.addEventListener("submit",async(event)=>{
+    event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button[type="submit"]');const feedback=document.querySelector("#assessment-feedback");button.disabled=true;feedback.textContent="Correction côté serveur…";
+    const answers=[...form.querySelectorAll(".assessment-question")].map((question)=>({question_id:question.querySelector('input[type="radio"]').name.replace("question_",""),option_ids:[question.querySelector('input[type="radio"]:checked')?.value].filter(Boolean)}));
+    try{await submitAssessment(form.dataset.attemptId,answers);await refresh();}
+    catch(error){feedback.textContent=error.message||"Soumission impossible.";button.disabled=false;}
+  });
+  document.querySelector("#issue-path-certificate")?.addEventListener("click",async(event)=>{
+    const button=event.currentTarget;button.disabled=true;button.textContent="Émission…";
+    try{const code=await issuePathCertificate(button.dataset.pathId);location.hash="#/certificat/"+encodeURIComponent(code);render();}
+    catch(error){window.alert(error.message||"Émission impossible.");button.disabled=false;button.textContent="Émettre mon certificat ↗";}
+  });
+  const verifyForm=document.querySelector("#certificate-verify-form");
+  if(verifyForm){
+    const verify=async(code)=>{const output=document.querySelector("#certificate-verification-result");output.innerHTML='<p class="progress-note">Vérification du registre…</p>';
+      try{const records=await verifyCertificate(code);const item=Array.isArray(records)?records[0]:records;output.innerHTML=item?`<section class="certificate-verification ${item.valid?"is-valid":"is-revoked"}"><span class="eyebrow">${item.valid?"CERTIFICAT VALIDE":"CERTIFICAT RÉVOQUÉ"}</span><h2>${escapeHtml(item.certificate_title)}</h2><p>Code : ${escapeHtml(item.certificate_code)}</p><p>Version : ${escapeHtml(item.path_version)}</p><p>Émis le : ${new Date(item.issued_at).toLocaleDateString("fr-FR")}</p></section>`:'<p class="progress-note">Aucun certificat correspondant à ce code.</p>';}
+      catch(error){output.innerHTML='<p class="progress-note">'+escapeHtml(error.message||"Vérification impossible.")+'</p>';}
+    };
+    verifyForm.addEventListener("submit",(event)=>{event.preventDefault();verify(new FormData(verifyForm).get("code").trim());});
+    if(verifyForm.elements.code.value.trim())verify(verifyForm.elements.code.value.trim());
+  }
   const membershipForm=document.querySelector("#membership-form");
   if(membershipForm) membershipForm.addEventListener("submit",async(event)=>{
     event.preventDefault();const button=membershipForm.querySelector('button[type="submit"]');const feedback=document.querySelector("#membership-feedback");const values=new FormData(membershipForm);
