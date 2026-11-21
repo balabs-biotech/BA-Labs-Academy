@@ -1,7 +1,7 @@
 import { loadAcademyData } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
-import { resolvePathItems } from "./features/learning/progress.js";
+import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { enrollInPath, saveResourceProgress } from "./data.js";
 
@@ -181,6 +181,7 @@ function learningPathDetail(slug) {
       .map((relation) => relation.competency_id)
   );
   const competencies = data.competencies.filter((item) => competencyIds.has(item.id));
+  const pathProgress = buildPathProgress(rawItems, data.progress);
   const difficulty = {
     INTRODUCTORY: "Initiation",
     FOUNDATION: "Fondamental",
@@ -192,17 +193,17 @@ function learningPathDetail(slug) {
     const resource = contentById.get(step.content_id);
     const title = resource?.title || "Ressource indisponible";
     const description = resource?.summary || "Description à compléter.";
-    const state = step.isLocked ? "Prérequis à valider" : "Accessible";
+    const state = step.progressStatus === "COMPLETED" ? "Validée" : step.isLocked ? "Prérequis à valider" : "Accessible";
     const body = `<span class="path-step-index">${String(index + 1).padStart(2, "0")}</span>
       <div class="path-step-copy"><span class="eyebrow">${step.is_required ? "ÉTAPE OBLIGATOIRE" : "ÉTAPE COMPLÉMENTAIRE"} · ${escapeHtml(state)}</span>
       <h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></div>
-      <span class="path-step-status">${step.isLocked ? "Verrouillé" : "Ouvrir"} ${step.isLocked ? "⌑" : "↗"}</span>`;
+      <span class="path-step-status">${step.progressStatus === "COMPLETED" ? "Acquis ✓" : step.isLocked ? "Verrouillé ⌑" : "Ouvrir ↗"}</span>`;
     return step.isLocked || !resource
       ? `<div class="path-step is-locked">${body}</div>`
       : `<a class="path-step" href="#/ressource/${encodeURIComponent(resource.slug)}">${body}</a>`;
   }).join("");
   return `<section class="page-intro"><span class="eyebrow"><a href="#/parcours">PARCOURS</a> / ${escapeHtml(path.code)}</span><h1>${escapeHtml(path.title)}</h1><p>${escapeHtml(path.summary)}</p></section>
-    <div class="pathway-overview"><span>${escapeHtml(difficulty)}</span><span>${sequence.length} étape(s)</span><span>${path.estimated_duration_minutes ? `${path.estimated_duration_minutes} minutes estimées` : "Durée à définir"}</span></div>
+    <div class="pathway-overview"><span>${escapeHtml(difficulty)}</span><span>${sequence.length} étape(s)</span><span>${path.estimated_duration_minutes ? `${path.estimated_duration_minutes} minutes estimées` : "Durée à définir"}</span>${currentSession && enrolled ? `<span>${pathProgress.percent}% acquis</span>` : ""}</div>
     ${currentSession
       ? enrolled ? `<p class="enrollment-state">Inscription active à ce parcours.</p>` : `<button class="button button-primary" id="enroll-path" data-path-id="${escapeHtml(path.id)}">S’inscrire à ce parcours ↗</button>`
       : `<p class="progress-note"><a href="#/espace">Connecte-toi</a> pour t’inscrire et suivre tes acquis.</p>`}
@@ -231,6 +232,20 @@ function loginView() {
     </form></section>`;
 }
 
+function learnerPathCard(path) {
+  const items = data.pathItems.filter((item) => item.path_id === path.id);
+  const progress = buildPathProgress(items, data.progress);
+  return `<a class="pathway-card learner-path-card" href="#/parcours/${encodeURIComponent(path.slug)}">
+    <span class="eyebrow">PARCOURS · ${escapeHtml(path.difficulty_level || "FORMATION")}</span>
+    <h3>${escapeHtml(path.title)}</h3>
+    <p>${escapeHtml(path.summary || "Parcours pédagogique.")}</p>
+    <div class="learner-progress-track" role="progressbar" aria-valuenow="${progress.percent}" aria-valuemin="0" aria-valuemax="100" aria-label="Progression du parcours">
+      <span style="width:${progress.percent}%"></span>
+    </div>
+    <span class="pathway-meta">${progress.completedRequired}/${progress.totalRequired} étape(s) obligatoires <b>${progress.percent}%</b></span>
+  </a>`;
+}
+
 function learnerDashboardView() {
   const user = currentSession?.user;
   const enrolledPaths = data.enrollments.map((record) => ({
@@ -242,7 +257,8 @@ function learnerDashboardView() {
   return `<section class="page-intro"><span class="eyebrow">ESPACE PERSONNEL</span><h1>Tableau de bord</h1><p>${escapeHtml(user?.email || "Apprenant")} · suivi individuel des apprentissages.</p></section>
     <div class="learner-stats"><article><strong>${enrolledPaths.length}</strong><span>Parcours suivis</span></article><article><strong>${completed}</strong><span>Ressources acquises</span></article><article><strong>${inProgress}</strong><span>En cours</span></article></div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">MES APPRENTISSAGES</span><h2>Mes parcours</h2></div><a class="text-link" href="#/parcours">Explorer les parcours →</a></div>
-    ${enrolledPaths.length ? `<div class="pathway-grid">${enrolledPaths.map((record) => pathwayCard(record.path)).join("")}</div>` : emptyState("Aucun parcours suivi", "Inscris-toi à un parcours publié pour retrouver ici tes étapes et tes ressources.")}</section>
+    ${data.memberError ? `<p class="progress-note">Synchronisation du suivi momentanément indisponible : ${escapeHtml(data.memberError)}</p>` : ""}
+    ${enrolledPaths.length ? `<div class="pathway-grid">${enrolledPaths.map((record) => learnerPathCard(record.path)).join("")}</div>` : emptyState("Aucun parcours suivi", "Inscris-toi à un parcours publié pour retrouver ici tes étapes et tes ressources.")}</section>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">ACTIVITÉ INDIVIDUELLE</span><h2>Ressources acquises</h2></div></div>
     ${completed ? `<div class="resource-list">${data.progress.filter((record) => record.progress_status === "COMPLETED").map((record) => {
       const resource = data.content.find((item) => item.id === record.content_id);
