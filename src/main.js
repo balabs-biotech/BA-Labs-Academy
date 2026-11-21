@@ -722,14 +722,14 @@ function renderPathwaySequence(panel, resources, sequence) {
 }
 
 function programmeNodeRowMarkup(node,index,nodes) {
- const types=["CYCLE","YEAR","SEMESTER","BLOCK","MODULE","UNIT"];
- const rank={CYCLE:1,YEAR:2,SEMESTER:3,BLOCK:4,MODULE:5,UNIT:6};
+ const types=[["CYCLE","Cycle"],["YEAR","Année"],["SEMESTER","Semestre"],["BLOCK","Bloc pédagogique"],["MODULE","Module"],["UNIT","Unité d’enseignement"],["CHAPTER","Chapitre"],["SEQUENCE","Séquence"],["LESSON","Leçon"],["ACTIVITY","Activité pédagogique"]];
+ const rank={CYCLE:1,YEAR:2,SEMESTER:3,BLOCK:4,MODULE:5,UNIT:6,CHAPTER:7,SEQUENCE:8,LESSON:9,ACTIVITY:10};
  const parentOptions=nodes.filter(x=>x.code&&x.code!==node.code&&(rank[x.node_type]||0)<(rank[node.node_type]||99));
  return '<article class="programme-node-row" data-program-node-row>'+
   '<div class="programme-node-heading"><span class="eyebrow">NIVEAU STRUCTUREL '+String(index+1).padStart(2,"0")+'</span><button type="button" class="button button-outline" data-program-node-remove>Retirer</button></div>'+
   '<div class="editor-form-grid">'+
   '<label>Code<input data-program-node-code required maxlength="48" value="'+escapeHtml(node.code||'')+'" placeholder="CYCLE-01"></label>'+
-  '<label>Type<select data-program-node-type>'+types.map(type=>'<option value="'+type+'" '+((node.node_type||"CYCLE")===type?'selected':'')+'>'+type+'</option>').join('')+'</select></label>'+
+  '<label>Type<select data-program-node-type>'+types.map(type=>'<option value="'+type[0]+'" '+((node.node_type||"CYCLE")===type[0]?'selected':'')+'>'+type[1]+'</option>').join('')+'</select></label>'+
   '<label class="wide">Intitulé<input data-program-node-title required maxlength="180" value="'+escapeHtml(node.title||'')+'" placeholder="Cycle fondamental"></label>'+
   '<label>Parent<select data-program-node-parent><option value="">Racine du programme</option>'+parentOptions.map(x=>'<option value="'+escapeHtml(x.code)+'" '+(node.parent_code===x.code?'selected':'')+'>'+escapeHtml(x.code)+' · '+escapeHtml(x.title)+'</option>').join('')+'</select></label>'+
   '<label>Ordre<input data-program-node-order type="number" min="1" step="1" required value="'+(node.sort_order||index+1)+'"></label>'+
@@ -778,7 +778,7 @@ function programmeEditorView(programId="nouveau") {
  '<h2>Domaines concernés</h2><p>Les domaines doivent appartenir à l’un des départements sélectionnés.</p>'+
  '<div class="programme-check-grid programme-domain-grid">'+domains.map(x=>'<label data-program-domain-row data-department-code="'+escapeHtml(x.department_code)+'"><input type="checkbox" data-program-domain value="'+escapeHtml(x.code)+'" '+(domainLinks.some(y=>y.domain_code===x.code)?'checked':'')+'><span><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.department_code)+' · '+escapeHtml(x.code)+'</small></span></label>').join('')+'</div></section>'+
  '<section class="programme-editor-section"><div class="section-heading"><div><span class="eyebrow">03 · HIÉRARCHIE PÉDAGOGIQUE</span><h2>Arborescence du cursus</h2></div><button type="button" id="add-programme-node" class="button button-outline">Ajouter un niveau +</button></div>'+
- '<p>Imbrication possible : cycle → année → semestre → bloc → module → unité. Les racines sont des cycles ou des blocs. Aucun contenu de cours n’est stocké ici.</p>'+
+ '<p>Imbrication possible : cycle → année → semestre → bloc → module → unité → chapitre → séquence → leçon → activité. Les racines sont des cycles ou des blocs ; les niveaux intermédiaires restent facultatifs. Aucun contenu de cours n’est stocké ici.</p>'+
  '<div id="programme-node-list">'+(nodes.map((x,i)=>programmeNodeRowMarkup(x,i,nodes)).join('')||programmeNodeRowMarkup({node_type:"CYCLE",sort_order:1,is_required:true},0,[]))+'</div><div class="programme-hierarchy-preview" id="programme-hierarchy-preview"><span class="eyebrow">APERÇU DE L’ARBORESCENCE</span></div></section>'+
  '<div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour</a><button class="button button-primary" type="submit">Enregistrer la structure ↗</button></div><p id="programme-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p></form>'+
  (!isNew&&canPublish?'<section class="section-block"><p>La publication ouvre le programme au catalogue public après validation de ses rattachements et de sa hiérarchie.</p><button type="button" id="publish-programme" data-program-id="'+escapeHtml(program.id)+'" class="button button-outline">Publier le programme ↗</button></section>':'');
@@ -1234,7 +1234,7 @@ function render() {
     };
     const refreshParentOptions=()=>{
       const rows=[...nodeList.querySelectorAll("[data-program-node-row]")];
-      const rank={CYCLE:1,YEAR:2,SEMESTER:3,BLOCK:4,MODULE:5,UNIT:6};
+      const rank={CYCLE:1,YEAR:2,SEMESTER:3,BLOCK:4,MODULE:5,UNIT:6,CHAPTER:7,SEQUENCE:8,LESSON:9,ACTIVITY:10};
       const nodes=rows.map(row=>({code:row.querySelector("[data-program-node-code]").value.trim().toUpperCase(),node_type:row.querySelector("[data-program-node-type]").value,title:row.querySelector("[data-program-node-title]").value.trim()}));
       rows.forEach((row,index)=>{
         const select=row.querySelector("[data-program-node-parent]");
