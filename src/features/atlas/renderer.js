@@ -7,6 +7,7 @@ const escape = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({
 const palette = {
   DEPARTMENT: "department",
   DOMAIN: "domain",
+  SECTION: "section",
   CONTENT: "content",
   MODULE: "content",
   LESSON: "content",
