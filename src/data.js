@@ -446,3 +446,13 @@ export function recordTrainingAttendance(enrollmentId, date, status, minutes = 0
 export function setTrainingEnrollmentStatus(enrollmentId, status, note = "") {
   return callEditorialRpc("academy_set_training_enrollment_status", { p_enrollment_id: enrollmentId, p_new_status: status, p_note: note }, "Changement du statut d'inscription impossible");
 }
+
+export function saveTrainingPartner(payload) {
+  return callEditorialRpc("academy_save_training_partner", { p_payload: payload }, "Enregistrement du partenaire impossible");
+}
+export function saveTrainingAgreement(payload) {
+  return callEditorialRpc("academy_save_training_agreement", { p_payload: payload }, "Enregistrement de la convention impossible");
+}
+export function setTrainingReferenceStatus(entityType, entityId, status, note = "") {
+  return callEditorialRpc("academy_set_training_reference_status", { p_entity_type: entityType, p_entity_id: entityId, p_new_status: status, p_note: note }, "Changement du statut de référence impossible");
+}
