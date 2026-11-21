@@ -79,7 +79,7 @@ export async function loadAcademyData() {
       })).catch((error) => ({
         enrollments: [], progress: [], pathItemProgress: [], assessmentAttempts: [], certificates: [], membership: null, error: error.message
       }))
-    : Promise.resolve({ enrollments: [], progress: [], pathItemProgress: [], membership: null, error: null });
+    : Promise.resolve({ enrollments: [], progress: [], pathItemProgress: [], assessmentAttempts: [], certificates: [], membership: null, error: null });
   const [departments, domains, content, departmentLinks, domainLinks, learningPaths, pathItems, pathPrerequisites, competencies, contentCompetencies, rawNodes, edges, memberRecords, assessments, assessmentQuestions, assessmentOptions, pathAssessments] = await Promise.all([
     readTable("departments", {
       select: "code,slug,title,summary,color_token,sort_order",
@@ -333,4 +333,31 @@ export function publishContent(id,visibility="PUBLIC",note="") { return callEdit
 
 export function manageAcademyMembership(userId, role, status, note = "") {
  return callEditorialRpc("academy_manage_membership", {p_user_id:userId,p_role:role,p_status:status,p_note:note}, "Modification du membre impossible");
+}
+
+export function saveAssessment(assessment) {
+ return callEditorialRpc("academy_save_assessment_editorial", {
+  p_assessment_id:assessment.id||null,p_code:assessment.code,p_title:assessment.title,p_description:assessment.description||"",
+  p_pass_score:Number(assessment.passScore??70),p_max_attempts:assessment.maxAttempts?Number(assessment.maxAttempts):null,
+  p_time_limit_minutes:assessment.timeLimitMinutes?Number(assessment.timeLimitMinutes):null,p_version_label:assessment.versionLabel||"0.1",
+  p_questions:assessment.questions||[]
+ },"Enregistrement de l’évaluation impossible");
+}
+export function publishAssessment(id,note="") {
+ return callEditorialRpc("academy_publish_assessment",{p_assessment_id:id,p_note:note},"Publication de l’évaluation impossible");
+}
+export function startAssessment(id) {
+ return callEditorialRpc("academy_start_assessment",{p_assessment_id:id},"Démarrage de l’évaluation impossible");
+}
+export function submitAssessment(attemptId,answers) {
+ return callEditorialRpc("academy_submit_assessment",{p_attempt_id:attemptId,p_answers:answers},"Envoi des réponses impossible");
+}
+export function savePathAssessments(pathId,requirements) {
+ return callEditorialRpc("academy_save_path_assessments",{p_path_id:pathId,p_requirements:requirements},"Configuration des évaluations du parcours impossible");
+}
+export function issuePathCertificate(pathId) {
+ return callEditorialRpc("academy_issue_path_certificate",{p_path_id:pathId},"Émission du certificat impossible");
+}
+export function verifyCertificate(code) {
+ return callEditorialRpc("academy_verify_certificate",{p_certificate_code:code},"Vérification du certificat impossible");
 }
