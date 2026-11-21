@@ -896,6 +896,54 @@ function render() {
     verifyForm.addEventListener("submit",(event)=>{event.preventDefault();verify(new FormData(verifyForm).get("code").trim());});
     if(verifyForm.elements.code.value.trim())verify(verifyForm.elements.code.value.trim());
   }
+  document.querySelector("#training-offering-form")?.addEventListener("submit",async(event)=>{
+    event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button[type="submit"]');const feedback=document.querySelector("#training-offering-feedback");const v=new FormData(form);button.disabled=true;feedback.textContent="Enregistrement du brouillon…";
+    try{const regime=v.get("delivery_regime");await saveTrainingOffering({offering_code:v.get("offering_code").trim().toUpperCase(),title:v.get("title").trim(),specialty_code:v.get("specialty_code").trim(),description:v.get("description"),audience_profile:v.get("audience_profile"),delivery_regime:regime,partner_id:regime==="PRIVATE_WORKSHOP"?null:(v.get("partner_id")||null),agreement_id:regime==="PRIVATE_WORKSHOP"?null:(v.get("agreement_id")||null),default_duration_days:v.get("default_duration_days"),default_capacity:v.get("default_capacity")});await refresh();}
+    catch(error){feedback.textContent=error.message||"Enregistrement impossible.";button.disabled=false;}
+  });
+  document.querySelector("#training-session-form")?.addEventListener("submit",async(event)=>{
+    event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button[type="submit"]');const feedback=document.querySelector("#training-session-feedback");const v=new FormData(form);button.disabled=true;feedback.textContent="Création de la session…";
+    const iso=(value)=>value?new Date(value).toISOString():null;
+    try{await saveTrainingSession({offering_id:v.get("offering_id"),session_code:v.get("session_code").trim().toUpperCase(),venue_code:v.get("venue_code").trim(),starts_at:iso(v.get("starts_at")),ends_at:iso(v.get("ends_at")),delivery_mode:v.get("delivery_mode"),capacity:v.get("capacity"),registration_opens_at:iso(v.get("registration_opens_at")),registration_closes_at:iso(v.get("registration_closes_at"))});await refresh();}
+    catch(error){feedback.textContent=error.message||"Création impossible.";button.disabled=false;}
+  });
+  document.querySelectorAll("[data-training-status]").forEach(button=>button.addEventListener("click",async()=>{
+    button.disabled=true;try{await setTrainingStatus(button.dataset.trainingStatus,button.dataset.id,button.dataset.next,"Changement depuis la console Academy");await refresh();}
+    catch(error){window.alert(error.message||"Changement de statut impossible.");button.disabled=false;}
+  }));
+  document.querySelectorAll("[data-training-enrollment-status]").forEach(form=>form.addEventListener("submit",async(event)=>{
+    event.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;
+    try{const v=new FormData(form);await setTrainingEnrollmentStatus(form.dataset.trainingEnrollmentStatus,v.get("status"),"Mise à jour depuis la console Academy");await refresh();}
+    catch(error){window.alert(error.message||"Mise à jour impossible.");button.disabled=false;}
+  }));
+  document.querySelectorAll("[data-training-attendance]").forEach(form=>form.addEventListener("submit",async(event)=>{
+    event.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;
+    try{const v=new FormData(form);await recordTrainingAttendance(form.dataset.trainingAttendance,v.get("date"),v.get("status"),v.get("minutes"),"");await refresh();}
+    catch(error){window.alert(error.message||"Enregistrement de présence impossible.");button.disabled=false;}
+  }));
+  document.querySelectorAll("[data-training-issue]").forEach(form=>form.addEventListener("submit",async(event)=>{
+    event.preventDefault();const button=form.querySelector('button[type="submit"]');button.disabled=true;const v=new FormData(form);let result=form.nextElementSibling;
+    if(!result||!result.classList.contains("training-issued-result")){result=document.createElement("div");result.className="training-issued-result";form.after(result);}
+    result.textContent="Émission sécurisée…";
+    try{const issued=await issueTrainingDocument(form.dataset.trainingIssue,v.get("document_type"),v.get("title").trim());const link=location.origin+location.pathname+"#/verifier-formation/"+issued.verification_token;
+      result.innerHTML='<b>Document émis : '+escapeHtml(issued.document_code)+'</b><p>Jeton affiché une seule fois. Conserve-le pour générer le QR code et le joindre au document.</p><code>'+escapeHtml(issued.verification_token)+'</code><a class="text-link" href="'+escapeHtml(link)+'">Ouvrir la vérification publique ↗</a>';
+      button.disabled=true;
+    }catch(error){result.textContent=error.message||"Émission impossible.";button.disabled=false;}
+  }));
+  document.querySelectorAll("[data-training-revoke]").forEach(button=>button.addEventListener("click",async()=>{
+    const reason=window.prompt("Motif obligatoire de révocation :");if(!reason||!reason.trim())return;button.disabled=true;
+    try{await revokeTrainingDocument(button.dataset.trainingRevoke,reason.trim());await refresh();}
+    catch(error){window.alert(error.message||"Révocation impossible.");button.disabled=false;}
+  }));
+  const verifyTrainingForm=document.querySelector("#training-document-verify-form")||document.querySelector("#training-public-verify-form");
+  const verifyTraining=(form,output)=>async(event)=>{
+    event.preventDefault();const token=new FormData(form).get("token").trim();output.textContent="Vérification…";
+    try{const result=await verifyTrainingDocument(token);output.innerHTML=result?'<article class="training-verification '+(result.verification_status==="VALID"?"is-valid":"is-revoked")+'"><h3>'+escapeHtml(result.verification_status==="VALID"?"Document valide":"Document révoqué")+'</h3><b>'+escapeHtml(result.document_code)+'</b><p>'+escapeHtml(result.title)+' · '+escapeHtml(result.document_type)+'</p><p>Émetteur : '+escapeHtml(result.issuer_name)+' · '+escapeHtml(new Date(result.issued_at).toLocaleDateString("fr-FR"))+'</p></article>':'<p class="progress-note">Aucun document correspondant à ce jeton.</p>';}
+    catch(error){output.textContent=error.message||"Vérification impossible.";}
+  };
+  if(verifyTrainingForm)verifyTrainingForm.addEventListener("submit",verifyTraining(verifyTrainingForm,document.querySelector("#training-document-verify-result")||document.querySelector("#training-public-verify-result")));
+  const publicVerifyForm=document.querySelector("#training-public-verify-form");
+  if(publicVerifyForm){const out=document.querySelector("#training-public-verify-result");publicVerifyForm.addEventListener("submit",verifyTraining(publicVerifyForm,out));if(publicVerifyForm.elements.token.value.trim())verifyTraining(publicVerifyForm,out)(new Event("submit",{cancelable:true}));}
   const membershipForm=document.querySelector("#membership-form");
   if(membershipForm) membershipForm.addEventListener("submit",async(event)=>{
     event.preventDefault();const button=membershipForm.querySelector('button[type="submit"]');const feedback=document.querySelector("#membership-feedback");const values=new FormData(membershipForm);
