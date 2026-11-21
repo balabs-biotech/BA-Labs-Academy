@@ -145,7 +145,7 @@ export async function loadAcademyData() {
   ]);
   const { enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, error: memberError } = memberRecords;
   const editorialMembers = accessToken && ['OWNER','ADMIN'].includes(membership?.role) ? await callEditorialRpc('academy_list_members', {}, 'Chargement des membres impossible').catch(() => []) : [];
-  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialCompetencyDomains, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys, editorialAssessmentCompetencies, editorialCompetencyPrerequisites] = accessToken
+  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialCompetencyDomains, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialContentAssets, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys, editorialAssessmentCompetencies, editorialCompetencyPrerequisites] = accessToken
     ? await Promise.all([
         readTable("academy_learning_paths", {
           select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
@@ -179,6 +179,10 @@ export async function loadAcademyData() {
         readTable("academy_competency_prerequisites", { select: "competency_id,prerequisite_competency_id" }, accessToken).catch(() => [])
       ])
     : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
+  const editorialContentAssets = accessToken ? await readTable("academy_content_assets", {
+    select: "id,content_id,asset_code,asset_kind,delivery_type,title,description,external_url,mime_type,file_name,file_size_bytes,checksum_sha256,language_code,license_code,attribution,asset_version,previous_version_id,sort_order,created_at",
+    order: "created_at.desc"
+  }, accessToken).catch(() => []) : [];
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
@@ -375,4 +379,11 @@ export function saveAssessmentCompetencies(assessmentId, mappings) {
 
 export function saveCompetencyPrerequisites(competencyId, prerequisiteIds) {
  return callEditorialRpc("academy_save_competency_prerequisites", {p_competency_id:competencyId,p_prerequisite_ids:prerequisiteIds}, "Enregistrement des prérequis de compétence impossible");
+}
+
+export function saveContentAssets(contentId, assets) {
+  return callEditorialRpc("academy_save_content_assets", {
+    p_content_id: contentId,
+    p_assets: assets || []
+  }, "Enregistrement des supports impossible");
 }
