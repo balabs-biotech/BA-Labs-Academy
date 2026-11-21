@@ -1,4 +1,4 @@
-import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, saveCompetencyDomains, saveCompetencyPrerequisites, publishCompetency, saveContentEditorial, saveContentAssets, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, enrollInTrainingSession, saveTrainingOffering, saveTrainingSession, setTrainingStatus, recordTrainingAttendance, setTrainingEnrollmentStatus, issueTrainingDocument, revokeTrainingDocument, verifyTrainingDocument, saveTrainingPartner, saveTrainingAgreement, setTrainingReferenceStatus, saveTrainingBillingRecord, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, saveAssessmentCompetencies, publishAssessment, savePathAssessments } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, saveProgramDraft, publishProgram, publishDepartment, publishDomain, saveCompetency, saveCompetencyDomains, saveCompetencyPrerequisites, publishCompetency, saveContentEditorial, saveContentAssets, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, enrollInTrainingSession, saveTrainingOffering, saveTrainingSession, setTrainingStatus, recordTrainingAttendance, setTrainingEnrollmentStatus, issueTrainingDocument, revokeTrainingDocument, verifyTrainingDocument, saveTrainingPartner, saveTrainingAgreement, setTrainingReferenceStatus, saveTrainingBillingRecord, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, saveAssessmentCompetencies, publishAssessment, savePathAssessments } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
@@ -709,6 +709,69 @@ function renderPathwaySequence(panel, resources, sequence) {
     <p class="search-count">L’ordre affiché définit la progression. Les prérequis peuvent être multiples ; les cycles sont refusés par le backend.</p>`;
 }
 
+function programmeNodeRowMarkup(node,index,nodes) {
+ const types=["CYCLE","YEAR","SEMESTER","BLOCK","MODULE","UNIT"];
+ const rank={CYCLE:1,YEAR:2,SEMESTER:3,BLOCK:4,MODULE:5,UNIT:6};
+ const parentOptions=nodes.filter(x=>x.code&&x.code!==node.code&&(rank[x.node_type]||0)<(rank[node.node_type]||99));
+ return '<article class="programme-node-row" data-program-node-row>'+
+  '<div class="programme-node-heading"><span class="eyebrow">NIVEAU STRUCTUREL '+String(index+1).padStart(2,"0")+'</span><button type="button" class="button button-outline" data-program-node-remove>Retirer</button></div>'+
+  '<div class="editor-form-grid">'+
+  '<label>Code<input data-program-node-code required maxlength="48" value="'+escapeHtml(node.code||'')+'" placeholder="CYCLE-01"></label>'+
+  '<label>Type<select data-program-node-type>'+types.map(type=>'<option value="'+type+'" '+((node.node_type||"CYCLE")===type?'selected':'')+'>'+type+'</option>').join('')+'</select></label>'+
+  '<label class="wide">Intitulé<input data-program-node-title required maxlength="180" value="'+escapeHtml(node.title||'')+'" placeholder="Cycle fondamental"></label>'+
+  '<label>Parent<select data-program-node-parent><option value="">Racine du programme</option>'+parentOptions.map(x=>'<option value="'+escapeHtml(x.code)+'" '+(node.parent_code===x.code?'selected':'')+'>'+escapeHtml(x.code)+' · '+escapeHtml(x.title)+'</option>').join('')+'</select></label>'+
+  '<label>Ordre<input data-program-node-order type="number" min="1" step="1" required value="'+(node.sort_order||index+1)+'"></label>'+
+  '<label>Durée indicative (minutes)<input data-program-node-duration type="number" min="1" step="1" value="'+(node.estimated_minutes||'')+'" placeholder="Facultatif"></label>'+
+  '<label class="wide">Résumé structurel<textarea data-program-node-summary rows="2" maxlength="500">'+escapeHtml(node.summary||'')+'</textarea></label>'+
+  '<label class="programme-node-required"><input data-program-node-required type="checkbox" '+(node.is_required===false?'':'checked')+'> Niveau obligatoire dans le programme</label>'+
+  '</div></article>';
+}
+
+function programmeEditorView(programId="nouveau") {
+ if(!currentSession?.user)return loginView();
+ const membership=data.membership;
+ if(!["OWNER","ADMIN","EDITOR"].includes(membership?.role)||membership.membership_status!=="ACTIVE")
+  return notFound("Édition non autorisée","La structuration des programmes est réservée aux rôles Owner, Admin et Editor.");
+ const isNew=!programId||programId==="nouveau";
+ const program=isNew?null:(data.editorialPrograms||[]).find(x=>x.id===programId);
+ if(!isNew&&(!program||program.status!=="DRAFT"))return notFound("Brouillon indisponible","Seuls les programmes au statut DRAFT peuvent être modifiés.");
+ const departmentLinks=(data.editorialProgramDepartments||[]).filter(x=>x.program_id===program?.id);
+ const domainLinks=(data.editorialProgramDomains||[]).filter(x=>x.program_id===program?.id);
+ const rawNodes=(data.editorialProgramNodes||[]).filter(x=>x.program_id===program?.id);
+ const codeById=new Map(rawNodes.map(x=>[x.id,x.code]));
+ const nodes=rawNodes.map(x=>({...x,parent_code:codeById.get(x.parent_node_id)||null})).sort((a,b)=>a.sort_order-b.sort_order);
+ const departments=(data.editorialDepartments||[]).filter(x=>x.status!=="ARCHIVED");
+ const domains=(data.editorialDomains||[]).filter(x=>x.status!=="ARCHIVED");
+ const primary=departmentLinks.find(x=>x.is_primary)?.department_code||"";
+ const canPublish=["OWNER","ADMIN"].includes(membership.role);
+ const typeOptions=["FOUNDATION","SPECIALIZATION","PROFESSIONAL","RESEARCH","TRANSVERSAL"];
+ const levelOptions=["INTRODUCTORY","FOUNDATION","INTERMEDIATE","ADVANCED"];
+ return '<section class="page-intro"><span class="eyebrow"><a href="#/administration">ESPACE ÉDITORIAL</a> / PROGRAMMES</span><h1>'+(isNew?"Nouveau programme":escapeHtml(program.title))+'</h1><p>Définir l’identité du cursus, ses disciplines de rattachement et sa hiérarchie. Aucun cours n’est rédigé dans cet éditeur.</p></section>'+
+ '<form id="programme-editor-form" class="programme-editor-form" data-program-id="'+escapeHtml(program?.id||'')+'">'+
+ '<section class="programme-editor-section"><span class="eyebrow">01 · IDENTITÉ DU PROGRAMME</span><div class="editor-form-grid">'+
+ '<label>Code interne<input name="code" required maxlength="48" value="'+escapeHtml(program?.code||'')+'" placeholder="BIO-MYCO-FOUND"></label>'+
+ '<label>Identifiant URL<input name="slug" required maxlength="80" value="'+escapeHtml(program?.slug||'')+'" placeholder="fondamentaux-mycologie"></label>'+
+ '<label class="wide">Titre du programme<input name="title" required maxlength="180" value="'+escapeHtml(program?.title||'')+'" placeholder="Fondamentaux de mycologie appliquée"></label>'+
+ '<label>Type de programme<select name="program_type">'+typeOptions.map(x=>'<option value="'+x+'" '+((program?.program_type||"FOUNDATION")===x?'selected':'')+'>'+x+'</option>').join('')+'</select></label>'+
+ '<label>Niveau d’entrée<select name="difficulty_level">'+levelOptions.map(x=>'<option value="'+x+'" '+((program?.difficulty_level||"FOUNDATION")===x?'selected':'')+'>'+x+'</option>').join('')+'</select></label>'+
+ '<label class="wide">Résumé<textarea name="summary" rows="2" maxlength="1200">'+escapeHtml(program?.summary||'')+'</textarea></label>'+
+ '<label class="wide">Finalité générale / objectifs du cursus<textarea name="objectives" rows="3" maxlength="2000">'+escapeHtml(program?.objectives||'')+'</textarea></label>'+
+ '<label class="wide">Public cible<input name="target_audience" maxlength="300" value="'+escapeHtml(program?.target_audience||'')+'" placeholder="Public mixte, techniciens, étudiants…"></label>'+
+ '<label>Durée globale indicative (heures)<input name="duration_hours" type="number" min="0.5" step="0.5" value="'+(program?.estimated_duration_hours??'')+'" placeholder="Facultatif"></label>'+
+ '<label>Version<input name="version_label" maxlength="24" value="'+escapeHtml(program?.version_label||'0.1')+'"></label>'+
+ '</div></section>'+
+ '<section class="programme-editor-section"><span class="eyebrow">02 · ANCRAGE DISCIPLINAIRE</span><h2>Départements associés</h2><p>Un programme peut être transversal. Un seul département est désigné comme rattachement principal.</p>'+
+ '<div class="programme-check-grid">'+departments.map(x=>'<label><input type="checkbox" data-program-department value="'+escapeHtml(x.code)+'" '+(departmentLinks.some(y=>y.department_code===x.code)?'checked':'')+'><span><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.code)+'</small></span></label>').join('')+'</div>'+
+ '<label>Département principal<select name="primary_department"><option value="">Choisir après sélection</option>'+departments.map(x=>'<option value="'+escapeHtml(x.code)+'" '+(primary===x.code?'selected':'')+'>'+escapeHtml(x.title)+'</option>').join('')+'</select></label>'+
+ '<h2>Domaines concernés</h2><p>Les domaines doivent appartenir à l’un des départements sélectionnés.</p>'+
+ '<div class="programme-check-grid programme-domain-grid">'+domains.map(x=>'<label data-program-domain-row data-department-code="'+escapeHtml(x.department_code)+'"><input type="checkbox" data-program-domain value="'+escapeHtml(x.code)+'" '+(domainLinks.some(y=>y.domain_code===x.code)?'checked':'')+'><span><b>'+escapeHtml(x.title)+'</b><small>'+escapeHtml(x.department_code)+' · '+escapeHtml(x.code)+'</small></span></label>').join('')+'</div></section>'+
+ '<section class="programme-editor-section"><div class="section-heading"><div><span class="eyebrow">03 · HIÉRARCHIE PÉDAGOGIQUE</span><h2>Arborescence du cursus</h2></div><button type="button" id="add-programme-node" class="button button-outline">Ajouter un niveau +</button></div>'+
+ '<p>Imbrication possible : cycle → année → semestre → bloc → module → unité. Les racines sont des cycles ou des blocs. Aucun contenu de cours n’est stocké ici.</p>'+
+ '<div id="programme-node-list">'+(nodes.map((x,i)=>programmeNodeRowMarkup(x,i,nodes)).join('')||programmeNodeRowMarkup({node_type:"CYCLE",sort_order:1,is_required:true},0,[]))+'</div></section>'+
+ '<div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour</a><button class="button button-primary" type="submit">Enregistrer la structure ↗</button></div><p id="programme-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p></form>'+
+ (!isNew&&canPublish?'<section class="section-block"><p>La publication ouvre le programme au catalogue public après validation de ses rattachements et de sa hiérarchie.</p><button type="button" id="publish-programme" data-program-id="'+escapeHtml(program.id)+'" class="button button-outline">Publier le programme ↗</button></section>':'');
+}
+
 function learningPathEditorView(pathId = "nouveau") {
   if (!currentSession?.user) return loginView();
   const membership = data.membership;
@@ -806,7 +869,7 @@ function render() {
     "verifier-formation": () => trainingVerificationView(slug),
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "espace": learnerView,
-    "administration": () => subroute === "parcours" ? learningPathEditorView(subId) : subroute === "competences" ? competencyEditorView(subId) : subroute === "ressources" ? contentEditorView(subId) : subroute === "evaluations" ? assessmentEditorView(subId) : administrationView(),
+    "administration": () => subroute === "programmes" ? programmeEditorView(subId) : subroute === "parcours" ? learningPathEditorView(subId) : subroute === "competences" ? competencyEditorView(subId) : subroute === "ressources" ? contentEditorView(subId) : subroute === "evaluations" ? assessmentEditorView(subId) : administrationView(),
     "atlas": atlasView,
     "apropos": aboutView
   };
