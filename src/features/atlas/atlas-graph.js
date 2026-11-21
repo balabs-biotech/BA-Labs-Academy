@@ -54,7 +54,16 @@ function makeNode(item, parent, rootId, level, x, y, angle, entityType) {
   };
 }
 
-export function buildAcademyGraph(departments, domains, pathways) {
+export const KNOWLEDGE_RELATION_TYPES = Object.freeze({
+  PREREQUISITE: { label: "Prérequis", directed: true },
+  COMPLEMENTARY: { label: "Complémentarité", directed: false },
+  METHOD_TRANSFER: { label: "Transfert de méthode", directed: true },
+  TECHNICAL_DEPENDENCY: { label: "Dépendance technique", directed: true },
+  APPLIED_IN: { label: "Application pratique", directed: true },
+  INTERDISCIPLINARY: { label: "Lien interdisciplinaire", directed: false }
+});
+
+export function buildAcademyGraph(departments, domains, pathways, knowledgeRelations = []) {
   const nodes = [];
   const edges = [];
   const byId = new Map();
@@ -272,6 +281,22 @@ export function buildAcademyGraph(departments, domains, pathways) {
       });
     }
   });
+
+  // Only explicit, evidence-backed editorial relations become visible edges.
+  for (const relation of knowledgeRelations) {
+    const type = KNOWLEDGE_RELATION_TYPES[relation.type];
+    const source = byId.get(relation.source);
+    const target = byId.get(relation.target);
+    if (!type || !source || !target || source.entity_type !== "MODULE" || target.entity_type !== "MODULE") continue;
+    if (source.id === target.id || relation.status !== "verified" || !String(relation.evidence || "").trim()) continue;
+    const edge = addEdge(source, target, {
+      id: "knowledge:" + source.id + ":" + relation.type + ":" + target.id,
+      relationType: relation.type, cross: true, verified: true,
+      basis: "academy-knowledge-relation", label: type.label
+    });
+    edge.directed = type.directed;
+    edge.evidence = String(relation.evidence).trim();
+  }
 
   // Local anastomoses connect nearby branches without imposing a grid.
   const groups = new Map();

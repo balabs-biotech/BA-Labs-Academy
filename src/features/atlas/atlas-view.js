@@ -225,6 +225,35 @@ export function mountAcademyAtlas(container, graph) {
       body.append(status);
     }
 
+    if (selected.entity_type === "MODULE") {
+      const relationEdges = edges.filter((edge) => edge.basis === "academy-knowledge-relation" && (edge.a.id === selected.id || edge.b.id === selected.id));
+      const connections = document.createElement("section");
+      connections.className = "atlas-knowledge-connections";
+      const connectionTitle = document.createElement("strong");
+      connectionTitle.textContent = "Connexions pédagogiques";
+      connections.append(connectionTitle);
+      if (!relationEdges.length) {
+        const empty = document.createElement("small");
+        empty.textContent = "Aucune relation inter-module validée pour le moment.";
+        connections.append(empty);
+      } else {
+        relationEdges.forEach((edge) => {
+          const isSource = edge.a.id === selected.id;
+          const other = isSource ? edge.b : edge.a;
+          const item = document.createElement("button");
+          item.type = "button";
+          item.className = "atlas-knowledge-connection";
+          const relationLabel = document.createElement("small");
+          relationLabel.textContent = edge.label + (isSource ? " · vers" : " · depuis");
+          const relationName = document.createElement("span");
+          relationName.textContent = other.title;
+          item.append(relationLabel, relationName);
+          item.addEventListener("click", () => focusNode(other));
+          connections.append(item);
+        });
+      }
+      body.append(connections);
+    }
     if (selected.data.route) {
       const link = document.createElement("a");
       link.className = "atlas-selection-link";

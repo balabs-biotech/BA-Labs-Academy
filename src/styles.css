@@ -691,3 +691,13 @@
  .academy-atlas .atlas-root-chip{flex:0 0 auto}
  .academy-atlas .atlas-zoom-readout{display:none}
 }
+
+
+/* Explicit module-to-module relations in the Atlas inspector */
+.atlas-knowledge-connections{display:grid;gap:8px;margin-top:16px;padding-top:13px;border-top:1px solid rgba(167,194,178,.16)}
+.atlas-knowledge-connections>strong{color:#d7e1d9;font-size:11px;letter-spacing:.04em}
+.atlas-knowledge-connections>small{color:#8fa397;font-size:10px;line-height:1.5}
+.atlas-knowledge-connection{display:grid;gap:4px;width:100%;padding:9px 11px;border:1px solid rgba(126,170,163,.24);background:rgba(16,29,26,.82);text-align:left;cursor:pointer}
+.atlas-knowledge-connection:hover{border-color:rgba(232,201,157,.65);background:rgba(232,201,157,.07)}
+.atlas-knowledge-connection small{color:#c9aa7c;font-size:9px;letter-spacing:.05em}
+.atlas-knowledge-connection span{color:#d7e1d9;font-size:11px}
