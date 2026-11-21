@@ -88,6 +88,14 @@ test("programme hierarchy preview is refreshed after initial load and structural
  assert.match(main,/refreshHierarchyPreview/);
 });
 
+test("programme edits reconcile nodes by stable code and preserve relationship targets",()=>{
+ assert.match(identityMigration,/sort_order=sort_order\+1000000000/);
+ assert.match(identityMigration,/v_processed_codes/);
+ assert.match(identityMigration,/update public\.academy_program_nodes set parent_node_id/);
+ assert.match(identityMigration,/not exists\(select 1 from jsonb_array_elements\(p_nodes\) incoming/);
+ assert.doesNotMatch(identityMigration,/delete from public\.academy_program_nodes where program_id=v_id/);
+});
+
 test("editing a programme preserves stable node IDs for future curriculum links",()=>{
  assert.match(identityMigration,/select n\.id into v_node_id/);
  assert.match(identityMigration,/update public\.academy_program_nodes set parent_node_id/);
