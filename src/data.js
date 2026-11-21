@@ -35,7 +35,7 @@ function resolveAtlasTitles(nodes, departments, domains, content) {
 }
 
 export async function loadAcademyData() {
-  const [departments, domains, content, rawNodes, edges] = await Promise.all([
+  const [departments, domains, content, departmentLinks, domainLinks, rawNodes, edges] = await Promise.all([
     readTable("departments", {
       select: "code,slug,title,summary,color_token,sort_order",
       status: "eq.PUBLISHED",
@@ -55,6 +55,12 @@ export async function loadAcademyData() {
       visibility: "eq.PUBLIC",
       order: "published_at.desc"
     }),
+    readTable("content_department_links", {
+      select: "content_id,department_code,is_primary"
+    }),
+    readTable("content_domain_links", {
+      select: "content_id,domain_code"
+    }),
     readTable("atlas_nodes", {
       select: "id,node_key,entity_type,entity_key,title_override,position_x,position_y,layout_version",
       status: "eq.PUBLISHED",
@@ -66,5 +72,5 @@ export async function loadAcademyData() {
     })
   ]);
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content);
-  return { departments, domains, content, nodes, edges };
+  return { departments, domains, content, departmentLinks, domainLinks, nodes, edges };
 }
