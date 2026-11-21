@@ -878,7 +878,7 @@ function updateNavigation(route) {
   document.querySelectorAll("[data-route]").forEach((link) => {
     const target = link.dataset.route;
     const active = (route === "" && target === "home") ||
-      (["departements", "domaines", "sections", "axes"].includes(route) && target === "departements") ||
+      (["departements", "domaines", "sections"].includes(route) && target === "departements") ||
       (["catalogue", "ressource"].includes(route) && target === "catalogue") ||
       (route === "recherche" && target === "recherche") ||
       (route === "atlas" && target === "atlas") ||
