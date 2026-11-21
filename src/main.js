@@ -1,10 +1,15 @@
 import { loadAcademyData } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
+import { resolvePathItems } from "./features/learning/progress.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
-let data = { departments: [], domains: [], content: [], departmentLinks: [], domainLinks: [], nodes: [], edges: [] };
+let data = {
+  departments: [], domains: [], content: [], departmentLinks: [], domainLinks: [],
+  learningPaths: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
+  nodes: [], edges: []
+};
 let loadError = null;
 let unbindAtlas = () => {};
 
@@ -125,6 +130,76 @@ function domainDetail(slug) {
   <div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource associée", "Les ressources validées seront reliées à ce domaine au fil des publications.")}</div></section>`;
 }
 
+function pathwayCard(path) {
+  const itemCount = data.pathItems.filter((item) => item.path_id === path.id).length;
+  const difficulty = {
+    INTRODUCTORY: "Initiation",
+    FOUNDATION: "Fondamental",
+    INTERMEDIATE: "Intermédiaire",
+    ADVANCED: "Avancé"
+  }[path.difficulty_level] || path.difficulty_level;
+  const duration = path.estimated_duration_minutes
+    ? `${path.estimated_duration_minutes} min`
+    : "Durée à définir";
+  return `<a class="pathway-card" href="#/parcours/${encodeURIComponent(path.slug)}">
+    <span class="eyebrow">PARCOURS · ${escapeHtml(difficulty)}</span>
+    <h3>${escapeHtml(path.title)}</h3>
+    <p>${escapeHtml(path.summary || "Présentation en préparation.")}</p>
+    <span class="pathway-meta">${itemCount} étape(s) · ${escapeHtml(duration)} <b>↗</b></span>
+  </a>`;
+}
+
+function learningPathsView() {
+  return `<section class="page-intro"><span class="eyebrow">PROGRESSION PÉDAGOGIQUE</span><h1>Parcours</h1><p>Des séquences structurées avec objectifs, ressources et prérequis explicites.</p></section>
+  ${data.learningPaths.length
+    ? `<div class="pathway-grid">${data.learningPaths.map(pathwayCard).join("")}</div>`
+    : emptyState("Les parcours sont en préparation", "Le moteur de parcours, les prérequis et le modèle de progression sont configurés. Les parcours seront visibles après leur validation éditoriale.")}`;
+}
+
+function learningPathDetail(slug) {
+  const path = data.learningPaths.find((item) => item.slug === slug);
+  if (!path) return notFound("Parcours indisponible", "Ce parcours n’est pas publié ou n’existe pas dans le catalogue public.");
+  const rawItems = data.pathItems.filter((item) => item.path_id === path.id);
+  const sequence = resolvePathItems(
+    rawItems,
+    data.pathPrerequisites.filter((relation) => relation.path_id === path.id),
+    []
+  );
+  const contentById = new Map(data.content.map((item) => [item.id, item]));
+  const competencyIds = new Set(
+    data.contentCompetencies
+      .filter((relation) => rawItems.some((item) => item.content_id === relation.content_id))
+      .map((relation) => relation.competency_id)
+  );
+  const competencies = data.competencies.filter((item) => competencyIds.has(item.id));
+  const difficulty = {
+    INTRODUCTORY: "Initiation",
+    FOUNDATION: "Fondamental",
+    INTERMEDIATE: "Intermédiaire",
+    ADVANCED: "Avancé"
+  }[path.difficulty_level] || path.difficulty_level;
+  const steps = sequence.map((step, index) => {
+    const resource = contentById.get(step.content_id);
+    const title = resource?.title || "Ressource indisponible";
+    const description = resource?.summary || "Description à compléter.";
+    const state = step.isLocked ? "Prérequis à valider" : "Accessible";
+    const body = `<span class="path-step-index">${String(index + 1).padStart(2, "0")}</span>
+      <div class="path-step-copy"><span class="eyebrow">${step.is_required ? "ÉTAPE OBLIGATOIRE" : "ÉTAPE COMPLÉMENTAIRE"} · ${escapeHtml(state)}</span>
+      <h3>${escapeHtml(title)}</h3><p>${escapeHtml(description)}</p></div>
+      <span class="path-step-status">${step.isLocked ? "Verrouillé" : "Ouvrir"} ${step.isLocked ? "⌑" : "↗"}</span>`;
+    return step.isLocked || !resource
+      ? `<div class="path-step is-locked">${body}</div>`
+      : `<a class="path-step" href="#/ressource/${encodeURIComponent(resource.slug)}">${body}</a>`;
+  }).join("");
+  return `<section class="page-intro"><span class="eyebrow"><a href="#/parcours">PARCOURS</a> / ${escapeHtml(path.code)}</span><h1>${escapeHtml(path.title)}</h1><p>${escapeHtml(path.summary)}</p></section>
+    <div class="pathway-overview"><span>${escapeHtml(difficulty)}</span><span>${sequence.length} étape(s)</span><span>${path.estimated_duration_minutes ? `${path.estimated_duration_minutes} minutes estimées` : "Durée à définir"}</span></div>
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">SÉQUENCE D’APPRENTISSAGE</span><h2>Étapes et prérequis</h2></div></div>
+    <div class="path-sequence">${steps || emptyState("Séquence en préparation", "Les ressources seront ajoutées au parcours après validation.")}</div></section>
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RÉSULTATS D’APPRENTISSAGE</span><h2>Compétences visées</h2></div></div>
+    ${competencies.length ? `<div class="competency-list">${competencies.map((item) => `<div class="competency-chip"><b>${escapeHtml(item.title)}</b><span>${escapeHtml(item.competency_level)}</span></div>`).join("")}</div>` : emptyState("Compétences en cours de définition", "Les compétences seront associées aux ressources du parcours.")}</section>
+    <p class="progress-note">Le suivi individuel et la sauvegarde de la progression seront activés avec l’espace apprenant et l’authentification.</p>`;
+}
+
 function atlasView() {
   return `<section class="page-intro"><span class="eyebrow">CARTOGRAPHIE DES CONNAISSANCES</span><h1>Atlas</h1><p>Explorer les relations entre départements, domaines et ressources. Déplace la carte par glisser-déposer et utilise la molette ou les contrôles pour zoomer.</p></section>
   <div class="atlas-panel"><div class="atlas-toolbar"><span><b>${data.nodes.length}</b> nœud(s) public(s)</span><span>${data.edges.length} relation(s) publique(s)</span></div>
@@ -146,7 +221,8 @@ function updateNavigation(route) {
     const active = (route === "" && target === "home") ||
       (["departements", "domaines"].includes(route) && target === "departements") ||
       (["catalogue", "ressource"].includes(route) && target === "catalogue") ||
-      (route === "atlas" && target === "atlas");
+      (route === "atlas" && target === "atlas") ||
+      (route === "parcours" && target === "parcours");
     link.classList.toggle("active", active);
     if (active) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
@@ -163,7 +239,7 @@ function render() {
     document.querySelector("#retry")?.addEventListener("click", refresh);
     return;
   }
-  connection.textContent = !data.departments.length && !data.content.length && !data.nodes.length
+  connection.textContent = !data.departments.length && !data.content.length && !data.nodes.length && !data.learningPaths.length
     ? "API connectée · aucun contenu public"
     : "Données publiques synchronisées";
   const routes = {
@@ -172,6 +248,7 @@ function render() {
     "domaines": () => domainDetail(slug),
     "catalogue": catalogueView,
     "ressource": () => resourceDetail(slug),
+    "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "atlas": atlasView,
     "apropos": aboutView
   };
