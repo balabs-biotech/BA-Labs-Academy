@@ -16,9 +16,8 @@ const escapeAtlasText = (value = "") => String(value).replace(/[&<>"']/g, (char)
 }[char]));
 
 export function renderAcademyAtlas(graph) {
-  const { departments, domains, pathways, sections, modules } = graph.stats;
+  const { departments, pathways, sections, modules } = graph.stats;
   const departmentRoots = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.level === 0);
-  const domainRoots = graph.nodes.filter((node) => node.entity_type === "DOMAIN" && node.level === 0);
   const pathwayRoots = graph.nodes.filter((node) => node.entity_type === "PATHWAY" && node.level === 0);
   const rootNavigation = (items, kind, label) => `
     <div class="atlas-root-group atlas-root-group--${kind}">
@@ -32,19 +31,18 @@ export function renderAcademyAtlas(graph) {
     <section class="page-intro atlas-page-intro">
       <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
       <h1>Atlas des connaissances</h1>
-      <p>Un réseau unique : sept départements, trois domaines transversaux, sections, modules et parcours pratiques. Approche-toi pour révéler les ramifications, sélectionne un nœud pour en lire la fiche.</p>
+      <p>Un réseau unique : neuf départements, sections, modules et parcours pratiques. Approche-toi pour révéler les ramifications, sélectionne un nœud pour en lire la fiche.</p>
     </section>
     <section class="academy-atlas" id="academy-atlas">
       <div class="atlas-topline">
         <div class="atlas-topline-copy">
           <span class="eyebrow">EXPLORATEUR 2D · PIXIJS / WEBGL</span>
-          <strong>${departments} départements <i>·</i> ${domains} domaines transversaux <i>·</i> ${pathways} parcours <i>·</i> ${sections} sections <i>·</i> ${modules} modules</strong>
+          <strong>${departments} départements <i>·</i> ${pathways} parcours <i>·</i> ${sections} sections <i>·</i> ${modules} modules</strong>
         </div>
         <span class="atlas-engine-state" id="atlas-engine-state">Initialisation du moteur…</span>
       </div>
-      <nav class="atlas-root-navigation" aria-label="Accès direct aux départements, domaines transversaux et parcours">
+      <nav class="atlas-root-navigation" aria-label="Accès direct aux départements et parcours">
         ${rootNavigation(departmentRoots, "departments", "DÉPARTEMENTS")}
-        ${rootNavigation(domainRoots, "domaines", "DOMAINES TRANSVERSAUX")}
         ${rootNavigation(pathwayRoots, "pathways", "PARCOURS PRATIQUES")}
       </nav>
       <div class="atlas-stage" id="academy-atlas-stage">
@@ -67,7 +65,6 @@ export function renderAcademyAtlas(graph) {
       <div class="atlas-legend">
         <span class="legend-department">Département</span>
         <span class="legend-pathway">Parcours transversal</span>
-        <span class="legend-domain">Domaine transversal</span>
         <span class="legend-section">Section</span>
         <span class="legend-module">Module</span>
         <span class="legend-link">Relation entre disciplines</span>
