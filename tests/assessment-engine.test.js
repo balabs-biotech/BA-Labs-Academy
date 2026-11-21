@@ -18,7 +18,7 @@ test("assessment attempts are server-graded and versioned",()=>{
  assert.match(hardening,/status='EXPIRED'/);
 });
 test("assessment payload validation rejects null, duplicate and foreign answers",()=>{
- assert.match(hardening,/coalesce\(jsonb_typeof\(p_answers\),' '\)<>?array/);
+ assert.match(hardening,/coalesce\\(jsonb_typeof\\(p_answers\\),''\\)<>'array'/);
  assert.match(hardening,/Duplicate question answer/);
  assert.match(hardening,/option outside its question/);
 });
