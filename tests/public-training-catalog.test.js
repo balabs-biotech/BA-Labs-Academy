@@ -1,0 +1,11 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+const migration=await readFile(new URL("../supabase/migrations/20261122018000_academy_public_training_catalog_read_v1.sql",import.meta.url),"utf8");
+const main=await readFile(new URL("../src/main.js",import.meta.url),"utf8");
+const data=await readFile(new URL("../src/data.js",import.meta.url),"utf8");
+const html=await readFile(new URL("../index.html",import.meta.url),"utf8");
+test("public read policies expose only active offers and open sessions",()=>{assert.match(migration,/status='ACTIVE'/);assert.match(migration,/status='OPEN'/);assert.match(migration,/o\.status='ACTIVE'/);});
+test("public catalog uses public fields and omits private operational records",()=>{assert.match(data,/publicTrainingOfferings/);assert.match(data,/publicTrainingSessions/);assert.match(main,/function trainingCatalogView/);assert.match(main,/"formations": trainingCatalogView/);});
+test("public navigation links to the training catalog",()=>{assert.match(html,/href="#\/formations"/);});
+test("public catalog omits capacity and private venue identifiers",()=>{const start=main.indexOf("function trainingCatalogView");const end=main.indexOf("function trainingOperationsView",start);const view=main.slice(start,end);assert.doesNotMatch(view,/venue_code|capacity|participant_email/);});
