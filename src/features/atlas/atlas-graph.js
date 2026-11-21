@@ -146,9 +146,9 @@ export function buildAcademyGraph(departments, domains, pathways) {
       angle = -Math.PI / 2 + (orbitIndex + 0.5) * (Math.PI * 2 / pathwayItems.length);
       radius = 1110;
     }
-    const jitter = (((seed >>> 8) & 255) / 255 - 0.5) * 16;
-    const x = Math.cos(angle) * (radius + jitter);
-    const y = Math.sin(angle) * (radius + jitter);
+    const jitter = item.kind === "department" && item.code === "MYC" ? 0 : (((seed >>> 8) & 255) / 255 - 0.5) * 16;
+    const x = item.kind === "department" && item.code === "MYC" ? 0 : Math.cos(angle) * (radius + jitter);
+    const y = item.kind === "department" && item.code === "MYC" ? 0 : Math.sin(angle) * (radius + jitter);
     if (item.kind !== "department" || item.code !== "MYC") angle += (((seed >>> 16) & 255) / 255 - 0.5) * 0.08;
     const rootId = item.kind === "pathway" ? "pathways" : item.code.toLowerCase();
     const shortTitle = item.kind === "pathway"
