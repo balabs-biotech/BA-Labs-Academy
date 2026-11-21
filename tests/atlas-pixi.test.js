@@ -9,10 +9,10 @@ const graph = buildAcademyGraph(catalogueMap, catalogueDomains, cataloguePathway
 
 test("Atlas includes every mapped department and practical pathway", () => {
   assert.equal(graph.stats.departments, catalogueMap.length);
-  assert.equal(graph.stats.axes, catalogueDomains.length);
+  assert.equal(graph.stats.domains, catalogueDomains.length);
   assert.equal(graph.stats.pathways, cataloguePathways.length);
   assert.equal(graph.nodes.filter((node) => node.entity_type === "DEPARTMENT").length, catalogueMap.length);
-  assert.equal(graph.nodes.filter((node) => node.entity_type === "TRANSVERSAL").length, catalogueDomains.length);
+  assert.equal(graph.nodes.filter((node) => node.entity_type === "DOMAIN").length, catalogueDomains.length);
   assert.equal(graph.nodes.filter((node) => node.entity_type === "PATHWAY").length, cataloguePathways.length);
   assert.equal(graph.nodes.filter((node) => node.level === 0).length, 20);
 });
@@ -24,15 +24,15 @@ test("Atlas exposes the full thematic map progressively", () => {
   assert.equal(graph.nodes.filter((node) => node.entity_type === "MODULE").length, catalogueTotals.modules);
 });
 
-test("every pathway has valid department, axis and section references", () => {
+test("every pathway has valid department, domain and section references", () => {
   const departmentCodes = new Set(catalogueMap.map((department) => department.code));
   const sectionCodes = new Set([...catalogueMap, ...catalogueDomains].flatMap((group) => group.sections.map((section) => section.code)));
-  const axisCodes = new Set(catalogueDomains.map((axis) => axis.code));
+  const domainCodes = new Set(catalogueDomains.map((domain) => domain.code));
   for (const pathway of cataloguePathways) {
     assert.ok(departmentCodes.has(pathway.departmentCode), pathway.code + " primary department");
     assert.ok(pathway.departmentCodes.every((code) => departmentCodes.has(code)), pathway.code + " linked departments");
     assert.ok(pathway.sectionCodes.every((code) => sectionCodes.has(code)), pathway.code + " linked sections");
-    assert.ok(pathway.axisCodes.every((code) => axisCodes.has(code)), pathway.code + " linked axes");
+    assert.ok(pathway.domainCodes.every((code) => domainCodes.has(code)), pathway.code + " linked transversal domains");
   }
 });
 
@@ -76,14 +76,14 @@ test("each pathway connects to every declared section", () => {
   }
 });
 
-test("department and transversal-axis root labels are not raw codes", () => {
+test("department and transversal-domain root labels are not raw codes", () => {
   const roots = graph.nodes.filter((node) => node.level === 0);
   assert.ok(roots.some((node) => node.entity_type === "DEPARTMENT" && node.shortTitle === "Mycologie appliquée"));
-  assert.ok(roots.some((node) => node.entity_type === "TRANSVERSAL" && node.shortTitle === "Bioprocédés"));
+  assert.ok(roots.some((node) => node.entity_type === "DOMAIN" && node.shortTitle === "Bioprocédés"));
   assert.ok(roots.filter((node) => node.entity_type !== "PATHWAY").every((node) => node.shortTitle !== node.entity_key));
 });
 
-test("department and transversal-axis root labels are human-readable", () => {
+test("department and transversal-domain root labels are human-readable", () => {
   const roots = graph.nodes.filter((node) => node.level === 0);
   assert.ok(roots.some((node) => node.entity_type === "DEPARTMENT" && node.shortTitle === "Mycologie appliquée"));
   assert.ok(roots.some((node) => node.entity_type === "TRANSVERSAL" && node.shortTitle === "Bioprocédés"));
