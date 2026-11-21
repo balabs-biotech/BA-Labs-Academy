@@ -77,6 +77,17 @@ test("curriculum nodes have explicit competency, resource, assessment and path r
  assert.match(data,/editorialProgramNodeAssessments/);
  assert.match(data,/editorialProgramNodePaths/);
 });
+test("curriculum mapping data bindings are unique and returned to the editor state",()=>{
+ const binding=data.match(/const \[([^\]]*editorialProgramNodePaths[^\]]*)\] = accessToken/);
+ assert.ok(binding,"programme mapping bindings must exist");
+ const names=binding[1].split(",").map(name=>name.trim());
+ assert.equal(new Set(names).size,names.length,"data destructuring must not redeclare identifiers");
+ for(const name of ["editorialProgramNodeCompetencies","editorialProgramNodeResources","editorialProgramNodeAssessments","editorialProgramNodePaths"]){
+  assert.equal(names.filter(value=>value===name).length,1);
+  assert.match(data,new RegExp(name+"\\s*,"));
+ }
+});
+
 test("curriculum mapping tables are protected by RLS and read-only outside controlled workflows",()=>{
  assert.match(curriculumMigration,/enable row level security/);
  assert.match(curriculumMigration,/Editors can read programme node competencies/);
