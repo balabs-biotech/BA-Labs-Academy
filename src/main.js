@@ -438,6 +438,17 @@ function trainingVerificationView(token="") {
  return '<section class="page-intro"><span class="eyebrow">REGISTRE PUBLIC · DOCUMENTS DE FORMATION</span><h1>Vérification d’une attestation</h1><p>Le registre confirme uniquement le statut et les métadonnées minimales du document. Aucune donnée personnelle du participant n’est publiée.</p></section><form id="training-public-verify-form" class="certificate-verify-form"><label>Jeton de vérification</label><input name="token" maxlength="64" pattern="[a-fA-F0-9]{64}" value="'+escapeHtml(token)+'" required><button class="button button-primary" type="submit">Vérifier ↗</button></form><div id="training-public-verify-result" aria-live="polite"></div>';
 }
 
+function programmeAdministrationSectionView() {
+ const programs=(data.editorialPrograms||[]).filter(item=>item.status==="DRAFT");
+ return '<section class="section-block pathway-editorial"><div class="section-heading"><div><span class="eyebrow">ARCHITECTURE DES CURSUS</span><h2>Programmes pédagogiques</h2></div><a class="button button-primary" href="#/administration/programmes/nouveau">Structurer un programme ↗</a></div>'+
+ '<p class="taxonomy-intro">Définir les cursus, leur ancrage disciplinaire et leur hiérarchie de cycles, années, semestres, blocs, modules et unités. Cette étape ne crée aucun cours ni support pédagogique.</p>'+
+ '<div class="editorial-path-list">'+(programs.map(program=>{
+  const nodeCount=(data.editorialProgramNodes||[]).filter(node=>node.program_id===program.id).length;
+  const departmentCount=(data.editorialProgramDepartments||[]).filter(link=>link.program_id===program.id).length;
+  return '<a class="editorial-path-row" href="#/administration/programmes/'+encodeURIComponent(program.id)+'"><div><span class="eyebrow">'+escapeHtml(program.code)+' · '+escapeHtml(program.program_type)+' · BROUILLON</span><h3>'+escapeHtml(program.title)+'</h3><p>'+nodeCount+' niveau(x) structurel(s) · '+departmentCount+' département(s) associé(s)</p></div><b>Modifier ↗</b></a>';
+ }).join('')||'<div class="empty-state"><h3>Aucun programme structuré</h3><p>Crée les premiers squelettes de cursus après validation de leur périmètre disciplinaire.</p></div>')+'</div></section>';
+}
+
 function administrationView() {
   if (!currentSession?.user) return loginView();
   const membership = data.membership;
@@ -466,6 +477,7 @@ function administrationView() {
     </div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">WORKFLOW ÉDITORIAL</span><h2>Chaîne de publication</h2></div></div>
     <div class="editorial-stages"><article><b>01</b><h3>Brouillon</h3><p>Préparation et structuration d’un contenu.</p></article><article><b>02</b><h3>Revue</h3><p>Soumission et examen par les rôles autorisés.</p></article><article><b>03</b><h3>Publication</h3><p>Validation finale et diffusion publique contrôlée.</p></article></div></section>
+    ${["OWNER","ADMIN","EDITOR"].includes(membership.role) ? programmeAdministrationSectionView() : ""}
     ${["OWNER","ADMIN","EDITOR"].includes(membership.role) ? `
     <section class="section-block assessment-editorial">
       <div class="section-heading"><div><span class="eyebrow">ÉVALUATIONS ET CONTRÔLE DES ACQUIS</span><h2>Banque d’évaluations</h2></div><a class="button button-primary" href="#/administration/evaluations/nouveau">Créer une évaluation ↗</a></div>
@@ -1202,6 +1214,84 @@ function render() {
       try { await publishCompetency(button.dataset.competencyPublish); await refresh(); }
       catch (error) { window.alert(error.message || "Publication impossible."); button.disabled = false; }
     });
+  });
+  const programmeForm=document.querySelector("#programme-editor-form");
+  if(programmeForm){
+    const nodeList=programmeForm.querySelector("#programme-node-list");
+    const refreshParentOptions=()=>{
+      const rows=[...nodeList.querySelectorAll("[data-program-node-row]")];
+      const rank={CYCLE:1,YEAR:2,SEMESTER:3,BLOCK:4,MODULE:5,UNIT:6};
+      const nodes=rows.map(row=>({code:row.querySelector("[data-program-node-code]").value.trim().toUpperCase(),node_type:row.querySelector("[data-program-node-type]").value,title:row.querySelector("[data-program-node-title]").value.trim()}));
+      rows.forEach((row,index)=>{
+        const select=row.querySelector("[data-program-node-parent]");
+        const current=select.value;
+        const own=nodes[index];
+        select.innerHTML='<option value="">Racine du programme</option>'+nodes.filter((candidate,i)=>i!==index&&candidate.code&&rank[candidate.node_type]<rank[own.node_type]).map(candidate=>'<option value="'+escapeHtml(candidate.code)+'">'+escapeHtml(candidate.code)+' · '+escapeHtml(candidate.title||candidate.node_type)+'</option>').join('');
+        if([...select.options].some(option=>option.value===current))select.value=current;
+      });
+    };
+    nodeList.addEventListener("input",refreshParentOptions);
+    nodeList.addEventListener("change",refreshParentOptions);
+    nodeList.addEventListener("click",event=>{
+      const remove=event.target.closest("[data-program-node-remove]");
+      if(remove){remove.closest("[data-program-node-row]").remove();refreshParentOptions();}
+    });
+    programmeForm.querySelector("#add-programme-node")?.addEventListener("click",()=>{
+      const count=nodeList.querySelectorAll("[data-program-node-row]").length;
+      nodeList.insertAdjacentHTML("beforeend",programmeNodeRowMarkup({node_type:"BLOCK",sort_order:count+1,is_required:true},count,[]));
+      refreshParentOptions();
+    });
+    const selectedDepartments=()=>[...programmeForm.querySelectorAll("[data-program-department]:checked")].map(input=>input.value);
+    const primarySelect=programmeForm.querySelector('[name="primary_department"]');
+    const updateDisciplineOptions=()=>{
+      const selected=selectedDepartments();
+      [...primarySelect.options].forEach(option=>{if(option.value)option.disabled=!selected.includes(option.value);});
+      programmeForm.querySelectorAll("[data-program-domain-row]").forEach(row=>{
+        const enabled=selected.includes(row.dataset.departmentCode);
+        row.hidden=!enabled;
+        if(!enabled)row.querySelector("input").checked=false;
+      });
+      if(!selected.includes(primarySelect.value))primarySelect.value=selected[0]||"";
+    };
+    programmeForm.querySelectorAll("[data-program-department]").forEach(checkbox=>checkbox.addEventListener("change",updateDisciplineOptions));
+    updateDisciplineOptions();
+    programmeForm.addEventListener("submit",async event=>{
+      event.preventDefault();
+      const button=programmeForm.querySelector('button[type="submit"]');
+      const feedback=programmeForm.querySelector("#programme-editor-feedback");
+      const values=new FormData(programmeForm);
+      const departments=selectedDepartments().map(code=>({code,is_primary:code===values.get("primary_department")}));
+      const domains=[...programmeForm.querySelectorAll("[data-program-domain]:checked")].map(input=>({code:input.value}));
+      const nodes=[...nodeList.querySelectorAll("[data-program-node-row]")].map(row=>({
+        code:row.querySelector("[data-program-node-code]").value.trim().toUpperCase(),
+        node_type:row.querySelector("[data-program-node-type]").value,
+        title:row.querySelector("[data-program-node-title]").value.trim(),
+        parent_code:row.querySelector("[data-program-node-parent]").value||null,
+        sort_order:Number(row.querySelector("[data-program-node-order]").value),
+        estimated_minutes:row.querySelector("[data-program-node-duration]").value?Number(row.querySelector("[data-program-node-duration]").value):null,
+        summary:row.querySelector("[data-program-node-summary]").value.trim(),
+        is_required:row.querySelector("[data-program-node-required]").checked
+      }));
+      if(!departments.some(item=>item.is_primary)){feedback.textContent="Sélectionne au moins un département et désigne son rattachement principal.";return;}
+      if(!domains.length){feedback.textContent="Sélectionne au moins un domaine disciplinaire.";return;}
+      if(!nodes.length){feedback.textContent="Ajoute au moins un niveau à la hiérarchie.";return;}
+      button.disabled=true;feedback.textContent="Enregistrement de la structure du programme…";
+      try{
+        const id=await saveProgramDraft({
+          id:programmeForm.dataset.programId||null,code:values.get("code").trim().toUpperCase(),slug:values.get("slug").trim().toLowerCase(),
+          title:values.get("title").trim(),summary:values.get("summary"),objectives:values.get("objectives"),
+          programType:values.get("program_type"),targetAudience:values.get("target_audience"),difficultyLevel:values.get("difficulty_level"),
+          durationHours:values.get("duration_hours"),versionLabel:values.get("version_label"),departments,domains,nodes
+        });
+        location.hash="#/administration/programmes/"+encodeURIComponent(id);
+        await refresh();
+      }catch(error){feedback.textContent=error.message||"Enregistrement impossible.";button.disabled=false;}
+    });
+  }
+  document.querySelector("#publish-programme")?.addEventListener("click",async event=>{
+    const button=event.currentTarget;button.disabled=true;button.textContent="Publication…";
+    try{await publishProgram(button.dataset.programId);await refresh();location.hash="#/administration";}
+    catch(error){window.alert(error.message||"Publication impossible.");button.disabled=false;button.textContent="Publier le programme ↗";}
   });
   document.querySelector("#pathway-editor-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
