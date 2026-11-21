@@ -280,7 +280,7 @@ export async function savePathItemProgress(pathItemId, completed = true) {
 
 async function callEditorialRpc(name, payload, errorLabel) {
   const accessToken = await getAccessToken();
-  if (!accessToken) throw new Error("Connecte-toi pour accéder à l’espace éditorial.");
+  if (!accessToken) throw new Error("Connecte-toi pour effectuer cette opération.");
   const response = await fetch(`${API}/rpc/${name}`, {
     method: "POST",
     headers: { ...headers, Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
@@ -435,6 +435,14 @@ export async function verifyTrainingDocument(token) {
   return Array.isArray(rows) ? (rows[0] || null) : rows;
 }
 
+export function enrollInTrainingSession(sessionId, participantName, participantEmail, participantCategory = "OTHER") {
+  return callEditorialRpc("academy_enroll_training_session", {
+    p_session_id: sessionId,
+    p_participant_name: participantName,
+    p_participant_email: participantEmail,
+    p_participant_category: participantCategory
+  }, "Inscription à la session impossible");
+}
 export function saveTrainingOffering(payload) {
   return callEditorialRpc("academy_save_training_offering", { p_payload: payload }, "Enregistrement de la formation impossible");
 }
