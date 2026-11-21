@@ -1,0 +1,11 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+const index=await readFile(new URL("../index.html",import.meta.url),"utf8");
+const main=await readFile(new URL("../src/main.js",import.meta.url),"utf8");
+const qr=await readFile(new URL("../src/vendor/qrcode.min.js",import.meta.url),"utf8");
+const license=await readFile(new URL("../src/vendor/QR-CODE-LICENSE.txt",import.meta.url),"utf8");
+test("QR encoder is bundled locally before the Academy module",()=>{assert.match(index,/src\/vendor\/qrcode\.min\.js/);assert.ok(index.indexOf("qrcode.min.js")<index.indexOf('type="module"'));assert.match(qr,/QRCode/);});
+test("issued training documents render a local QR and allow PNG export",()=>{assert.match(main,/new window\.QRCode\(qrNode/);assert.match(main,/toDataURL\("image\/png"\)/);assert.match(main,/BA-Labs-Academy-/);});
+test("QR library MIT attribution is retained",()=>{assert.match(license,/Copyright \(c\) 2012 davidshimjs/);assert.match(license,/Permission is hereby granted/);});
+test("QR payload points to the public verification route, not a third-party service",()=>{assert.match(main,/verifier-formation/);assert.match(main,/text:link/);assert.doesNotMatch(main,/api\.qrserver\.com|chart\.googleapis\.com/);});
