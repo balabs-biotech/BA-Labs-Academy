@@ -1,5 +1,6 @@
 import { createPixiRenderer } from "./pixi-renderer.js";
 import { createAtlasNavigation, getAtlasBreadcrumbPath } from "./atlas-navigation.js";
+import { atlasScreenPoint, fitAtlasCamera, zoomAtlasCamera, interpolateAtlasCamera } from "./atlas-camera.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -118,10 +119,7 @@ export function mountAcademyAtlas(container, graph) {
   let lastClick = null;
   let relationFilter = "all";
 
-  const screen = (node) => ({
-    x: width / 2 + offset.x + node.x * scale,
-    y: height / 2 + offset.y + node.y * scale
-  });
+  const screen = (node) => atlasScreenPoint(node, { width, height, scale, offset });
 
   const draw = () => {
     if (!renderer || disposed) return;
@@ -141,21 +139,10 @@ export function mountAcademyAtlas(container, graph) {
   };
 
   const fitOverview = () => {
-    const roots = nodes.filter((node) => node.level === 0);
-    if (!roots.length || !width || !height) return;
-    const xs = roots.map((node) => node.x);
-    const ys = roots.map((node) => node.y);
-    const mobile = width < 700;
-    const padX = mobile ? 26 : Math.min(150, Math.max(72, width * 0.11));
-    const padY = mobile ? 42 : Math.min(125, Math.max(70, height * 0.13));
-    const minX = Math.min(...xs);
-    const maxX = Math.max(...xs);
-    const minY = Math.min(...ys);
-    const maxY = Math.max(...ys);
-    const spanX = maxX - minX + 230;
-    const spanY = maxY - minY + 220;
-    targetScale = clamp(Math.min((width - padX * 2) / spanX, (height - padY * 2) / spanY), 0.075, 0.82);
-    targetOffset = { x: -((minX + maxX) / 2) * targetScale, y: -((minY + maxY) / 2) * targetScale };
+    const camera = fitAtlasCamera(nodes.filter((node) => node.level === 0), width, height);
+    if (!camera) return;
+    targetScale = camera.scale;
+    targetOffset = camera.offset;
   };
 
   const updateBreadcrumbs = () => {
@@ -329,11 +316,9 @@ export function mountAcademyAtlas(container, graph) {
   };
 
   const zoom = (factor, x = width / 2, y = height / 2) => {
-    const next = clamp(targetScale * factor, 0.075, 12);
-    const ratio = next / targetScale;
-    targetOffset.x = (x - width / 2) - (x - width / 2 - targetOffset.x) * ratio;
-    targetOffset.y = (y - height / 2) - (y - height / 2 - targetOffset.y) * ratio;
-    targetScale = next;
+    const camera = zoomAtlasCamera({ scale: targetScale, offset: targetOffset, width, height }, factor, x, y);
+    targetScale = camera.scale;
+    targetOffset = camera.offset;
     if (reduced) {
       scale = targetScale;
       offset = { ...targetOffset };
@@ -525,9 +510,13 @@ export function mountAcademyAtlas(container, graph) {
   const animate = () => {
     if (disposed) return;
     if (!reduced) {
-      scale += (targetScale - scale) * 0.12;
-      offset.x += (targetOffset.x - offset.x) * 0.12;
-      offset.y += (targetOffset.y - offset.y) * 0.12;
+      const camera = interpolateAtlasCamera(
+        { scale, offset },
+        { scale: targetScale, offset: targetOffset },
+        0.12
+      );
+      scale = camera.scale;
+      offset = camera.offset;
       draw();
       frame = requestAnimationFrame(animate);
     }

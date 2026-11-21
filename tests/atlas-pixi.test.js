@@ -186,3 +186,55 @@ test("Atlas view delegates breadcrumb construction to the navigation model", () 
   const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
   assert.ok(source.includes("getAtlasBreadcrumbPath(navigation.selected, byId)"));
 });
+
+
+test("Atlas camera projects world coordinates into the viewport", async () => {
+  const { atlasScreenPoint } = await import("../src/features/atlas/atlas-camera.js");
+  assert.deepEqual(atlasScreenPoint({ x: 10, y: -5 }, {
+    width: 800, height: 600, scale: 2, offset: { x: 20, y: -10 }
+  }), { x: 520, y: 190 });
+});
+
+test("Atlas camera fits the complete root constellation for desktop and mobile", async () => {
+  const { fitAtlasCamera } = await import("../src/features/atlas/atlas-camera.js");
+  const roots = [{ x: -500, y: -200 }, { x: 500, y: 200 }];
+  const desktop = fitAtlasCamera(roots, 1440, 900);
+  const mobile = fitAtlasCamera(roots, 390, 780);
+  assert.ok(desktop.scale > mobile.scale);
+  assert.ok(desktop.scale <= 0.82 && desktop.scale >= 0.075);
+  assert.ok(mobile.scale >= 0.075);
+  assert.deepEqual(fitAtlasCamera([], 390, 780), null);
+});
+
+test("Atlas camera zoom preserves the cursor's world-space anchor and clamps limits", async () => {
+  const { zoomAtlasCamera, atlasScreenPoint } = await import("../src/features/atlas/atlas-camera.js");
+  const initial = { width: 800, height: 600, scale: 1, offset: { x: 0, y: 0 } };
+  const anchor = { x: 620, y: 210 };
+  const worldBefore = {
+    x: (anchor.x - initial.width / 2 - initial.offset.x) / initial.scale,
+    y: (anchor.y - initial.height / 2 - initial.offset.y) / initial.scale
+  };
+  const next = zoomAtlasCamera(initial, 2, anchor.x, anchor.y);
+  const screenAfter = atlasScreenPoint(worldBefore, { ...initial, ...next });
+  assert.ok(Math.abs(screenAfter.x - anchor.x) < 1e-9);
+  assert.ok(Math.abs(screenAfter.y - anchor.y) < 1e-9);
+  assert.equal(zoomAtlasCamera(initial, 100, anchor.x, anchor.y).scale, 12);
+});
+
+test("Atlas camera interpolation converges predictably without mutating inputs", async () => {
+  const { interpolateAtlasCamera } = await import("../src/features/atlas/atlas-camera.js");
+  const current = { scale: 1, offset: { x: 0, y: 0 } };
+  const target = { scale: 3, offset: { x: 100, y: -50 } };
+  assert.deepEqual(interpolateAtlasCamera(current, target, 0.5), {
+    scale: 2, offset: { x: 50, y: -25 }
+  });
+  assert.deepEqual(current, { scale: 1, offset: { x: 0, y: 0 } });
+});
+
+test("Atlas view delegates projection, fit, zoom and animation interpolation to camera module", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(source.includes("atlasScreenPoint(node"));
+  assert.ok(source.includes("fitAtlasCamera("));
+  assert.ok(source.includes("zoomAtlasCamera("));
+  assert.ok(source.includes("interpolateAtlasCamera("));
+});
