@@ -444,3 +444,5 @@
  .atlas-root-chip{max-width:125px;padding:4px 8px}
  .atlas-root-chip span{max-width:108px;font-size:8px}
 }
+
+.atlas-root-group--axes .atlas-root-chip:hover,.atlas-root-group--axes .atlas-root-chip.is-active{border-color:#c88773;background:#3a2b27;color:#f0ddd4}
