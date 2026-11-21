@@ -122,8 +122,7 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
       if (item.kind === "section") sectionNodes.set(item.code, node);
       if (item.kind === "domain") domainNodes.set(item.code, node);
       if (item.children?.length) {
-        const nextDrift = Math.sin((node.x + node.y) * 0.0017 + seed * 0.000001) * 0.16;
-        walk(item.children, node, rootId, depth + 1, angle + fraction * 0.22 + jitter * 0.45 + nextDrift);
+        walk(item.children, node, rootId, depth + 1, angle);
       }
     });
   };
