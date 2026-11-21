@@ -97,6 +97,10 @@ La clôture d'une inscription exige désormais une présence validée pour chaqu
 
 Le catalogue public propose une demande d’inscription aux sessions ouvertes pour les apprenants déjà connectés. Le nom et le profil sont saisis dans le formulaire ; l’adresse e-mail provient du compte authentifié et est contrôlée à nouveau par la RPC PostgreSQL. Les personnes non connectées sont redirigées vers l’espace apprenant : aucune création publique de compte n’est activée. Les doublons, fenêtres d’inscription et capacités sont contrôlés côté serveur ; les demandes excédentaires passent en liste d’attente. Une demande acceptée reste au statut PENDING jusqu’à confirmation par l’administration.
 
+### Architecture des programmes pédagogiques
+
+Les programmes sont des cursus distincts des parcours linéaires et des ressources de cours. Chaque programme possède un périmètre disciplinaire (un ou plusieurs départements, un ou plusieurs domaines) et une arborescence ordonnée de niveaux : cycle, année, semestre, bloc, module et unité. Les niveaux sont imbriqués par parent ; les racines sont des cycles ou des blocs. La base vérifie les codes, les rattachements domaine-département, les parents, l’ordre et l’absence de cycle. L’éditeur de programme ne stocke pas de cours, de leçons ni de supports : leur conception intervient dans une phase ultérieure.
+
 ### Catalogue public des formations
 
 Une page publique `#/formations` présente uniquement les offres au statut ACTIVE et les sessions au statut OPEN. Les politiques RLS permettent la lecture publique de ces deux ensembles sans exposer les partenaires, conventions, participants, présences ou documents internes. Le catalogue ne publie ni capacité, ni code de lieu, ni données personnelles.
