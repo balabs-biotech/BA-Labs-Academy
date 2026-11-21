@@ -392,7 +392,7 @@ function contentEditorView(contentId = "nouveau") {
  if (!isNew && (!item || item.status!=="DRAFT" || !["PLANNED","OUTLINE","DRAFT"].includes(item.editorial_status))) return notFound("Brouillon indisponible","Cette ressource n’est pas modifiable.");
  const deps=(data.editorialDepartmentLinks||[]).filter((x)=>x.content_id===item?.id);
  const doms=(data.editorialDomainLinks||[]).filter((x)=>x.content_id===item?.id).map((x)=>x.domain_code);
- const types=["ARTICLE","COURSE","VIDEO","DOCUMENT","PODCAST","INTERACTIVE","EXERCISE","LAB_PROTOCOL","EXTERNAL_RESOURCE"];
+ const types=["learning_module","ARTICLE","COURSE","VIDEO","DOCUMENT","PODCAST","INTERACTIVE","EXERCISE","LAB_PROTOCOL","EXTERNAL_RESOURCE"];
  const levels=["INTRODUCTORY","FOUNDATION","INTERMEDIATE","ADVANCED","EXPERT"];
  return '<section class="page-intro"><span class="eyebrow"><a href="#/administration">ESPACE ÉDITORIAL</a> / RESSOURCES</span><h1>'+(isNew?"Nouvelle ressource":escapeHtml(item.title))+'</h1><p>Fiche de référence et classification disciplinaire.</p></section>' +
  '<form class="content-editor-form" id="content-editor-form" data-content-id="'+escapeHtml(item?.id||'')+'"><div class="editor-form-grid">' +
