@@ -2,11 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 const sql=await readFile(new URL("../supabase/migrations/20261121213000_academy_membership_governance_v1.sql",import.meta.url),"utf8");
+const policySql=await readFile(new URL("../supabase/migrations/20261121214500_academy_membership_policy_no_recursion_v1.sql",import.meta.url),"utf8");
 const main=await readFile(new URL("../src/main.js",import.meta.url),"utf8");
 const data=await readFile(new URL("../src/data.js",import.meta.url),"utf8");
 test("membership read policy avoids recursive RLS evaluation",()=>{
- assert.match(sql,/academy_is_owner_or_admin/);
- assert.match(sql,/security definer/);
+ assert.match(policySql,/academy_is_owner_or_admin/);
+ assert.match(policySql,/security definer/);
 });
 test("membership changes require active Owner\/Admin and restrict Admin grants",()=>{
  assert.match(sql,/v_actor_role not in \('OWNER','ADMIN'\)/);
