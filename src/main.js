@@ -896,7 +896,11 @@ function render() {
   const [route = "", routeTail = ""] = path.split("/");
   const [slug = "", query = ""] = routeTail.split("?");
   const [subroute = "", subId = ""] = slug.split("/");
-  const atlasGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, data.domains, cataloguePathways) : null;
+  const atlasDomains = [...new Map(
+    [...(data.domains || []), ...(data.editorialDomains || [])]
+      .map((domain) => [domain.code, domain])
+  ).values()];
+  const atlasGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, atlasDomains, cataloguePathways) : null;
   const pathItemId = new URLSearchParams(query).get("pathItem") || "";
   updateNavigation(route);
   if (loadError) {
