@@ -77,10 +77,10 @@ try {
     await page.waitForFunction(() => document.querySelector(".page-intro h1")?.textContent.trim() === "Production mycologique, du laboratoire à la fructification");
     assert.equal(await page.locator(".page-intro h1").innerText(), "Production mycologique, du laboratoire à la fructification");
 
-    await page.goto(routeUrl("departements"), { waitUntil: "domcontentloaded" });
+    await page.goto(`${siteBase}?smoke=departments#/departements`, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => document.querySelectorAll(".department-card").length === 9);
     assert.equal(await page.locator(".department-card").count(), 9, "All nine current departments must be visible");
-    await page.goto(routeUrl("parcours"), { waitUntil: "domcontentloaded" });
+    await page.goto(`${siteBase}?smoke=pathways#/parcours`, { waitUntil: "domcontentloaded" });
     await page.waitForFunction(() => document.querySelectorAll(".pathway-card").length === 10);
     assert.equal(await page.locator(".pathway-card").count(), 10, "All ten cross-disciplinary pathways must be visible");
 
