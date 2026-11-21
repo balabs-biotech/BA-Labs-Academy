@@ -954,7 +954,7 @@ function render() {
   const routes = {
     "": homeView,
     "departements": () => slug ? departmentDetail(slug) : departmentsView(),
-    "domaines": () => domainDetail(slug),
+    "domaines": () => catalogueDomains.some((item) => item.code.toLowerCase() === slug) ? transversalDomainsView(slug) : domainDetail(slug),
     "axes": () => transversalDomainsView(slug),
     "sections": () => sectionDetail(slug),
     "catalogue": catalogueView,
