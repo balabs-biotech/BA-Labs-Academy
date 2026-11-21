@@ -242,16 +242,20 @@ test("Atlas view delegates projection, fit, zoom and animation interpolation to 
 });
 
 
-test("Atlas wheel renderer keeps pathways out of the overview and uses a restrained radial motif", async () => {
+test("Atlas wheel renderer keeps the restrained radial motif", () => {
   const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
-  assert.ok(source.includes('selected?.entity_type !== "PATHWAY"'));
   assert.ok(source.includes("filaments.circle(0,0,820)"));
   assert.ok(source.includes("filaments.circle(0,0,1600)"));
-  assert.ok(source.includes('e.basis==="academy-pathway-network"'));
-  assert.ok(source.includes("const sharedPathway=e.basis===\"academy-pathway-network\""));
   assert.ok(source.includes("const departmentRoots = nodes.filter"));
   assert.ok(!source.includes('field.moveTo(x,y).quadraticCurveTo'));
   assert.ok(source.includes("Three arms echo the BA Labs Y mark"));
+});
+
+test("Atlas connection layer hides pathway roots outside pathway focus", async () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-connections.js", import.meta.url), "utf8");
+  assert.ok(source.includes('selected?.entity_type !== "PATHWAY"'));
+  assert.ok(source.includes('e.basis==="academy-pathway-network"'));
+  assert.ok(source.includes('const sharedPathway=e.basis==="academy-pathway-network"'));
 });
 
 
