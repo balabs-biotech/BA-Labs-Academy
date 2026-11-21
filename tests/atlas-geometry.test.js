@@ -31,7 +31,7 @@ test("pathways occupy a distinct orbit and interleave department anchors", () =>
   points.forEach((point) => {
     assert.ok(Math.abs(Math.hypot(point.x, point.y) - ATLAS_GEOMETRY.pathwayOrbitRadius) < 1e-8);
   });
-  assert.ok(Math.abs(points[0].angle + Math.PI / 2 + Math.PI / 10) < 1e-10);
+  assert.ok(Math.abs(points[0].angle + Math.PI / 2 - Math.PI / 10) < 1e-10);
 });
 
 test("Mycology sections distribute around a complete ring without duplicate endpoint", () => {
@@ -41,7 +41,7 @@ test("Mycology sections distribute around a complete ring without duplicate endp
   }));
   const gaps = points.map((point, index) => {
     const next = points[(index + 1) % points.length];
-    return Math.atan2(next.y, next.x) - Math.atan2(point.y, point.x);
+    return (Math.atan2(next.y, next.x) - Math.atan2(point.y, point.x) + Math.PI * 2) % (Math.PI * 2);
   });
   gaps.forEach((gap) => assert.ok(Math.abs(gap - Math.PI / 3) < 1e-10));
 });
