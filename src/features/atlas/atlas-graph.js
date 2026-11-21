@@ -206,7 +206,13 @@ export function buildAcademyGraph(departments, domains, pathways) {
           code: section.code + "-" + String(moduleIndex + 1).padStart(2, "0"),
           title: module,
           summary: "Module cartographié dans " + section.title + ". Fiche pédagogique à développer.",
-          kind: "module"
+          kind: "module",
+          sectionCode: section.code,
+          sectionTitle: section.title,
+          departmentCode: item.code,
+          departmentTitle: item.title,
+          moduleIndex: moduleIndex + 1,
+          route: "#/modules/" + section.code.toLowerCase() + "/" + String(moduleIndex + 1).padStart(2, "0")
         }))
       }));
       walk([...domainChildren, ...sectionChildren], root, rootId, 1, item.code === "MYC" ? 0 : angle);

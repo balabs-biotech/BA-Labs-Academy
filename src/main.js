@@ -209,8 +209,52 @@ function sectionDetail(slug) {
   return `<section class="page-intro"><span class="eyebrow"><a href="#/departements/${mapped.parent.code.toLowerCase()}">${escapeHtml(mapped.parent.title)}</a> / SECTION</span><h1>${escapeHtml(mapped.title)}</h1><p>${escapeHtml(mapped.description)}</p></section>
     <div class="detail-meta"><span>${escapeHtml(mapped.code)}</span><span>${mapped.modules.length} modules cartographiés</span><span>Fiches non rédigées</span></div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">MODULES ASSOCIÉS</span><h2>Connaissances à développer</h2></div></div>
-      <div class="knowledge-module-grid">${mapped.modules.map((module,index)=>`<article class="knowledge-module"><span>${escapeHtml(mapped.code)} · ${String(index+1).padStart(2,"0")}</span><h4>${escapeHtml(module)}</h4><small>Module cartographié · fiche à développer</small></article>`).join("")}</div>
+      <div class="knowledge-module-grid">${mapped.modules.map((module,index)=>`<a class="knowledge-module knowledge-module-link" href="#/modules/${encodeURIComponent(mapped.code.toLowerCase())}/${String(index+1).padStart(2,"0")}"><span>${escapeHtml(mapped.code)} · ${String(index+1).padStart(2,"0")}</span><h4>${escapeHtml(module)}</h4><small>Module cartographié · ouvrir la fiche ↗</small></a>`).join("")}</div>
     </section>`;
+}
+
+function moduleDetail(sectionSlug, moduleIndex) {
+  const section = catalogueMap.flatMap((department) => department.sections.map((item) => ({ ...item, parent: department })))
+    .find((item) => item.code.toLowerCase() === String(sectionSlug || "").toLowerCase());
+  const index = Number.parseInt(moduleIndex, 10);
+  if (!section || !Number.isInteger(index) || index < 1 || index > section.modules.length) {
+    return notFound("Module indisponible", "Ce module ne figure pas dans la cartographie actuelle.");
+  }
+  const department = section.parent;
+  const title = section.modules[index - 1];
+  const code = section.code + "-" + String(index).padStart(2, "0");
+  const previous = index > 1 ? index - 1 : null;
+  const next = index < section.modules.length ? index + 1 : null;
+  return `<section class="page-intro module-page-intro">
+    <span class="eyebrow"><a href="#/departements/${encodeURIComponent(department.code.toLowerCase())}">${escapeHtml(department.title)}</a> / <a href="#/sections/${encodeURIComponent(section.code.toLowerCase())}">${escapeHtml(section.title)}</a> / MODULE</span>
+    <h1>${escapeHtml(title)}</h1>
+    <p>Fiche de référence du module dans la cartographie des connaissances BA Labs Academy.</p>
+  </section>
+  <div class="module-identity-strip"><span class="module-code">${escapeHtml(code)}</span><span>${escapeHtml(department.code)} · ${escapeHtml(section.code)}</span><span class="module-status">Cartographié · à rédiger</span></div>
+  <section class="module-detail-layout">
+    <article class="module-detail-main">
+      <span class="eyebrow">OBJET PÉDAGOGIQUE CANONIQUE</span>
+      <h2>Fiche de module</h2>
+      <p>Cette fiche constitue le point d’entrée stable du module. Son contenu pédagogique sera ajouté lors de la phase de rédaction.</p>
+      <div class="module-placeholder-grid">
+        <div><span>01</span><strong>Objectifs d’apprentissage</strong><small>À définir</small></div>
+        <div><span>02</span><strong>Compétences associées</strong><small>À relier</small></div>
+        <div><span>03</span><strong>Activités pratiques</strong><small>À construire</small></div>
+        <div><span>04</span><strong>Ressources pédagogiques</strong><small>À produire</small></div>
+      </div>
+    </article>
+    <aside class="module-detail-aside">
+      <span class="eyebrow">ANCRAGE TAXONOMIQUE</span>
+      <a href="#/departements/${encodeURIComponent(department.code.toLowerCase())}"><small>DÉPARTEMENT</small><strong>${escapeHtml(department.title)}</strong></a>
+      <a href="#/sections/${encodeURIComponent(section.code.toLowerCase())}"><small>SECTION</small><strong>${escapeHtml(section.title)}</strong></a>
+      <div><small>IDENTIFIANT</small><strong>${escapeHtml(code)}</strong></div>
+      <div><small>ÉTAT ÉDITORIAL</small><strong>Cartographié</strong></div>
+    </aside>
+  </section>
+  <nav class="module-neighbor-nav" aria-label="Navigation entre modules">
+    ${previous ? `<a href="#/modules/${encodeURIComponent(section.code.toLowerCase())}/${String(previous).padStart(2,"0")}" class="module-neighbor"><small>MODULE PRÉCÉDENT</small><strong>${escapeHtml(section.modules[previous - 1])}</strong></a>` : `<span class="module-neighbor is-disabled"><small>MODULE PRÉCÉDENT</small><strong>Premier module</strong></span>`}
+    ${next ? `<a href="#/modules/${encodeURIComponent(section.code.toLowerCase())}/${String(next).padStart(2,"0")}" class="module-neighbor module-neighbor-next"><small>MODULE SUIVANT</small><strong>${escapeHtml(section.modules[next - 1])}</strong></a>` : `<span class="module-neighbor is-disabled"><small>MODULE SUIVANT</small><strong>Dernier module</strong></span>`}
+  </nav>`;
 }
 
 function pathwayCard(path) {
@@ -916,6 +960,7 @@ function render() {
     "departements": () => slug ? departmentDetail(slug) : departmentsView(),
     "domaines": () => domainDetail(slug),
     "sections": () => sectionDetail(slug),
+    "modules": () => moduleDetail(subroute, subId),
     "catalogue": catalogueView,
     "formations": trainingCatalogView,
     "recherche": () => searchResultsView(new URLSearchParams(query).get("q") || ""),

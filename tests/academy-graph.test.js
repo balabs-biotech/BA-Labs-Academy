@@ -61,3 +61,15 @@ test("Other departments and pathways occupy separate orbital bands", () => {
   assert.ok(meanDepartmentRadius > 600 && meanDepartmentRadius < 720);
   assert.ok(meanPathwayRadius > 1050 && meanPathwayRadius < 1170);
 });
+
+
+test("Every module node has a stable route and canonical section identity", () => {
+  const moduleNodes = graph.nodes.filter((node) => node.entity_type === "MODULE");
+  assert.equal(moduleNodes.length, catalogueTotals.modules);
+  for (const node of moduleNodes) {
+    assert.match(node.data.route, /^#\/modules\/[a-z0-9-]+\/\d{2}$/);
+    assert.ok(node.data.sectionCode);
+    assert.ok(node.data.departmentCode);
+    assert.ok(node.data.moduleIndex > 0);
+  }
+});
