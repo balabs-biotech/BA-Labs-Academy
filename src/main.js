@@ -265,6 +265,18 @@ function render() {
       } else if (node.entity_type === "DOMAIN") {
         const item = data.domains.find((entry) => entry.code === node.entity_key);
         if (item) location.hash = `#/domaines/${encodeURIComponent(item.slug)}`;
+      } else if (node.entity_type === "PATHWAY") {
+        const item = data.learningPaths.find((entry) =>
+          entry.code === node.entity_key || entry.slug === node.entity_key
+        );
+        if (item) location.hash = `#/parcours/${encodeURIComponent(item.slug)}`;
+      } else if (node.entity_type === "SKILL") {
+        const item = data.competencies.find((entry) => entry.code === node.entity_key);
+        if (item) {
+          const relation = data.contentCompetencies.find((entry) => entry.competency_id === item.id);
+          const resource = data.content.find((entry) => entry.id === relation?.content_id);
+          if (resource) location.hash = `#/ressource/${encodeURIComponent(resource.slug)}`;
+        }
       } else if (["CONTENT", "MODULE", "LESSON"].includes(node.entity_type)) {
         const item = data.content.find((entry) =>
           entry.business_id === node.entity_key || entry.slug === node.entity_key
