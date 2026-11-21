@@ -1,4 +1,4 @@
-import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent, manageAcademyMembership } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
@@ -335,6 +335,24 @@ function administrationView() {
     </section>` : ""}
 
 
+
+    ${["OWNER","ADMIN"].includes(membership.role) ? `
+    <section class="section-block membership-governance">
+      <div class="section-heading"><div><span class="eyebrow">GOUVERNANCE DES ACCÈS</span><h2>Membres Academy</h2></div></div>
+      <p class="taxonomy-intro">Seuls les comptes déjà créés dans Supabase Auth peuvent recevoir un rôle Academy. Les changements sont journalisés. Un administrateur ne peut attribuer que les rôles Editor et Reviewer.</p>
+      <form id="membership-form" class="membership-form">
+        <label>UUID du compte Supabase<input name="user_id" required minlength="36" maxlength="36" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"></label>
+        <label>Rôle<select name="role">${(membership.role==="OWNER"?["OWNER","ADMIN","EDITOR","REVIEWER"]:["EDITOR","REVIEWER"]).map((role)=>'<option value="'+role+'">'+role+'</option>').join("")}</select></label>
+        <label>Statut<select name="status"><option value="ACTIVE">ACTIF</option><option value="SUSPENDED">SUSPENDU</option></select></label>
+        <label class="wide">Note d’audit<input name="note" maxlength="1000" placeholder="Motif de l’attribution ou du changement"></label>
+        <button class="button button-primary" type="submit">Enregistrer le rôle ↗</button>
+        <p id="membership-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
+      </form>
+      <div class="membership-table">
+        <div class="membership-table-head"><span>Compte / UUID</span><span>Rôle</span><span>Statut</span></div>
+        ${(data.editorialMembers||[]).map((member)=>'<div class="membership-table-row"><span><b>'+escapeHtml(member.email||"Compte sans e-mail")+'</b><small>'+escapeHtml(member.user_id)+'</small></span><span>'+escapeHtml(member.role)+'</span><span class="membership-status '+(member.membership_status==="ACTIVE"?"is-active":"is-suspended")+'">'+escapeHtml(member.membership_status)+'</span></div>').join("") || emptyState("Aucun membre attribué","Le premier Owner doit être provisionné via la procédure sécurisée de bootstrap serveur.")}
+      </div>
+    </section>` : ""}
     <section class="section-block resource-editorial">
       <div class="section-heading"><div><span class="eyebrow">CATALOGUE ÉDITORIAL</span><h2>Ressources pédagogiques</h2></div><a class="button button-primary" href="#/administration/ressources/nouveau">Créer une ressource ↗</a></div>
       <p class="taxonomy-intro">Cycle : brouillon, revue, approbation, publication. La classification disciplinaire alimente l’Atlas.</p>
@@ -671,6 +689,14 @@ function render() {
     });
   }
 
+
+  const membershipForm=document.querySelector("#membership-form");
+  if(membershipForm) membershipForm.addEventListener("submit",async(event)=>{
+    event.preventDefault();const button=membershipForm.querySelector('button[type="submit"]');const feedback=document.querySelector("#membership-feedback");const values=new FormData(membershipForm);
+    button.disabled=true;feedback.textContent="Vérification des droits et enregistrement…";
+    try{await manageAcademyMembership(values.get("user_id").trim(),values.get("role"),values.get("status"),values.get("note"));await refresh();}
+    catch(error){feedback.textContent=error.message||"Modification impossible.";button.disabled=false;}
+  });
   const contentForm=document.querySelector("#content-editor-form");
   if(contentForm){
     const syncDomains=()=>{const selected=new Set([...contentForm.querySelectorAll("[data-content-department]:checked")].map((x)=>x.value));contentForm.querySelectorAll("[data-domain-parent]").forEach((row)=>{row.hidden=!selected.has(row.dataset.domainParent);if(row.hidden)row.querySelector("input").checked=false;});};
