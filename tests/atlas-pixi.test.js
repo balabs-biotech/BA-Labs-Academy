@@ -122,11 +122,12 @@ test("Atlas inspector exposes parent and immediate-child navigation for hierarch
   const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
   const selectionSource = readFileSync(new URL("../src/features/atlas/atlas-selection.js", import.meta.url), "utf8");
   assert.ok(selectionSource.includes('className = "atlas-branch-navigation"'));
-  assert.ok(source.includes('className = "atlas-branch-parent"'));
-  assert.ok(source.includes('className = "atlas-branch-children"'));
-  assert.ok(source.includes('node.parent === navigation.selected.id'));
-  assert.ok(source.includes('focusNode(parentNode)'));
-  assert.ok(source.includes('focusNode(child)'));
+  assert.ok(selectionSource.includes('className = "atlas-branch-parent"'));
+  assert.ok(selectionSource.includes('className = "atlas-branch-children"'));
+  assert.ok(selectionSource.includes('node.parent === selected.id'));
+  assert.ok(selectionSource.includes('focusNode(parentNode)'));
+  assert.ok(selectionSource.includes('focusNode(child)'));
+  assert.ok(source.includes('renderAtlasSelectionPanel({'));
 });
 
 
