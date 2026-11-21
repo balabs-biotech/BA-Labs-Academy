@@ -896,7 +896,7 @@ function render() {
   const [route = "", routeTail = ""] = path.split("/");
   const [slug = "", query = ""] = routeTail.split("?");
   const [subroute = "", subId = ""] = slug.split("/");
-  const atlasGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, [], cataloguePathways) : null;
+  const atlasGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, data.domains, cataloguePathways) : null;
   const pathItemId = new URLSearchParams(query).get("pathItem") || "";
   updateNavigation(route);
   if (loadError) {
