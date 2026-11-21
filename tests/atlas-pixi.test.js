@@ -401,3 +401,24 @@ test("Atlas connection renderer resolves edge endpoints after extraction", async
   assert.ok(calls.some(([kind]) => kind === "move"));
   assert.ok(calls.some(([kind]) => kind === "curve"));
 });
+
+
+test("Atlas renderer delegates label layout to its dedicated layer", () => {
+  const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  const labelsSource = readFileSync(new URL("../src/features/atlas/atlas-labels.js", import.meta.url), "utf8");
+  assert.ok(source.includes('import { renderAtlasLabels } from "./atlas-labels.js";'));
+  assert.ok(source.includes("renderAtlasLabels({ canvas, labels, labelPool, style"));
+  assert.ok(!source.includes("const shortRoots="));
+  assert.ok(labelsSource.includes("export function renderAtlasLabels"));
+  assert.ok(labelsSource.includes("const collides=occupied.some"));
+  assert.ok(labelsSource.includes("canvas.dataset.visibleNodeHitBoxes"));
+});
+
+test("Atlas department palette is a single shared rendering contract", () => {
+  const paletteSource = readFileSync(new URL("../src/features/atlas/atlas-palette.js", import.meta.url), "utf8");
+  const rendererSource = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
+  assert.ok(paletteSource.includes("export const PALETTE="));
+  assert.ok(rendererSource.includes('import { PALETTE } from "./atlas-palette.js";'));
+  assert.ok(nodesSource.includes('import { PALETTE } from "./atlas-palette.js";'));
+});
