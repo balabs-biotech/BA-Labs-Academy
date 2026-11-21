@@ -145,7 +145,7 @@ export async function loadAcademyData() {
   ]);
   const { enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, error: memberError } = memberRecords;
   const editorialMembers = accessToken && ['OWNER','ADMIN'].includes(membership?.role) ? await callEditorialRpc('academy_list_members', {}, 'Chargement des membres impossible').catch(() => []) : [];
-  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialCompetencyDomains, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialContentAssets, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys, editorialAssessmentCompetencies, editorialCompetencyPrerequisites] = accessToken
+  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialCompetencyDomains, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialContentAssets, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys, editorialAssessmentCompetencies, editorialCompetencyPrerequisites, editorialPrograms, editorialProgramDepartments, editorialProgramDomains, editorialProgramNodes, editorialPrograms, editorialProgramDepartments, editorialProgramDomains, editorialProgramNodes] = accessToken
     ? await Promise.all([
         readTable("academy_learning_paths", {
           select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
@@ -177,9 +177,13 @@ export async function loadAcademyData() {
         readTable("academy_path_assessments", { select: "path_id,assessment_id,sort_order,is_required,minimum_score" }, accessToken).catch(() => []),
         readTable("academy_assessment_answer_keys", { select: "question_id,option_id" }, accessToken).catch(() => []),
         readTable("academy_assessment_competencies", { select: "assessment_id,competency_id,expected_level,minimum_score" }, accessToken).catch(() => []),
-        readTable("academy_competency_prerequisites", { select: "competency_id,prerequisite_competency_id" }, accessToken).catch(() => [])
+        readTable("academy_competency_prerequisites", { select: "competency_id,prerequisite_competency_id" }, accessToken).catch(() => []),
+        readTable("academy_programs", { select: "id,code,slug,title,summary,objectives,program_type,target_audience,difficulty_level,estimated_duration_hours,version_label,status,visibility,published_at,updated_at", order: "updated_at.desc" }, accessToken).catch(() => []),
+        readTable("academy_program_departments", { select: "program_id,department_code,is_primary" }, accessToken).catch(() => []),
+        readTable("academy_program_domains", { select: "program_id,domain_code" }, accessToken).catch(() => []),
+        readTable("academy_program_nodes", { select: "id,program_id,parent_node_id,code,node_type,title,summary,sort_order,is_required,estimated_minutes", order: "sort_order.asc" }, accessToken).catch(() => [])
       ])
-    : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
+    : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
   const [trainingPartners, trainingAgreements, trainingOfferings, trainingSessions, trainingEnrollments, trainingAttendance, trainingDocuments, trainingBilling] = accessToken
     ? await Promise.all([
         readTable("academy_training_partners", { select: "id,partner_code,legal_name,approval_number,approval_authority,approval_valid_from,approval_valid_until,approved_specialties,approved_delivery_modes,status", order: "legal_name.asc" }, accessToken).catch(() => []),
@@ -307,6 +311,21 @@ export function saveLearningPath(path) {
   }, "Enregistrement du parcours impossible");
 }
 
+
+export function saveProgramDraft(program) {
+  return callEditorialRpc("academy_save_program_draft", {
+    p_program_id: program.id || null, p_code: program.code, p_slug: program.slug,
+    p_title: program.title, p_summary: program.summary || "", p_objectives: program.objectives || "",
+    p_program_type: program.programType, p_target_audience: program.targetAudience || "",
+    p_difficulty_level: program.difficultyLevel || "FOUNDATION",
+    p_estimated_duration_hours: program.durationHours ? Number(program.durationHours) : null,
+    p_version_label: program.versionLabel || "0.1", p_departments: program.departments || [],
+    p_domains: program.domains || [], p_nodes: program.nodes || []
+  }, "Enregistrement du programme impossible");
+}
+export function publishProgram(programId) {
+  return callEditorialRpc("academy_publish_program", { p_program_id: programId }, "Publication du programme impossible");
+}
 
 export function publishDepartment(code, visibility = "PUBLIC", note = "") {
   return callEditorialRpc("academy_publish_department", {
