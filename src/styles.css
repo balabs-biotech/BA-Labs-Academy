@@ -280,3 +280,20 @@
 .training-qr canvas,.training-qr img{display:block;max-width:100%;height:auto}
 .training-issued-result details{font-size:.8rem;color:var(--muted)}
 .training-issued-result summary{cursor:pointer}
+
+/* Academic programme hierarchy editor */
+.programme-editor-form{display:grid;gap:1.2rem}
+.programme-editor-section{display:grid;gap:.9rem;padding:1.2rem;border:1px solid var(--line);background:var(--panel)}
+.programme-editor-section h2{margin:.25rem 0;font-size:1.05rem}
+.programme-editor-section>p{margin:0;color:var(--muted);font-size:.85rem;line-height:1.55}
+.programme-check-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+.programme-check-grid>label{display:flex;align-items:flex-start;gap:.65rem;padding:.7rem;border:1px solid var(--line);min-width:0}
+.programme-check-grid>label span{display:grid;gap:.2rem}
+.programme-check-grid small{color:var(--muted);font-size:.72rem}
+.programme-domain-grid{max-height:360px;overflow:auto}
+.programme-domain-grid [hidden]{display:none}
+.programme-node-row{display:grid;gap:.8rem;padding:1rem 0;border-top:1px solid var(--line)}
+.programme-node-heading{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.programme-node-required{display:flex!important;align-items:center;gap:.5rem}
+.programme-node-required input{width:auto}
+@media(max-width:620px){.programme-check-grid{grid-template-columns:1fr}}
