@@ -127,8 +127,9 @@ export function mountAcademyAtlas(container, graph) {
     if (!roots.length || !width || !height) return;
     const xs = roots.map((node) => node.x);
     const ys = roots.map((node) => node.y);
-    const padX = Math.min(150, Math.max(72, width * 0.11));
-    const padY = Math.min(125, Math.max(70, height * 0.13));
+    const mobile = width < 700;
+    const padX = mobile ? 26 : Math.min(150, Math.max(72, width * 0.11));
+    const padY = mobile ? 42 : Math.min(125, Math.max(70, height * 0.13));
     const minX = Math.min(...xs);
     const maxX = Math.max(...xs);
     const minY = Math.min(...ys);
