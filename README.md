@@ -7,7 +7,7 @@ Frontend public de BA Labs Academy. Le site est conçu comme une application sta
 - `index.html` — point d'entrée et structure globale.
 - `src/main.js` — routes, vues et orchestration de l'interface.
 - `src/data.js` — adaptateur de lecture Supabase et résolution des libellés de l'Atlas.
-- `src/core/` — fonctions partagées du runtime, dont `auth.js` pour les sessions Supabase Auth.
+- `src/core/` — fonctions partagées du runtime, dont `auth.js` pour les sessions et `permissions.js` pour les capacités par rôle.
 - `src/features/atlas/layout.js` — moteur de positionnement 2D déterministe.
 - `src/features/atlas/renderer.js` — rendu SVG, sélection, déplacement et zoom.
 - `src/features/learning/progress.js` — calcul de progression et résolution des prérequis.
