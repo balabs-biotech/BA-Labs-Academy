@@ -145,7 +145,7 @@ export async function loadAcademyData() {
   ]);
   const { enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, error: memberError } = memberRecords;
   const editorialMembers = accessToken && ['OWNER','ADMIN'].includes(membership?.role) ? await callEditorialRpc('academy_list_members', {}, 'Chargement des membres impossible').catch(() => []) : [];
-  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialCompetencyDomains, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys, editorialAssessmentCompetencies] = accessToken
+  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialCompetencyDomains, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys, editorialAssessmentCompetencies, editorialCompetencyPrerequisites] = accessToken
     ? await Promise.all([
         readTable("academy_learning_paths", {
           select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
@@ -175,9 +175,10 @@ export async function loadAcademyData() {
         readTable("academy_assessment_options", { select: "id,question_id,option_text,sort_order", order: "sort_order.asc" }, accessToken).catch(() => []),
         readTable("academy_path_assessments", { select: "path_id,assessment_id,sort_order,is_required,minimum_score" }, accessToken).catch(() => []),
         readTable("academy_assessment_answer_keys", { select: "question_id,option_id" }, accessToken).catch(() => []),
-        readTable("academy_assessment_competencies", { select: "assessment_id,competency_id,expected_level,minimum_score" }, accessToken).catch(() => [])
+        readTable("academy_assessment_competencies", { select: "assessment_id,competency_id,expected_level,minimum_score" }, accessToken).catch(() => []),
+        readTable("academy_competency_prerequisites", { select: "competency_id,prerequisite_competency_id" }, accessToken).catch(() => [])
       ])
-    : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
+    : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
@@ -185,7 +186,7 @@ export async function loadAcademyData() {
     pathItems, pathPrerequisites, competencies, contentCompetencies,
     enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, memberError, editorialMembers, nodes, edges,
     assessments, assessmentQuestions, assessmentOptions, pathAssessments,
-    editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentCompetencies
+    editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentCompetencies, editorialCompetencyPrerequisites
   };
 }
 
@@ -370,4 +371,8 @@ export function saveCompetencyDomains(competencyId, domainCodes) {
 }
 export function saveAssessmentCompetencies(assessmentId, mappings) {
  return callEditorialRpc("academy_save_assessment_competencies", {p_assessment_id:assessmentId,p_mappings:mappings}, "Enregistrement des compétences évaluées impossible");
+}
+
+export function saveCompetencyPrerequisites(competencyId, prerequisiteIds) {
+ return callEditorialRpc("academy_save_competency_prerequisites", {p_competency_id:competencyId,p_prerequisite_ids:prerequisiteIds}, "Enregistrement des prérequis de compétence impossible");
 }
