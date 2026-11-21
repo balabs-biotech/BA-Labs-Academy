@@ -3,6 +3,7 @@ import { createAtlasNavigation, getAtlasBreadcrumbPath } from "./atlas-navigatio
 import { atlasScreenPoint, fitAtlasCamera, zoomAtlasCamera, interpolateAtlasCamera } from "./atlas-camera.js";
 import { createAtlasLifecycle } from "./atlas-lifecycle.js";
 import { createAtlasPointerController } from "./atlas-interaction.js";
+import { renderAtlasAccessibleNodes } from "./atlas-accessibility.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -297,19 +298,12 @@ export function mountAcademyAtlas(container, graph) {
     selection.hidden = false;
   };
 
-  const renderAccessible = () => {
-    const nav = container.querySelector("#academy-atlas-accessible");
-    if (!nav) return;
-    nav.replaceChildren();
-    nodes.forEach((node) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = node.title;
-      button.setAttribute("aria-label", node.title + " · " + (typeLabels[node.entity_type] || "Nœud"));
-      button.addEventListener("click", () => focusNode(node));
-      nav.append(button);
-    });
-  };
+  const renderAccessible = () => renderAtlasAccessibleNodes({
+    nav: container.querySelector("#academy-atlas-accessible"),
+    nodes,
+    typeLabels,
+    onSelect: focusNode
+  });
 
   const focusNode = (node, zoomTo) => {
     if (!node) return;

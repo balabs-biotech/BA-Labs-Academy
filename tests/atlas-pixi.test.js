@@ -333,3 +333,12 @@ test("Atlas pointer controller zooms around the midpoint of a two-pointer pinch"
   assert.equal(zooms.length, 1);
   assert.deepEqual(zooms[0], [2, 40, 20]);
 });
+
+
+test("Atlas accessible node index is rendered by its own view adapter", async () => {
+  const { renderAtlasAccessibleNodes } = await import("../src/features/atlas/atlas-accessibility.js");
+  assert.equal(typeof renderAtlasAccessibleNodes, "function");
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(source.includes("renderAtlasAccessibleNodes({"));
+  assert.ok(source.includes('nav: container.querySelector("#academy-atlas-accessible")'));
+});
