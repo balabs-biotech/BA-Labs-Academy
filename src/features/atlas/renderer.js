@@ -50,8 +50,9 @@ export function bindAtlasGraph(container, nodes, onSelect = () => {}) {
   const svg = container.querySelector(".atlas-svg");
   const viewport = container.querySelector(".atlas-viewport");
   if (!svg || !viewport) return () => {};
-  let startView = svg.viewBox.baseVal;
-  let view = { x: startView.x, y: startView.y, width: startView.width, height: startView.height };
+  const initialView = svg.viewBox.baseVal;
+  const startView = { x: initialView.x, y: initialView.y, width: initialView.width, height: initialView.height };
+  let view = { ...startView };
   let drag = null;
   const applyView = () => svg.setAttribute("viewBox", `${view.x} ${view.y} ${view.width} ${view.height}`);
   const zoom = (factor, anchorX = view.x + view.width / 2, anchorY = view.y + view.height / 2) => {
