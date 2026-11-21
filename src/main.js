@@ -972,7 +972,19 @@ function render() {
     if(!result||!result.classList.contains("training-issued-result")){result=document.createElement("div");result.className="training-issued-result";form.after(result);}
     result.textContent="Émission sécurisée…";
     try{const issued=await issueTrainingDocument(form.dataset.trainingIssue,v.get("document_type"),v.get("title").trim(),v.get("issuer_kind")||null,v.get("issuer_reference") ? v.get("issuer_reference").trim() : null);const link=location.origin+location.pathname+"#/verifier-formation/"+issued.verification_token;
-      result.innerHTML='<b>Document émis : '+escapeHtml(issued.document_code)+'</b><p>Jeton affiché une seule fois. Conserve-le pour générer le QR code et le joindre au document.</p><code>'+escapeHtml(issued.verification_token)+'</code><a class="text-link" href="'+escapeHtml(link)+'">Ouvrir la vérification publique ↗</a>';
+      result.innerHTML='<b>Document émis : '+escapeHtml(issued.document_code)+'</b><p>Le QR code est généré localement dans le navigateur. Il encode uniquement le lien public de vérification.</p><div class="training-qr" role="img" aria-label="QR code de vérification du document"></div><button type="button" class="button button-outline" data-training-qr-download>Télécharger le QR code (PNG)</button><a class="text-link" href="'+escapeHtml(link)+'">Ouvrir la vérification publique ↗</a><details><summary>Afficher le jeton de vérification</summary><code>'+escapeHtml(issued.verification_token)+'</code></details>';
+      const qrNode=result.querySelector(".training-qr");
+      if(window.QRCode){
+        new window.QRCode(qrNode,{text:link,width:240,height:240,colorDark:"#101815",colorLight:"#ffffff",correctLevel:window.QRCode.CorrectLevel.M});
+        result.querySelector("[data-training-qr-download]").addEventListener("click",()=>{
+          const canvas=qrNode.querySelector("canvas");
+          if(!canvas){window.alert("Le QR code n’est pas disponible au format PNG sur ce navigateur.");return;}
+          const anchor=document.createElement("a");anchor.href=canvas.toDataURL("image/png");anchor.download="BA-Labs-Academy-"+issued.document_code+".png";anchor.click();
+        });
+      }else{
+        qrNode.textContent="Générateur QR local indisponible. Le lien de vérification reste accessible ci-dessus.";
+        result.querySelector("[data-training-qr-download]").disabled=true;
+      }
       button.disabled=true;
     }catch(error){result.textContent=error.message||"Émission impossible.";button.disabled=false;}
   }));
