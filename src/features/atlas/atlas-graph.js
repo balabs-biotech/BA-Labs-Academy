@@ -107,7 +107,9 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     const distance = depth === 1 ? 390 : depth === 2 ? 260 : Math.max(58, 92 - depth * 4);
     items.forEach((item, index) => {
       const fraction = items.length === 1 ? 0 : index / (items.length - 1) - 0.5;
-      const angle = branchAngle + fraction * spread;
+      const angle = isMycologyCore
+        ? branchAngle + (index / items.length) * spread
+        : branchAngle + fraction * spread;
       const x = parent.x + Math.cos(angle) * distance;
       const y = parent.y + Math.sin(angle) * distance;
       const entityType = item.kind === "section" ? "SECTION" : item.kind === "domain" ? "DOMAIN" : "MODULE";

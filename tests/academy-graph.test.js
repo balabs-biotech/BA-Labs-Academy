@@ -80,8 +80,8 @@ test("The Academy universe separates disciplinary territories and pathway transf
   const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
   const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
   const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
-  assert.ok(meanDepartmentRadius > 1450 && meanDepartmentRadius < 1650);
-  assert.ok(meanPathwayRadius > 2400 && meanPathwayRadius < 2650);
+  assert.ok(meanDepartmentRadius > 1800 && meanDepartmentRadius < 1900);
+  assert.ok(meanPathwayRadius > 2500 && meanPathwayRadius < 2700);
   const transfers = graph.edges.filter((edge) => edge.relation_type === "TRANSFERS_TO");
   assert.ok(transfers.length > 0);
   assert.ok(transfers.every((edge) => edge.verified && edge.basis === "academy-pathway-flow"));
@@ -140,4 +140,14 @@ test("Department sections occupy narrow radial petals instead of overlapping fan
       assert.ok(Math.abs(delta) <= 0.42 + 1e-8, `${department.code} section escaped its radial petal`);
     }
   }
+});
+
+
+test("Mycology sections form a complete inner ring without a duplicate end point", () => {
+  const core = graph.nodes.find((node) => node.entity_type === "DEPARTMENT" && node.entity_key === "MYC");
+  const sections = graph.nodes.filter((node) => node.parent === core.id && node.entity_type === "SECTION");
+  const angles = sections.map((node) => (Math.atan2(node.y, node.x) + Math.PI * 2) % (Math.PI * 2)).sort((a, b) => a - b);
+  assert.equal(sections.length, 6);
+  const gaps = angles.map((angle, index) => ((angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2)));
+  assert.ok(gaps.every((gap) => Math.abs(gap - Math.PI / 3) < 1e-8));
 });
