@@ -6,6 +6,7 @@ import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
 import { renderKnowledgeMap } from "./features/catalogue/render.js";
+import { catalogueMap } from "./catalogue-map.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
