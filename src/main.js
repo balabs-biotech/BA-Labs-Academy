@@ -6,7 +6,7 @@ import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { enrollInPath, saveResourceProgress, savePathItemProgress } from "./data.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
-import { saveLearningPathDraft, saveLearningPathItems, publishLearningPath } from "./data.js";
+import { saveLearningPath, publishLearningPath } from "./data.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
@@ -333,7 +333,7 @@ function administrationView() {
     ${["OWNER","ADMIN","EDITOR"].includes(membership.role) ? `
     <section class="section-block pathway-editorial">
       <div class="section-heading"><div><span class="eyebrow">GESTION DES PARCOURS</span><h2>Parcours pédagogiques</h2></div><a class="button button-primary" href="#/administration/parcours/nouveau">Créer un parcours ↗</a></div>
-      <div class="editorial-path-list">${(data.editorialPaths || []).map((path) => `<a class="editorial-path-row" href="#/administration/parcours/${encodeURIComponent(path.id)}"><div><span class="eyebrow">${escapeHtml(path.code)} · ${escapeHtml(path.status)}</span><h3>${escapeHtml(path.title)}</h3><p>${escapeHtml(path.summary || "Aucun résumé.")}</p></div><b>Modifier ↗</b></a>`).join("") || emptyState("Aucun parcours", "Crée le premier brouillon pédagogique.")}</div>
+      <div class="editorial-path-list">${(data.editorialPaths || []).filter((path) => path.status === "DRAFT").map((path) => `<a class="editorial-path-row" href="#/administration/parcours/${encodeURIComponent(path.id)}"><div><span class="eyebrow">${escapeHtml(path.code)} · ${escapeHtml(path.status)}</span><h3>${escapeHtml(path.title)}</h3><p>${escapeHtml(path.summary || "Aucun résumé.")}</p></div><b>Modifier ↗</b></a>`).join("") || emptyState("Aucun parcours", "Crée le premier brouillon pédagogique.")}</div>
     </section>` : ""}
     <p class="progress-note">Le contrôle d’accès de cette interface est indicatif. Chaque opération éditoriale reste protégée par les contrôles de rôle des fonctions PostgreSQL ; aucun droit n’est accordé par le frontend seul.</p>`;
 }
@@ -478,16 +478,26 @@ function render() {
     feedback.textContent = "Enregistrement du brouillon…";
     try {
       const values = new FormData(form);
-      const pathId = await saveLearningPathDraft({
+      const contentIds = values.getAll("content_ids");
+      const selectedIds = new Set(contentIds);
+      const currentItems = data.pathItems.filter((item) => item.path_id === (form.dataset.pathId || ""));
+      const itemById = new Map(currentItems.map((item) => [item.id, item]));
+      const items = contentIds.map((contentId) => {
+        const current = currentItems.find((item) => item.content_id === contentId);
+        const prerequisites = current
+          ? data.pathPrerequisites
+              .filter((link) => link.item_id === current.id)
+              .map((link) => itemById.get(link.prerequisite_item_id)?.content_id)
+              .filter((id) => id && selectedIds.has(id))
+          : [];
+        return { content_id: contentId, is_required: current?.is_required ?? true, prerequisites };
+      });
+      const pathId = await saveLearningPath({
         id: form.dataset.pathId || null, code: values.get("code"), slug: values.get("slug"),
         title: values.get("title"), summary: values.get("summary"),
         targetAudience: values.get("target_audience"), difficultyLevel: values.get("difficulty_level"),
-        durationMinutes: values.get("duration"), versionLabel: values.get("version_label")
+        durationMinutes: values.get("duration"), versionLabel: values.get("version_label"), items
       });
-      const contentIds = values.getAll("content_ids");
-      await saveLearningPathItems(pathId, contentIds.map((contentId) => ({
-        content_id: contentId, is_required: true, prerequisites: []
-      })));
       location.hash = `#/administration/parcours/${encodeURIComponent(pathId)}`;
       await refresh();
     } catch (error) {
