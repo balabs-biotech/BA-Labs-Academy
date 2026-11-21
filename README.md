@@ -100,3 +100,7 @@ Une page publique `#/formations` présente uniquement les offres au statut ACTIV
 ### Facturation et suivi des règlements
 
 Le registre de facturation conserve les références de factures externes, le responsable de facturation, la devise, le montant en unités mineures et le statut de règlement. L'écriture est réservée aux Owner/Admin et contrôlée par le régime de formation et la responsabilité financière inscrite dans la convention. Les transitions de règlement sont auditées ; un changement de statut exige une note, et un paiement confirmé ne peut être rétrogradé en impayé. Ce registre de suivi ne remplace pas la comptabilité ni l'émission réglementaire des factures.
+
+### QR codes de vérification des documents
+
+Les QR codes des attestations et certificats sont générés localement dans le navigateur avec une copie embarquée de QRCode.js (licence MIT, attribution conservée dans `src/vendor/QR-CODE-LICENSE.txt`). Aucun service QR tiers ne reçoit le jeton. Le PNG est téléchargeable depuis la console après émission ; il encode l'URL de vérification publique de l'Academy.
