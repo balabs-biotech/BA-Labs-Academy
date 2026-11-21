@@ -46,6 +46,10 @@ function homeView() {
     <div class="section-heading"><div><span class="eyebrow">STRUCTURE ACADÉMIQUE</span><h2>Départements</h2></div><a class="text-link" href="#/departements">Voir la structure <span>→</span></a></div>
     ${data.departments.length ? `<div class="card-grid">${data.departments.slice(0, 4).map(departmentCard).join("")}</div>` : emptyState("Les départements seront bientôt ouverts", "La structure académique est configurée. Les fiches publiques apparaîtront après validation éditoriale.")}
   </section>
+  <section class="section-block">
+    <div class="section-heading"><div><span class="eyebrow">APPRENTISSAGE STRUCTURÉ</span><h2>Parcours pédagogiques</h2></div><a class="text-link" href="#/parcours">Voir les parcours <span>→</span></a></div>
+    ${data.learningPaths.length ? `<div class="pathway-grid">${data.learningPaths.slice(0, 3).map(pathwayCard).join("")}</div>` : emptyState("Parcours en préparation", "Les séquences, prérequis et compétences sont prêts à accueillir les futurs parcours validés.")}
+  </section>
   <section class="section-block feature-strip"><div><span class="eyebrow">EXPLORATION TRANSVERSALE</span><h2>L’Atlas des connaissances</h2><p>Visualiser les liens entre disciplines, domaines, ressources et parcours.</p></div><a class="button button-outline" href="#/atlas">Explorer l’Atlas <span>↗</span></a></section>`;
 }
 
