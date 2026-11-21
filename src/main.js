@@ -129,8 +129,8 @@ function updateNavigation(route) {
   document.querySelectorAll("[data-route]").forEach((link) => {
     const target = link.dataset.route;
     const active = (route === "" && target === "home") ||
-      (route === "departements" && target === "departements") ||
-      (route === "catalogue" && target === "catalogue") ||
+      (["departements", "domaines"].includes(route) && target === "departements") ||
+      (["catalogue", "ressource"].includes(route) && target === "catalogue") ||
       (route === "atlas" && target === "atlas");
     link.classList.toggle("active", active);
     if (active) link.setAttribute("aria-current", "page");
@@ -153,7 +153,7 @@ function render() {
     : "Données publiques synchronisées";
   const routes = {
     "": homeView,
-    "departements": () => slug ? departmentDetail(slug) : departmentsView,
+    "departements": () => slug ? departmentDetail(slug) : departmentsView(),
     "domaines": () => domainDetail(slug),
     "catalogue": catalogueView,
     "ressource": () => resourceDetail(slug),
