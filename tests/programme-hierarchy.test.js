@@ -54,3 +54,10 @@ test("programme tables are RLS-enabled and Data API read grants are explicit",()
  assert.match(migration,/grant select on public\.academy_programs/);
  assert.match(migration,/revoke all on function public\.academy_save_program_draft[\s\S]*from public,anon/);
 });
+
+test("programme editor renders a live nested outline from parent and sibling order",()=>{
+ assert.match(main,/programme-hierarchy-preview/);
+ assert.match(main,/refreshHierarchyPreview/);
+ assert.match(main,/parent_code/);
+ assert.match(main,/sort_order/);
+});
