@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { catalogueMap } from "../src/catalogue-map.js";
+import { catalogueMap, catalogueTotals } from "../src/catalogue-map.js";
 import { cataloguePathways } from "../src/catalogue-pathways.js";
 import { buildAcademyGraph } from "../src/features/atlas/atlas-graph.js";
 
