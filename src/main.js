@@ -162,7 +162,20 @@ function render() {
   };
   root.innerHTML = (routes[route] || (() => notFound("Page introuvable", "Cette adresse ne correspond à aucune page publique de l’Academy.")))();
   if (route === "atlas" && data.nodes.length) {
-    unbindAtlas = bindAtlasGraph(root, data.nodes);
+    unbindAtlas = bindAtlasGraph(root, data.nodes, (node) => {
+      if (node.entity_type === "DEPARTMENT") {
+        const item = data.departments.find((entry) => entry.code === node.entity_key);
+        if (item) location.hash = `#/departements/${encodeURIComponent(item.slug)}`;
+      } else if (node.entity_type === "DOMAIN") {
+        const item = data.domains.find((entry) => entry.code === node.entity_key);
+        if (item) location.hash = `#/domaines/${encodeURIComponent(item.slug)}`;
+      } else if (["CONTENT", "MODULE", "LESSON"].includes(node.entity_type)) {
+        const item = data.content.find((entry) =>
+          entry.business_id === node.entity_key || entry.slug === node.entity_key
+        );
+        if (item) location.hash = `#/ressource/${encodeURIComponent(item.slug)}`;
+      }
+    });
   }
   if (route === "catalogue") {
     document.querySelector("#resource-search")?.addEventListener("input", (event) => filterCatalogue(event.target.value));
