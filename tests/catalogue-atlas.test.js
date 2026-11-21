@@ -6,9 +6,9 @@ import { buildCatalogueAtlas } from "../src/features/catalogue/atlas.js";
 test("overview Atlas keeps the department and section map compact", () => {
   const graph = buildCatalogueAtlas(catalogueMap);
   assert.equal(graph.nodes.filter((node) => node.entity_type === "DEPARTMENT").length, catalogueTotals.departments);
-  assert.equal(graph.nodes.filter((node) => node.entity_type === "SECTION").length, catalogueTotals.sections);
-  assert.equal(graph.nodes.length, catalogueTotals.departments + catalogueTotals.sections);
-  assert.equal(graph.edges.length, catalogueTotals.sections);
+  assert.equal(graph.nodes.filter((node) => node.entity_type === "SECTION").length, canonicalSectionCount);
+  assert.equal(graph.nodes.length, catalogueTotals.departments + canonicalSectionCount);
+  assert.equal(graph.edges.length, canonicalSectionCount);
   assert.equal(graph.nodes.some((node) => node.entity_type === "MODULE"), false);
 });
 
@@ -27,6 +27,6 @@ test("section drill-down exposes only that section and its modules", () => {
 
 test("unknown section code safely falls back to the overview", () => {
   const graph = buildCatalogueAtlas(catalogueMap, "UNKNOWN");
-  assert.equal(graph.nodes.length, catalogueTotals.departments + catalogueTotals.sections);
+  assert.equal(graph.nodes.length, catalogueTotals.departments + canonicalSectionCount);
   assert.equal(graph.focus, null);
 });
