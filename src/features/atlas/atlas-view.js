@@ -16,7 +16,7 @@ const escapeAtlasText = (value = "") => String(value).replace(/[&<>"']/g, (char)
 }[char]));
 
 export function renderAcademyAtlas(graph) {
-  const { departments, domaines, pathways, sections, modules } = graph.stats;
+  const { departments, domains, pathways, sections, modules } = graph.stats;
   const departmentRoots = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.level === 0);
   const domainRoots = graph.nodes.filter((node) => node.entity_type === "DOMAIN" && node.level === 0);
   const pathwayRoots = graph.nodes.filter((node) => node.entity_type === "PATHWAY" && node.level === 0);
@@ -38,7 +38,7 @@ export function renderAcademyAtlas(graph) {
       <div class="atlas-topline">
         <div class="atlas-topline-copy">
           <span class="eyebrow">EXPLORATEUR 2D · PIXIJS / WEBGL</span>
-          <strong>${departments} départements <i>·</i> ${domaines} domaines transversaux <i>·</i> ${pathways} parcours <i>·</i> ${sections} sections <i>·</i> ${modules} modules</strong>
+          <strong>${departments} départements <i>·</i> ${domains} domaines transversaux <i>·</i> ${pathways} parcours <i>·</i> ${sections} sections <i>·</i> ${modules} modules</strong>
         </div>
         <span class="atlas-engine-state" id="atlas-engine-state">Initialisation du moteur…</span>
       </div>
