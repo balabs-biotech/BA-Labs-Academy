@@ -251,3 +251,42 @@ test("Atlas wheel renderer keeps pathways out of the overview and uses a restrai
   assert.ok(!source.includes('field.moveTo(x,y).quadraticCurveTo'));
   assert.ok(source.includes("Three arms echo the BA Labs Y mark"));
 });
+
+
+test("Atlas lifecycle disposes resources once in reverse registration order", async () => {
+  const { createAtlasLifecycle } = await import("../src/features/atlas/atlas-lifecycle.js");
+  const lifecycle = createAtlasLifecycle();
+  const calls = [];
+  lifecycle.add(() => calls.push("renderer"));
+  lifecycle.add(() => calls.push("observer"));
+  lifecycle.add(() => calls.push("animation"));
+  lifecycle.dispose(); lifecycle.dispose();
+  assert.equal(lifecycle.disposed, true);
+  assert.deepEqual(calls, ["animation", "observer", "renderer"]);
+});
+
+test("Atlas lifecycle removes event listeners with their original options", async () => {
+  const { createAtlasLifecycle } = await import("../src/features/atlas/atlas-lifecycle.js");
+  const lifecycle = createAtlasLifecycle();
+  const calls = [];
+  const target = { addEventListener: (...args) => calls.push(["add", ...args]), removeEventListener: (...args) => calls.push(["remove", ...args]) };
+  const handler = () => {};
+  const options = { passive: false };
+  lifecycle.listen(target, "wheel", handler, options); lifecycle.dispose();
+  assert.deepEqual(calls, [["add", "wheel", handler, options], ["remove", "wheel", handler, options]]);
+});
+
+test("Atlas lifecycle immediately releases resources registered after disposal", async () => {
+  const { createAtlasLifecycle } = await import("../src/features/atlas/atlas-lifecycle.js");
+  const lifecycle = createAtlasLifecycle(); lifecycle.dispose();
+  let released = false; lifecycle.add(() => { released = true; });
+  assert.equal(released, true);
+});
+
+test("Atlas view centralizes cleanup and observes stage resizing", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(source.includes("createAtlasLifecycle()"));
+  assert.ok(source.includes("new ResizeObserver(resize)"));
+  assert.ok(source.includes('lifecycle.listen(canvas, "pointerdown", onPointerDown)'));
+  assert.ok(source.includes("return () => lifecycle.dispose()"));
+});

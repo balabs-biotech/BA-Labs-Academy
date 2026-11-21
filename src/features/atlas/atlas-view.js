@@ -1,6 +1,7 @@
 import { createPixiRenderer } from "./pixi-renderer.js";
 import { createAtlasNavigation, getAtlasBreadcrumbPath } from "./atlas-navigation.js";
 import { atlasScreenPoint, fitAtlasCamera, zoomAtlasCamera, interpolateAtlasCamera } from "./atlas-camera.js";
+import { createAtlasLifecycle } from "./atlas-lifecycle.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -110,7 +111,8 @@ export function mountAcademyAtlas(container, graph) {
   const { nodes, edges, byId } = graph;
   const reduced = reducedMotion();
   let renderer = null;
-  let disposed = false;
+  const lifecycle = createAtlasLifecycle();
+  lifecycle.add(() => renderer?.destroy());
   let frame = 0;
   let width = 0;
   let height = 0;
@@ -130,7 +132,7 @@ export function mountAcademyAtlas(container, graph) {
   const screen = (node) => atlasScreenPoint(node, { width, height, scale, offset });
 
   const draw = () => {
-    if (!renderer || disposed) return;
+    if (!renderer || lifecycle.disposed) return;
     renderer.render({
       nodes,
       edges,
@@ -368,7 +370,7 @@ export function mountAcademyAtlas(container, graph) {
   };
 
   const resize = () => {
-    if (disposed) return;
+    if (lifecycle.disposed) return;
     const rect = stage.getBoundingClientRect();
     width = rect.width;
     height = rect.height;
@@ -505,18 +507,24 @@ export function mountAcademyAtlas(container, graph) {
     }
   };
 
-  canvas.addEventListener("pointerdown", onPointerDown);
-  canvas.addEventListener("pointermove", onPointerMove);
-  canvas.addEventListener("pointerup", onPointerUp);
-  canvas.addEventListener("pointercancel", onPointerUp);
-  canvas.addEventListener("wheel", onWheel, { passive: false });
-  container.addEventListener("click", onControls);
-  container.addEventListener("click", onRelationFilter);
-  container.addEventListener("click", onRootNavigation);
-  window.addEventListener("resize", resize, { passive: true });
+  lifecycle.listen(canvas, "pointerdown", onPointerDown);
+  lifecycle.listen(canvas, "pointermove", onPointerMove);
+  lifecycle.listen(canvas, "pointerup", onPointerUp);
+  lifecycle.listen(canvas, "pointercancel", onPointerUp);
+  lifecycle.listen(canvas, "wheel", onWheel, { passive: false });
+  lifecycle.listen(container, "click", onControls);
+  lifecycle.listen(container, "click", onRelationFilter);
+  lifecycle.listen(container, "click", onRootNavigation);
+  if (typeof ResizeObserver !== "undefined") {
+    const observer = new ResizeObserver(resize);
+    observer.observe(stage);
+    lifecycle.add(() => observer.disconnect());
+  } else {
+    lifecycle.listen(window, "resize", resize, { passive: true });
+  }
 
   const animate = () => {
-    if (disposed) return;
+    if (lifecycle.disposed) return;
     if (!reduced) {
       const camera = interpolateAtlasCamera(
         { scale, offset },
@@ -531,7 +539,7 @@ export function mountAcademyAtlas(container, graph) {
   };
 
   createPixiRenderer(canvas).then((instance) => {
-    if (disposed) {
+    if (lifecycle.disposed) {
       instance.destroy();
       return;
     }
@@ -549,18 +557,6 @@ export function mountAcademyAtlas(container, graph) {
     loading.classList.add("is-error");
   });
 
-  return () => {
-    disposed = true;
-    if (frame) cancelAnimationFrame(frame);
-    canvas.removeEventListener("pointerdown", onPointerDown);
-    canvas.removeEventListener("pointermove", onPointerMove);
-    canvas.removeEventListener("pointerup", onPointerUp);
-    canvas.removeEventListener("pointercancel", onPointerUp);
-    canvas.removeEventListener("wheel", onWheel);
-    container.removeEventListener("click", onControls);
-  container.removeEventListener("click", onRelationFilter);
-    container.removeEventListener("click", onRootNavigation);
-    window.removeEventListener("resize", resize);
-    renderer?.destroy();
-  };
+  lifecycle.add(() => { if (frame) cancelAnimationFrame(frame); });
+  return () => lifecycle.dispose();
 }
