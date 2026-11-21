@@ -145,7 +145,7 @@ export async function loadAcademyData() {
   ]);
   const { enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, error: memberError } = memberRecords;
   const editorialMembers = accessToken && ['OWNER','ADMIN'].includes(membership?.role) ? await callEditorialRpc('academy_list_members', {}, 'Chargement des membres impossible').catch(() => []) : [];
-  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments] = accessToken
+  const [editorialPaths, editorialDepartments, editorialDomains, editorialCompetencies, editorialContentCompetencies, editorialContent, editorialDepartmentLinks, editorialDomainLinks, editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentAnswerKeys] = accessToken
     ? await Promise.all([
         readTable("academy_learning_paths", {
           select: "id,code,slug,title,summary,target_audience,difficulty_level,estimated_duration_minutes,version_label,status,visibility,published_at,updated_at",
@@ -172,9 +172,10 @@ export async function loadAcademyData() {
         readTable("academy_assessments", { select: "id,code,title,description,pass_score,max_attempts,time_limit_minutes,version_label,status,visibility,published_at,updated_at", order: "updated_at.desc" }, accessToken).catch(() => []),
         readTable("academy_assessment_questions", { select: "id,assessment_id,prompt,sort_order,question_type", order: "sort_order.asc" }, accessToken).catch(() => []),
         readTable("academy_assessment_options", { select: "id,question_id,option_text,sort_order", order: "sort_order.asc" }, accessToken).catch(() => []),
-        readTable("academy_path_assessments", { select: "path_id,assessment_id,sort_order,is_required,minimum_score" }, accessToken).catch(() => [])
+        readTable("academy_path_assessments", { select: "path_id,assessment_id,sort_order,is_required,minimum_score" }, accessToken).catch(() => []),
+        readTable("academy_assessment_answer_keys", { select: "question_id,option_id" }, accessToken).catch(() => [])
       ])
-    : [[], [], [], [], [], [], [], [], [], [], [], []];
+    : [[], [], [], [], [], [], [], [], [], [], [], [], []];
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
