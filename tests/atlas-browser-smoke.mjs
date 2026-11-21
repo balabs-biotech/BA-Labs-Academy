@@ -58,7 +58,7 @@ try {
     const stats = await page.locator(".atlas-topline-copy strong").innerText();
     assert.match(stats, /9 départements/);
     assert.match(stats, /9 parcours/);
-    assert.match(stats, /47 domaines/);
+    assert.match(stats, /47 sections/);
     assert.match(stats, /264 modules/);
 
     const accessibleCount = await page.locator("#academy-atlas-accessible button").count();
