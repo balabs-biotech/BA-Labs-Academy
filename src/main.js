@@ -1,4 +1,4 @@
-import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, publishAssessment, savePathAssessments } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
@@ -367,6 +367,11 @@ function administrationView() {
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">WORKFLOW ÉDITORIAL</span><h2>Chaîne de publication</h2></div></div>
     <div class="editorial-stages"><article><b>01</b><h3>Brouillon</h3><p>Préparation et structuration d’un contenu.</p></article><article><b>02</b><h3>Revue</h3><p>Soumission et examen par les rôles autorisés.</p></article><article><b>03</b><h3>Publication</h3><p>Validation finale et diffusion publique contrôlée.</p></article></div></section>
     ${["OWNER","ADMIN","EDITOR"].includes(membership.role) ? `
+    <section class="section-block assessment-editorial">
+      <div class="section-heading"><div><span class="eyebrow">ÉVALUATIONS ET CONTRÔLE DES ACQUIS</span><h2>Banque d’évaluations</h2></div><a class="button button-primary" href="#/administration/evaluations/nouveau">Créer une évaluation ↗</a></div>
+      <p class="taxonomy-intro">Les évaluations sont versionnées, réutilisables dans plusieurs parcours et corrigées côté serveur. Les clés de réponse ne sont pas exposées aux apprenants.</p>
+      <div class="editorial-path-list">${(data.editorialAssessments||[]).map((item)=>`<article class="resource-editorial-row"><div class="resource-editorial-info"><span class="eyebrow">${escapeHtml(item.code)} · ${escapeHtml(item.status)} · v${escapeHtml(item.version_label)}</span><b>${escapeHtml(item.title)}</b><small>Seuil ${item.pass_score}% · ${item.max_attempts?item.max_attempts+" tentative(s)":"Tentatives illimitées"}</small></div><div class="resource-editorial-actions">${item.status==="DRAFT"?`<a class="button button-outline" href="#/administration/evaluations/${encodeURIComponent(item.id)}">Modifier</a>`:"<span class='taxonomy-state'>"+escapeHtml(item.status)+"</span>"}</div></article>`).join("")||emptyState("Aucune évaluation","La banque est prête. Crée des évaluations lorsque les objectifs pédagogiques seront définis.")}</div>
+    </section>
     <section class="section-block pathway-editorial">
       <div class="section-heading"><div><span class="eyebrow">GESTION DES PARCOURS</span><h2>Parcours pédagogiques</h2></div><a class="button button-primary" href="#/administration/parcours/nouveau">Créer un parcours ↗</a></div>
       <div class="editorial-path-list">${(data.editorialPaths || []).filter((path) => path.status === "DRAFT").map((path) => `<a class="editorial-path-row" href="#/administration/parcours/${encodeURIComponent(path.id)}"><div><span class="eyebrow">${escapeHtml(path.code)} · ${escapeHtml(path.status)}</span><h3>${escapeHtml(path.title)}</h3><p>${escapeHtml(path.summary || "Aucun résumé.")}</p></div><b>Modifier ↗</b></a>`).join("") || emptyState("Aucun parcours", "Crée le premier brouillon pédagogique.")}</div>
@@ -464,6 +469,50 @@ function contentEditorView(contentId = "nouveau") {
  '</div><h2>Domaines</h2><p>Les domaines sont filtrés selon les départements sélectionnés.</p><div class="content-taxonomy-list" id="content-domain-list">' +
  (data.editorialDomains||[]).map((dom)=>'<label class="content-taxonomy-option" data-domain-parent="'+escapeHtml(dom.department_code)+'"><input type="checkbox" data-content-domain value="'+escapeHtml(dom.code)+'" '+(doms.includes(dom.code)?'checked':'')+'><span>'+escapeHtml(dom.title)+' <small>'+escapeHtml(dom.code)+'</small></span></label>').join('') +
  '</div></section><div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div><p id="content-editor-feedback" class="auth-feedback" role="status"></p></form>';
+}
+
+
+function assessmentQuestionMarkup(question,index) {
+  const options=question.options||["",""];
+  return `<article class="assessment-editor-question" data-assessment-question data-question-index="${index}">
+    <div class="assessment-editor-question-head"><span class="eyebrow">QUESTION ${String(index+1).padStart(2,"0")}</span><button type="button" class="button button-outline" data-assessment-action="remove-question">Retirer</button></div>
+    <label>Énoncé<textarea data-question-prompt rows="2" required maxlength="1200">${escapeHtml(question.prompt||"")}</textarea></label>
+    <div class="assessment-editor-options" data-assessment-options>
+      ${options.map((option,i)=>`<div class="assessment-editor-option" data-assessment-option><label><input type="radio" name="correct_${index}" value="${i}" ${i===(question.correctIndex??0)?"checked":""} aria-label="Bonne réponse ${i+1}"><input type="text" data-option-text value="${escapeHtml(option.text??option??"")}" required maxlength="500" placeholder="Texte de la réponse"></label><button type="button" data-assessment-action="remove-option" aria-label="Retirer la réponse" ${options.length<=2?"disabled":""}>×</button></div>`).join("")}
+    </div>
+    <button type="button" class="button button-outline" data-assessment-action="add-option">Ajouter une réponse</button>
+  </article>`;
+}
+
+function assessmentEditorView(assessmentId="nouveau") {
+  if(!currentSession?.user)return loginView();
+  const membership=data.membership;
+  if(!["OWNER","ADMIN","EDITOR"].includes(membership?.role)||membership.membership_status!=="ACTIVE")return notFound("Édition non autorisée","La création d’évaluations est réservée aux rôles Owner, Admin et Editor.");
+  const isNew=!assessmentId||assessmentId==="nouveau";
+  const assessment=isNew?null:(data.editorialAssessments||[]).find((item)=>item.id===assessmentId);
+  if(!isNew&&(!assessment||assessment.status!=="DRAFT"))return notFound("Brouillon indisponible","Seules les évaluations au statut DRAFT peuvent être modifiées.");
+  const questions=(data.editorialAssessmentQuestions||[]).filter((item)=>item.assessment_id===assessment?.id).sort((a,b)=>a.sort_order-b.sort_order).map((question)=>{
+    const options=(data.editorialAssessmentOptions||[]).filter((item)=>item.question_id===question.id).sort((a,b)=>a.sort_order-b.sort_order);
+    const correct=(data.editorialAssessmentAnswerKeys||[]).find((item)=>item.question_id===question.id)?.option_id;
+    return {prompt:question.prompt,options:options.map((option)=>({text:option.option_text,id:option.id})),correctIndex:Math.max(0,options.findIndex((option)=>option.id===correct))};
+  });
+  const canPublish=["OWNER","ADMIN"].includes(membership.role);
+  return `<section class="page-intro"><span class="eyebrow"><a href="#/administration">ESPACE ÉDITORIAL</a> / ÉVALUATIONS</span><h1>${isNew?"Nouvelle évaluation":escapeHtml(assessment.title)}</h1><p>Créer un questionnaire versionné. La correction reste privée et s’effectue exclusivement côté serveur.</p></section>
+    <form id="assessment-editor-form" class="assessment-editor-form" data-assessment-id="${escapeHtml(assessment?.id||"")}" >
+      <div class="editor-form-grid">
+        <label>Code interne<input name="code" required maxlength="48" value="${escapeHtml(assessment?.code||"")}" placeholder="MYCO-QCM-01"></label>
+        <label>Version<input name="version_label" maxlength="24" value="${escapeHtml(assessment?.version_label||"0.1")}"></label>
+        <label class="wide">Titre<input name="title" required maxlength="180" value="${escapeHtml(assessment?.title||"")}"></label>
+        <label class="wide">Description<textarea name="description" rows="3">${escapeHtml(assessment?.description||"")}</textarea></label>
+        <label>Seuil de réussite (%)<input name="pass_score" type="number" min="0" max="100" step="1" required value="${assessment?.pass_score??70}"></label>
+        <label>Nombre maximal de tentatives<input name="max_attempts" type="number" min="1" max="100" value="${assessment?.max_attempts??""}" placeholder="Illimité"></label>
+        <label>Durée (minutes)<input name="time_limit_minutes" type="number" min="1" max="1440" value="${assessment?.time_limit_minutes??""}" placeholder="Sans limite"></label>
+      </div>
+      <section class="assessment-question-builder"><div class="section-heading"><div><span class="eyebrow">CONSTRUCTION DU QUESTIONNAIRE</span><h2>Questions à choix unique</h2></div><button type="button" id="add-assessment-question" class="button button-outline">Ajouter une question +</button></div><div id="assessment-question-list">${questions.map((question,index)=>assessmentQuestionMarkup(question,index)).join("")||assessmentQuestionMarkup({prompt:"",options:["",""],correctIndex:0},0)}</div></section>
+      <div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour à l’espace éditorial</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div>
+      <p id="assessment-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
+    </form>
+    ${!isNew&&canPublish?`<section class="pathway-publish-panel"><div><span class="eyebrow">VALIDATION FINALE</span><h2>Publier cette évaluation</h2><p>Les questions et clés de correction sont vérifiées avant publication.</p></div><button class="button button-outline" id="publish-assessment" data-assessment-id="${escapeHtml(assessment.id)}">Publier ↗</button></section>`:""}`;
 }
 
 function competencyEditorView(competencyId = "nouveau") {
@@ -576,6 +625,9 @@ function learningPathEditorView(pathId = "nouveau") {
         <label>Version<input name="version_label" value="${escapeHtml(path?.version_label || "0.1")}" maxlength="24"></label>
       </div>
       <section class="pathway-sequence-builder" id="pathway-sequence-builder"><span class="eyebrow">CONSTRUCTION DE LA SÉQUENCE</span><h2>Étapes et dépendances</h2><p class="sequence-builder-intro">Ajoute les ressources, change leur ordre et définis leurs prérequis. Le moteur vérifie la cohérence du graphe avant validation.</p><div id="pathway-sequence-panel"></div></section>
+      <section class="pathway-sequence-builder"><span class="eyebrow">ÉVALUATIONS ET CERTIFICATION</span><h2>Conditions de validation</h2><p class="sequence-builder-intro">Associe des évaluations publiées au parcours et fixe le seuil exigé pour la certification.</p><div class="path-assessment-editor-list">
+        ${(data.editorialAssessments||[]).filter((item)=>item.status==="PUBLISHED").map((item)=>{const link=(data.editorialPathAssessments||[]).find((entry)=>entry.path_id===path?.id&&entry.assessment_id===item.id);return `<article class="path-assessment-editor-row" data-path-assessment-row><label><input type="checkbox" data-path-assessment value="${escapeHtml(item.id)}" ${link?"checked":""}><span><b>${escapeHtml(item.title)}</b><small>${escapeHtml(item.code)} · Seuil par défaut ${item.pass_score}%</small></span></label><label>Seuil minimal<input type="number" data-path-assessment-score min="0" max="100" step="1" value="${link?.minimum_score??item.pass_score}" ${link?"":"disabled"}></label><label>Obligatoire<input type="checkbox" data-path-assessment-required ${link?.is_required!==false?"checked":""} ${link?"":"disabled"}></label></article>`}).join("")||emptyState("Aucune évaluation publiée","Publie d’abord une évaluation pour pouvoir l’associer à un parcours.") }
+      </div></section>
       <div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour à l’espace éditorial</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div>
       <p id="pathway-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
     </form>
@@ -637,7 +689,7 @@ function render() {
     "certificat": () => certificateView(slug),
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "espace": learnerView,
-    "administration": () => subroute === "parcours" ? learningPathEditorView(subId) : subroute === "competences" ? competencyEditorView(subId) : subroute === "ressources" ? contentEditorView(subId) : administrationView(),
+    "administration": () => subroute === "parcours" ? learningPathEditorView(subId) : subroute === "competences" ? competencyEditorView(subId) : subroute === "ressources" ? contentEditorView(subId) : subroute === "evaluations" ? assessmentEditorView(subId) : administrationView(),
     "atlas": atlasView,
     "apropos": aboutView
   };
@@ -731,6 +783,24 @@ function render() {
 
 
 
+
+  const assessmentBuilder=document.querySelector("#assessment-question-list");
+  const reindexAssessmentQuestions=()=>{assessmentBuilder?.querySelectorAll("[data-assessment-question]").forEach((question,index)=>{question.dataset.questionIndex=index;question.querySelector(".eyebrow").textContent="QUESTION "+String(index+1).padStart(2,"0");question.querySelectorAll('input[type="radio"]').forEach((radio)=>{radio.name="correct_"+index;});});};
+  document.querySelector("#add-assessment-question")?.addEventListener("click",()=>{assessmentBuilder.insertAdjacentHTML("beforeend",assessmentQuestionMarkup({prompt:"",options:["",""],correctIndex:0},assessmentBuilder.children.length));});
+  assessmentBuilder?.addEventListener("click",(event)=>{const button=event.target.closest("[data-assessment-action]");if(!button)return;const question=button.closest("[data-assessment-question]");const action=button.dataset.assessmentAction;
+    if(action==="remove-question"){if(assessmentBuilder.children.length>1)question.remove();reindexAssessmentQuestions();}
+    if(action==="add-option"){const index=Number(question.dataset.questionIndex);const options=question.querySelector("[data-assessment-options]");const next=options.children.length;options.insertAdjacentHTML("beforeend",`<div class="assessment-editor-option" data-assessment-option><label><input type="radio" name="correct_${index}" value="${next}" aria-label="Bonne réponse ${next+1}"><input type="text" data-option-text required maxlength="500" placeholder="Texte de la réponse"></label><button type="button" data-assessment-action="remove-option" aria-label="Retirer la réponse">×</button></div>`);options.querySelectorAll('[data-assessment-action="remove-option"]').forEach((item)=>item.disabled=options.children.length<=2);}
+    if(action==="remove-option"){const options=question.querySelector("[data-assessment-options]");if(options.children.length>2){const wasChecked=button.closest("[data-assessment-option]").querySelector('input[type="radio"]').checked;button.closest("[data-assessment-option]").remove();if(wasChecked)options.querySelector('input[type="radio"]').checked=true;options.querySelectorAll("[data-assessment-option]").forEach((row,index)=>{const radio=row.querySelector('input[type="radio"]');radio.value=index;radio.name="correct_"+question.dataset.questionIndex;row.querySelector('[data-assessment-action="remove-option"]').disabled=options.children.length<=2;});}}
+  });
+  document.querySelectorAll("[data-path-assessment]").forEach((checkbox)=>checkbox.addEventListener("change",()=>{const row=checkbox.closest("[data-path-assessment-row]");row.querySelector("[data-path-assessment-score]").disabled=!checkbox.checked;row.querySelector("[data-path-assessment-required]").disabled=!checkbox.checked;}));
+  const assessmentForm=document.querySelector("#assessment-editor-form");
+  assessmentForm?.addEventListener("submit",async(event)=>{event.preventDefault();const button=assessmentForm.querySelector('button[type="submit"]');const feedback=document.querySelector("#assessment-editor-feedback");button.disabled=true;feedback.textContent="Enregistrement et validation des clés de correction…";
+    try{const values=new FormData(assessmentForm);const questions=[...assessmentBuilder.querySelectorAll("[data-assessment-question]")].map((question)=>{const rows=[...question.querySelectorAll("[data-assessment-option]")];return {prompt:question.querySelector("[data-question-prompt]").value.trim(),options:rows.map((row)=>row.querySelector("[data-option-text]").value.trim()),correct_option_indexes:[rows.findIndex((row)=>row.querySelector('input[type="radio"]').checked)]};});
+      const id=await saveAssessment({id:assessmentForm.dataset.assessmentId||null,code:values.get("code").trim().toUpperCase(),title:values.get("title").trim(),description:values.get("description"),passScore:values.get("pass_score"),maxAttempts:values.get("max_attempts"),timeLimitMinutes:values.get("time_limit_minutes"),versionLabel:values.get("version_label"),questions});
+      location.hash="#/administration/evaluations/"+encodeURIComponent(id);await refresh();
+    }catch(error){feedback.textContent=error.message||"Enregistrement impossible.";button.disabled=false;}
+  });
+  document.querySelector("#publish-assessment")?.addEventListener("click",async(event)=>{const button=event.currentTarget;button.disabled=true;button.textContent="Publication…";try{await publishAssessment(button.dataset.assessmentId);await refresh();location.hash="#/administration";}catch(error){window.alert(error.message||"Publication impossible.");button.disabled=false;button.textContent="Publier ↗";}});
   document.querySelector("#start-assessment")?.addEventListener("click",async(event)=>{
     const button=event.currentTarget;button.disabled=true;button.textContent="Initialisation…";
     try{const attemptId=await startAssessment(button.dataset.assessmentId);location.hash="#/evaluations/"+encodeURIComponent(button.dataset.assessmentId)+"?attempt="+encodeURIComponent(attemptId);await refresh();}
@@ -851,6 +921,8 @@ function render() {
         targetAudience: values.get("target_audience"), difficultyLevel: values.get("difficulty_level"),
         durationMinutes: values.get("duration"), versionLabel: values.get("version_label"), items
       });
+      const requirements=[...form.querySelectorAll("[data-path-assessment]:checked")].map((checkbox)=>{const row=checkbox.closest("[data-path-assessment-row]");return {assessment_id:checkbox.value,is_required:row.querySelector("[data-path-assessment-required]").checked,minimum_score:Number(row.querySelector("[data-path-assessment-score]").value)};});
+      await savePathAssessments(pathId,requirements);
       location.hash = `#/administration/parcours/${encodeURIComponent(pathId)}`;
       await refresh();
     } catch (error) {
