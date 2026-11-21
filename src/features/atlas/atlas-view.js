@@ -215,7 +215,7 @@ export function mountAcademyAtlas(container, graph) {
       const status = document.createElement("small");
       status.textContent = "Module prévu · fiche pédagogique non rédigée";
       body.append(status);
-    } else if (selected.entity_type === "DEPARTMENT" || selected.entity_type === "SECTION") {
+    } else if (selected.entity_type === "DEPARTMENT" || selected.entity_type === "TRANSVERSAL" || selected.entity_type === "SECTION") {
       const status = document.createElement("small");
       status.textContent = "Référentiel cartographié · publication éditoriale distincte";
       body.append(status);
