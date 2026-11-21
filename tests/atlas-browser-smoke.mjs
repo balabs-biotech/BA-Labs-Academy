@@ -56,7 +56,7 @@ try {
 
     const stats = await page.locator(".atlas-topline-copy strong").innerText();
     assert.match(stats, /7 départements/);
-    assert.match(stats, /3 axes transversaux/);
+    assert.match(stats, /3 domaines transversaux/);
     assert.match(stats, /10 parcours/);
     assert.match(stats, /47 sections/);
     assert.match(stats, /264 modules/);
@@ -65,7 +65,7 @@ try {
     assert.equal(accessibleCount, 331, "All 331 mapped nodes must be keyboard-accessible");
     assert.equal(await page.locator(".atlas-root-chip").count(), 20, "All 20 roots must have direct navigation");
     assert.equal(await page.locator(".atlas-root-group--departments [data-atlas-root]").count(), 7);
-    assert.equal(await page.locator(".atlas-root-group--axes [data-atlas-root]").count(), 3);
+    assert.equal(await page.locator(".atlas-root-group--domaines [data-atlas-root]").count(), 3);
     assert.equal(await page.locator(".atlas-root-group--pathways [data-atlas-root]").count(), 10);
 
     await page.locator('[data-atlas-root="department:MYC"]').click();
