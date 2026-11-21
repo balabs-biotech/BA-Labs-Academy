@@ -190,3 +190,16 @@
 .competency-prerequisite-list span{display:grid;gap:3px}
 .competency-prerequisite-list small{color:var(--muted);font-size:9px}
 @media(max-width:680px){.competency-prerequisite-list{grid-template-columns:1fr}}
+
+
+/* Versioned pedagogical assets */
+.content-assets-editor{margin-top:1.5rem}
+.content-asset-list{display:grid;gap:.65rem;margin:1rem 0 1.5rem}
+.content-asset-row{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.85rem 1rem;border:1px solid var(--line,#34404a);border-radius:12px}
+.content-asset-row>div{display:grid;gap:.25rem;min-width:0}
+.content-asset-row small,.content-asset-row a{font-size:.82rem;color:var(--muted,#9aa6b2)}
+.content-asset-row a{width:max-content;text-decoration:underline}
+.content-asset-row>span{font-size:.78rem;color:var(--muted,#9aa6b2);text-align:right}
+.content-asset-form{padding:1rem;border:1px solid var(--line,#34404a);border-radius:14px}
+.content-asset-form h3{margin-top:0}
+@media(max-width:640px){.content-asset-row{align-items:flex-start;flex-direction:column}.content-asset-row>span{text-align:left}}
