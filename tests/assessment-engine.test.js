@@ -11,7 +11,10 @@ const data=await readFile(new URL("../src/data.js",import.meta.url),"utf8");
 test("assessment answer keys are hidden from learners and visible only to editorial members",()=>{
  assert.match(engine,/revoke all on public\.academy_assessment_answer_keys from public,anon,authenticated/i);
  assert.match(answerKeyPolicy,/academy_is_editorial_member/);
- assert.match(answerKeyPolicy,/grant select on public\.academy_assessment_answer_keys to authenticated/);\n assert.match(auditMigration,/MEMBER_CREATED/);\n assert.match(auditMigration,/ASSESSMENT_PUBLISHED/);\n assert.match(auditMigration,/CERTIFICATE_ISSUED/);
+ assert.match(answerKeyPolicy,/grant select on public\.academy_assessment_answer_keys to authenticated/);
+ assert.match(auditMigration,/MEMBER_CREATED/);
+ assert.match(auditMigration,/ASSESSMENT_PUBLISHED/);
+ assert.match(auditMigration,/CERTIFICATE_ISSUED/);
 });
 test("assessment attempts are server-graded and versioned",()=>{
  assert.match(engine,/assessment_version/);
