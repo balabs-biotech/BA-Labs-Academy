@@ -23,7 +23,9 @@ const DEPARTMENT_LABELS = {
   MYC: "Mycologie appliquée",
   BIO: "Biotechnologies végétales",
   AGR: "Agronomie",
-  ZOO: "Zootechnie",
+  BPR: "Bioprocédés",
+  BMT: "Biomatériaux",
+  PHY: "Sciences physiques & chimiques",
   INF: "Informatique et données",
   GEN: "Génie biologique et instrumentation"
 };
@@ -37,13 +39,13 @@ const DOMAIN_LABELS = {
 const PATHWAY_LABELS = {
   "MYC-PAR-001": "Prod. mycologique",
   "MYC-PAR-002": "Tech. fongique",
-  "MYC-PAR-003": "Ing. bioprocédés",
+  "BPR-PAR-001": "Ing. bioprocédés",
   "MIC-PAR-001": "MIC sols/plantes",
   "BIO-PAR-001": "Biostimulants",
   "GEN-PAR-001": "Labo biologique",
   "GEN-PAR-002": "Auto. culture",
-  "AGR-PAR-001": "Biomasses",
-  "MYC-PAR-004": "Mycomatériaux",
+  "BPR-PAR-002": "Biomasses",
+  "BMT-PAR-001": "Mycomatériaux",
   "INF-PAR-001": "Données & IA"
 };
 
