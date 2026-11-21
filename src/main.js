@@ -102,16 +102,17 @@ function render() {
   if (!data.departments.length && !data.content.length && !data.nodes.length) {
     connection.textContent = "API connectée · aucun contenu public";
   } else connection.textContent = "Données publiques synchronisées";
+  if (route === "departements") {
+    root.innerHTML = slug ? departmentDetail(slug) : departmentsView();
+    return;
+  }
   const views = {
     "": homeView,
-    "departements": () => slug ? departmentDetail(slug) : departmentsView,
     "catalogue": catalogueView,
     "atlas": atlasView,
     "apropos": aboutView
   };
-  const selected = views[route || ""] || homeView;
-  root.innerHTML = typeof selected === "function" && route === "departements" && slug
-    ? selected() : selected();
+  root.innerHTML = (views[route || ""] || homeView)();
 }
 
 async function refresh() {
