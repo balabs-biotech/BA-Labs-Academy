@@ -1,7 +1,9 @@
 -- Competency editorial workflow: atomic draft save, resource mapping and Atlas sync.
+drop policy if exists "Academy editors can read draft competencies" on public.academy_competencies;
 create policy "Academy editors can read draft competencies"
 on public.academy_competencies for select to authenticated
 using (exists (select 1 from public.academy_memberships m where m.user_id=auth.uid() and m.membership_status='ACTIVE' and m.role in ('OWNER','ADMIN','EDITOR','REVIEWER')));
+drop policy if exists "Academy editors can read draft competency links" on public.academy_content_competencies;
 create policy "Academy editors can read draft competency links"
 on public.academy_content_competencies for select to authenticated
 using (exists (select 1 from public.academy_memberships m where m.user_id=auth.uid() and m.membership_status='ACTIVE' and m.role in ('OWNER','ADMIN','EDITOR','REVIEWER')));
