@@ -1,7 +1,7 @@
 // Cartographie éditoriale de départ : huit pôles disciplinaires et MYCOLOGIE centrale.
 // Les entrées restent distinctes des ressources publiées dans Supabase.
 export const catalogueMap = [
-  { code:"MYC", title:"Mycologie appliquée", description:"Comprendre les champignons, les cultiver, piloter leur production et développer des applications.", sections:[
+  { code:"MYC", title:"MYCOLOGIE", description:"Comprendre les champignons, les cultiver, piloter leur production et développer des applications.", sections:[
     {code:"MYC-01",title:"Diversité, taxonomie et écologie fongiques",description:"Identifier les grands groupes, leur organisation et leurs rôles écologiques.",modules:["Introduction à la mycologie","Morphologie et organisation cellulaire","Classification et identification des champignons","Spores et cycles biologiques","Écologie fongique"]},
     {code:"MYC-02",title:"Physiologie, nutrition et croissance",description:"Comprendre le fonctionnement du mycélium et les facteurs qui gouvernent son développement.",modules:["Physiologie du mycélium","Nutrition carbonée et azotée","Facteurs de croissance fongique","Cinétique de croissance mycélienne","Stress et réponses physiologiques"]},
     {code:"MYC-03",title:"Souches et laboratoire mycologique",description:"Sélectionner, conserver, isoler et manipuler des cultures fongiques.",modules:["Sélection et caractérisation des souches","Conservation des cultures fongiques","Asepsie et organisation du laboratoire","Isolement et purification","Transfert et repiquage sur gélose","Milieux solides et liquides"]},
