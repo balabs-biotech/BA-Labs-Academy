@@ -22,14 +22,19 @@ export function renderAcademyAtlas(graph) {
   const domainSummary = domains ? `${domains} domaines <i>·</i> ` : "";
   const departmentRoots = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.level === 0);
   const pathwayRoots = graph.nodes.filter((node) => node.entity_type === "PATHWAY" && node.level === 0);
-  const rootNavigation = (items, kind, label) => `
-    <div class="atlas-root-group atlas-root-group--${kind}">
-      <span class="atlas-root-label">${label}</span>
-      <div class="atlas-root-items">${items.map((node) => `
-        <button type="button" class="atlas-root-chip" data-atlas-root="${escapeAtlasText(node.id)}" aria-pressed="false">
-          <small>${escapeAtlasText(node.entity_key)}</small><span>${escapeAtlasText(node.title)}</span>
-        </button>`).join("")}</div>
-    </div>`;
+  const rootNavigation = (items, kind, label) => {
+    const content = `
+      <div class="atlas-root-group atlas-root-group--${kind}">
+        <span class="atlas-root-label">${label}</span>
+        <div class="atlas-root-items">${items.map((node) => `
+          <button type="button" class="atlas-root-chip" data-atlas-root="${escapeAtlasText(node.id)}" aria-pressed="false">
+            <small>${escapeAtlasText(node.entity_key)}</small><span>${escapeAtlasText(node.title)}</span>
+          </button>`).join("")}</div>
+      </div>`;
+    return kind === "pathways"
+      ? `<details class="atlas-utility-disclosure atlas-pathway-disclosure"><summary>PARCOURS PRATIQUES <span>${items.length}</span></summary>${content}</details>`
+      : content;
+  };
   return `
     <section class="page-intro atlas-page-intro">
       <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
@@ -44,11 +49,12 @@ export function renderAcademyAtlas(graph) {
         </div>
         <span class="atlas-engine-state" id="atlas-engine-state">Initialisation du moteur…</span>
       </div>
-      <nav class="atlas-root-navigation" aria-label="Accès direct aux départements et parcours">
+      <nav class="atlas-root-navigation" aria-label="Accès direct aux départements">
         ${rootNavigation(departmentRoots, "departments", "DÉPARTEMENTS")}
-        ${rootNavigation(pathwayRoots, "pathways", "PARCOURS PRATIQUES")}
       </nav>
-      <div class="atlas-relation-filters" role="group" aria-label="Filtres des connexions pédagogiques">
+      <details class="atlas-utility-disclosure atlas-filter-disclosure">
+        <summary>FILTRES DES CONNEXIONS <span>7</span></summary>
+        <div class="atlas-relation-filters" role="group" aria-label="Filtres des connexions pédagogiques">
         <span>FLUX PÉDAGOGIQUES</span>
         <button type="button" data-atlas-relation="all" aria-pressed="true">Tous</button>
         <button type="button" data-atlas-relation="PREREQUISITE" aria-pressed="false">Prérequis</button>
@@ -56,8 +62,9 @@ export function renderAcademyAtlas(graph) {
         <button type="button" data-atlas-relation="METHOD_TRANSFER" aria-pressed="false">Transfert</button>
         <button type="button" data-atlas-relation="TECHNICAL_DEPENDENCY" aria-pressed="false">Dépendance</button>
         <button type="button" data-atlas-relation="APPLIED_IN" aria-pressed="false">Application</button>
-        <button type="button" data-atlas-relation="INTERDISCIPLINARY" aria-pressed="false">Interdisciplinaire</button>
-      </div>
+          <button type="button" data-atlas-relation="INTERDISCIPLINARY" aria-pressed="false">Interdisciplinaire</button>
+        </div>
+      </details>
       <div class="atlas-stage" id="academy-atlas-stage">
         <canvas id="academy-atlas-canvas" aria-label="Réseau de connaissances interactif BA Labs Academy"></canvas>
         <div class="atlas-stage-heading">

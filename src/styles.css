@@ -721,3 +721,17 @@
 .atlas-branch-children{display:flex;flex-wrap:wrap;gap:5px;max-height:132px;overflow:auto}
 .atlas-branch-child{font-size:9px}
 .atlas-branch-parent:focus-visible,.atlas-branch-child:focus-visible{outline:2px solid #d6a18a;outline-offset:2px}
+
+
+/* Keep the initial Atlas viewport focused on the radial knowledge wheel. */
+.atlas-utility-disclosure{margin:0 0 8px;border:1px solid #ffffff16;border-radius:7px;background:#121e1b}
+.atlas-utility-disclosure>summary{display:flex;align-items:center;gap:8px;min-height:34px;padding:7px 11px;color:#9caf9f;font-size:9px;font-weight:700;letter-spacing:.12em;cursor:pointer;list-style:none}
+.atlas-utility-disclosure>summary::-webkit-details-marker{display:none}
+.atlas-utility-disclosure>summary::before{content:"＋";color:#c88773;font-size:12px}
+.atlas-utility-disclosure[open]>summary::before{content:"−"}
+.atlas-utility-disclosure>summary span{margin-left:auto;color:#d2b39b;font-variant-numeric:tabular-nums}
+.atlas-utility-disclosure[open]{padding-bottom:7px}
+.atlas-pathway-disclosure .atlas-root-group{margin:0 10px 4px;padding:7px 0;border:0;background:transparent}
+.atlas-pathway-disclosure .atlas-root-label{display:none}
+.atlas-filter-disclosure .atlas-relation-filters{padding:4px 10px 8px}
+.atlas-utility-disclosure>summary:focus-visible{outline:2px solid #d6a18a;outline-offset:2px}

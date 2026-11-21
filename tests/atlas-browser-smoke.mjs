@@ -51,7 +51,7 @@ try {
     assert.ok(surface.width > 0 && surface.height > 0, "PixiJS must create a real drawing surface");
     assert.ok(surface.rect.width >= surface.stage.width * 0.98, "Canvas must fill the Atlas stage width");
     assert.ok(surface.rect.height >= surface.stage.height * 0.98, "Canvas must fill the Atlas stage height");
-    assert.ok(surface.visibleNodes >= 19, "All department and pathway roots must be visible in the overview");
+    assert.ok(surface.visibleNodes >= 9, "The nine department anchors must be visible in the overview");
 
     const stats = await page.locator(".atlas-topline-copy strong").innerText();
     assert.match(stats, /9 départements/);
@@ -61,7 +61,9 @@ try {
 
     const accessibleCount = await page.locator("#academy-atlas-accessible button").count();
     assert.equal(accessibleCount, 330, "All 330 mapped nodes must be keyboard-accessible");
-    assert.equal(await page.locator(".atlas-root-chip").count(), 19, "All 19 roots must have direct navigation");
+    assert.equal(await page.locator(".atlas-root-chip").count(), 19, "All 19 roots must remain available for direct navigation");
+    assert.equal(await page.locator(".atlas-pathway-disclosure").getAttribute("open"), null, "Pathway shortcuts must stay collapsed in the initial view");
+    assert.equal(await page.locator(".atlas-filter-disclosure").getAttribute("open"), null, "Connection filters must stay collapsed in the initial view");
 
     const pathway = page.locator("#academy-atlas-accessible button").filter({
       hasText: "Production mycologique, du laboratoire à la fructification"
