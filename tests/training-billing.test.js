@@ -1,0 +1,10 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+const migration=await readFile(new URL("../supabase/migrations/20261122018500_academy_training_billing_controls_v1.sql",import.meta.url),"utf8");
+const data=await readFile(new URL("../src/data.js",import.meta.url),"utf8");
+test("billing writes are Owner/Admin-only and audited",()=>{assert.match(migration,/academy_assert_role\(array\['OWNER','ADMIN'\]\)/);assert.match(migration,/TRAINING_BILLING/);assert.match(migration,/academy_save_training_billing_record/);});
+test("billing owner must match workshop or signed agreement responsibility",()=>{assert.match(migration,/PRIVATE_WORKSHOP/);assert.match(migration,/v_responsibility='UNDECIDED'/);assert.match(migration,/v_responsibility<>'SPLIT'/);});
+test("payment status transitions cannot silently roll back paid records",()=>{assert.match(migration,/v_old_status='PAID'/);assert.match(migration,/v_old_status='PARTIALLY_PAID'/);assert.match(migration,/REFUNDED','CANCELLED/);assert.match(migration,/A note is required when changing payment status/);});
+test("browser cannot invoke billing writes anonymously",()=>{assert.match(migration,/revoke all on function public\.academy_save_training_billing_record\(jsonb\) from public,anon/);assert.match(migration,/grant execute on function public\.academy_save_training_billing_record\(jsonb\) to authenticated/);});
+test("frontend billing wrapper uses the controlled RPC",()=>{assert.match(data,/saveTrainingBillingRecord/);assert.match(data,/academy_save_training_billing_record/);});
