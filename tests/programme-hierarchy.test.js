@@ -94,6 +94,17 @@ test("curriculum mapping tables are protected by RLS and read-only outside contr
  assert.match(curriculumMigration,/grant select on public\.academy_program_node_competencies/);
  assert.match(pathMappingMigration,/enable row level security/);
 });
+test("public curriculum mappings expose only public linked learning objects",()=>{
+ const security=readFile(new URL("../supabase/migrations/20261122019800_academy_programme_mapping_visibility_v1.sql",import.meta.url),"utf8");
+ return security.then(sql=>{
+  assert.match(sql,/revoke all privileges on table[\s\S]*from public, anon, authenticated/);
+  assert.match(sql,/grant select on table[\s\S]*to anon, authenticated/);
+  assert.match(sql,/c\.editorial_status='PUBLISHED' and c\.visibility='PUBLIC'/);
+  assert.match(sql,/a\.status='PUBLISHED' and a\.visibility='PUBLIC' and a\.published_at is not null/);
+  assert.match(sql,/c\.status='PUBLISHED' and c\.visibility='PUBLIC'/);
+ });
+});
+
 test("programme hierarchy preview is refreshed after initial load and structural edits",()=>{
  assert.match(main,/programme-hierarchy-preview/);
  assert.match(main,/refreshHierarchyPreview/);
