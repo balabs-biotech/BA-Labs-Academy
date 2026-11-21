@@ -23,8 +23,8 @@ export async function createPixiRenderer(canvas){
   field.circle(width*.5,height*.48,Math.max(width,height)*.78).fill({color:0x172925,alpha:.22});
   filaments.clear();junctions.clear();
   // Eight quiet spokes and two rings establish a wheel before any detail is revealed.
-  filaments.circle(0,0,1080).stroke({color:0x91a99b,alpha:.075,width:2});
-  filaments.circle(0,0,2050).stroke({color:0x91a99b,alpha:.055,width:2});
+  filaments.circle(0,0,820).stroke({color:0x91a99b,alpha:.075,width:2});
+  filaments.circle(0,0,1600).stroke({color:0x91a99b,alpha:.055,width:2});
   const departmentRoots = nodes.filter((node) => node.level === 0 && node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
   for (const root of departmentRoots) {
     filaments.moveTo(0,0).lineTo(root.x,root.y).stroke({color:PALETTE[root.rootId]||0x91a99b,alpha:.12,width:2.2});
@@ -50,11 +50,13 @@ export async function createPixiRenderer(canvas){
    const seed=(e.seed??hash(e.a.id+e.b.id))>>>0,side=(seed&1)?1:-1;
    const bend=Math.min(16,len*.05)*side;
    const drift=(((seed>>>12)&255)/255-.5)*Math.min(4,len*.015);
-   const cx=(a.x+b.x)/2-dy/len*bend+dx/len*drift,cy=(a.y+b.y)/2+dx/len*bend+dy/len*drift;
-   const relationColors={PREREQUISITE:0x80aeb8,COMPLEMENTARY:0xa9a0d4,METHOD_TRANSFER:0xe8c99d,TECHNICAL_DEPENDENCY:0xc88773,APPLIED_IN:0x79a991,INTERDISCIPLINARY:0x7eaaa3};const color=PALETTE[e.a.rootId]||0x91a99b,widthBase=knowledge?1.35:e.basis==="academy-pathway-flow"?1.05:e.verified?1.2:e.cross?.55:Math.max(.45,(e.depth===1?1.5:e.depth===2?1.15:.85));
-   if(!e.cross&&depth<=2&&len>34)filaments.moveTo(a.x,a.y).quadraticCurveTo(cx,cy,b.x,b.y).stroke({color,alpha:alpha*.12,width:widthBase*3.1,cap:"round"});
-   filaments.moveTo(a.x,a.y).quadraticCurveTo(cx,cy,b.x,b.y).stroke({color:knowledge?(relationColors[e.relation_type]||0x7eaaa3):e.basis==="academy-pathway-flow"?0xe8c99d:e.verified?(e.basis==="notion-link"?0xb96b4d:e.basis==="academy-pathway"?0xa9a0d4:e.basis==="academy-domain"?0xb5b58d:e.basis==="academy-hierarchy"?color:0x7eaaa3):e.cross?0xb96b4d:color,alpha:alpha*(knowledge?.88:e.basis==="academy-pathway-flow"?.72:e.verified?.82:e.cross?.34:depth>=3?.42:depth===2?.62:.78),width:widthBase,cap:"round"});
-   if(e.verified)junctions.circle(cx,cy,Math.max(1.25,1.8/Math.sqrt(scale))).fill({color:e.basis==="notion-link"?0xb96b4d:e.basis==="academy-pathway"?0xa9a0d4:e.basis==="academy-axis"?0xc88773:0x7eaaa3,alpha:.9});
+   const sharedPathway=e.basis==="academy-pathway-network";
+   const cx=sharedPathway?(a.x+b.x)*.36:(a.x+b.x)/2-dy/len*bend+dx/len*drift;
+   const cy=sharedPathway?(a.y+b.y)*.36:(a.y+b.y)/2+dx/len*bend+dy/len*drift;
+   const relationColors={PREREQUISITE:0x80aeb8,COMPLEMENTARY:0xa9a0d4,METHOD_TRANSFER:0xe8c99d,TECHNICAL_DEPENDENCY:0xc88773,APPLIED_IN:0x79a991,INTERDISCIPLINARY:0x7eaaa3};const color=PALETTE[e.a.rootId]||0x91a99b,widthBase=sharedPathway?2.2:knowledge?1.35:e.basis==="academy-pathway-flow"?1.05:e.verified?1.2:e.cross?.55:Math.max(.45,(e.depth===1?1.5:e.depth===2?1.15:.85));
+   if((!e.cross&&depth<=2&&len>34)||sharedPathway)filaments.moveTo(a.x,a.y).quadraticCurveTo(cx,cy,b.x,b.y).stroke({color,alpha:alpha*(sharedPathway?.12:.12),width:widthBase*(sharedPathway?3.2:3.1),cap:"round"});
+   filaments.moveTo(a.x,a.y).quadraticCurveTo(cx,cy,b.x,b.y).stroke({color:sharedPathway?0xb8a9df:knowledge?(relationColors[e.relation_type]||0x7eaaa3):e.basis==="academy-pathway-flow"?0xe8c99d:e.verified?(e.basis==="notion-link"?0xb96b4d:e.basis==="academy-pathway"?0xa9a0d4:e.basis==="academy-domain"?0xb5b58d:e.basis==="academy-hierarchy"?color:0x7eaaa3):e.cross?0xb96b4d:color,alpha:alpha*(sharedPathway?.52:knowledge?.88:e.basis==="academy-pathway-flow"?.72:e.verified?.82:e.cross?.34:depth>=3?.42:depth===2?.62:.78),width:widthBase,cap:"round"});
+   if(e.verified&&!sharedPathway)junctions.circle(cx,cy,Math.max(1.25,1.8/Math.sqrt(scale))).fill({color:e.basis==="notion-link"?0xb96b4d:e.basis==="academy-pathway"?0xa9a0d4:e.basis==="academy-axis"?0xc88773:0x7eaaa3,alpha:.9});
    // Hierarchy stays clean; motion is reserved for explicit knowledge transfers.
    const transfer=e.basis==="academy-pathway-flow"||e.basis==="academy-knowledge-relation";
    if(!reduced&&alpha>.2&&transfer){

@@ -257,6 +257,34 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     }
   });
 
+  // Shared pathways create visible bridges between the departments they explicitly mobilize.
+  // This is a pathway-membership relation, not an inferred scientific relation.
+  const sharedDepartments = new Map();
+  for (const pathway of pathways) {
+    const participants = [...new Set(pathway.departmentCodes || [pathway.departmentCode])]
+      .map((code) => departmentNodes.get(code)).filter(Boolean);
+    for (let left = 0; left < participants.length; left += 1) {
+      for (let right = left + 1; right < participants.length; right += 1) {
+        const a = participants[left];
+        const b = participants[right];
+        const key = [a.id, b.id].sort().join("|");
+        if (!sharedDepartments.has(key)) sharedDepartments.set(key, { a, b, pathwayCodes: [] });
+        sharedDepartments.get(key).pathwayCodes.push(pathway.code);
+      }
+    }
+  }
+  for (const { a, b, pathwayCodes } of sharedDepartments.values()) {
+    const edge = addEdge(a, b, {
+      id: "shared-pathway:" + a.entity_key + ":" + b.entity_key,
+      relationType: "SHARED_PATHWAY",
+      cross: true,
+      verified: true,
+      basis: "academy-pathway-network",
+      label: "Départements mobilisés par un même parcours"
+    });
+    edge.pathwayCodes = pathwayCodes;
+  }
+
   // Only explicit, evidence-backed editorial relations become visible edges.
   for (const relation of knowledgeRelations) {
     const type = KNOWLEDGE_RELATION_TYPES[relation.type];

@@ -1,8 +1,8 @@
 export const ATLAS_GEOMETRY = Object.freeze({
-  departmentOrbitRadius: 1850,
-  pathwayOrbitRadius: 2600,
+  departmentOrbitRadius: 1450,
+  pathwayOrbitRadius: 2050,
   mycologyCoreAngle: -Math.PI / 2,
-  childDistances: Object.freeze({ 1: 390, 2: 260 }),
+  childDistances: Object.freeze({ 1: 320, 2: 220 }),
   departmentPetalSpread: 0.82,
   sectionSpread: 1.15
 });
