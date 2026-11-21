@@ -6,6 +6,9 @@ const main=await readFile(new URL("../src/main.js",import.meta.url),"utf8");
 const data=await readFile(new URL("../src/data.js",import.meta.url),"utf8");
 const migration=await readFile(new URL("../supabase/migrations/20261122018000_academy_programme_hierarchy_v1.sql",import.meta.url),"utf8");
 const depthMigration=await readFile(new URL("../supabase/migrations/20261122018200_academy_programme_hierarchy_depth_v1.sql",import.meta.url),"utf8");
+const curriculumMigration=await readFile(new URL("../supabase/migrations/20261122019500_academy_programme_curriculum_mapping_v1.sql",import.meta.url),"utf8");
+const pathMappingMigration=await readFile(new URL("../supabase/migrations/20261122019600_academy_programme_node_paths_v1.sql",import.meta.url),"utf8");
+
 
 test("programme hierarchy has its own curriculum entity and ordered tree",()=>{
  assert.match(migration,/create table if not exists public\.academy_programs/);
@@ -59,4 +62,26 @@ test("programme tables are RLS-enabled and Data API read grants are explicit",()
  assert.match(migration,/enable row level security/);
  assert.match(migration,/grant select on public\.academy_programs/);
  assert.match(migration,/revoke all on function public\.academy_save_program_draft[\s\S]*from public,anon/);
+});
+
+test("curriculum nodes have explicit competency, resource, assessment and path relationships",()=>{
+ assert.match(curriculumMigration,/academy_program_node_competencies/);
+ assert.match(curriculumMigration,/academy_program_node_resources/);
+ assert.match(curriculumMigration,/academy_program_node_assessments/);
+ assert.match(pathMappingMigration,/academy_program_node_paths/);
+ assert.match(curriculumMigration,/academy_training_offering_program_node_fk/);
+ assert.match(data,/editorialProgramNodeCompetencies/);
+ assert.match(data,/editorialProgramNodeResources/);
+ assert.match(data,/editorialProgramNodeAssessments/);
+ assert.match(data,/editorialProgramNodePaths/);
+});
+test("curriculum mapping tables are protected by RLS and read-only outside controlled workflows",()=>{
+ assert.match(curriculumMigration,/enable row level security/);
+ assert.match(curriculumMigration,/Editors can read programme node competencies/);
+ assert.match(curriculumMigration,/grant select on public\.academy_program_node_competencies/);
+ assert.match(pathMappingMigration,/enable row level security/);
+});
+test("programme hierarchy preview is refreshed after initial load and structural edits",()=>{
+ assert.match(main,/programme-hierarchy-preview/);
+ assert.match(main,/refreshHierarchyPreview/);
 });
