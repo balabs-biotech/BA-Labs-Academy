@@ -935,7 +935,7 @@ function render() {
     try{await revokeTrainingDocument(button.dataset.trainingRevoke,reason.trim());await refresh();}
     catch(error){window.alert(error.message||"Révocation impossible.");button.disabled=false;}
   }));
-  const verifyTrainingForm=document.querySelector("#training-document-verify-form")||document.querySelector("#training-public-verify-form");
+  const verifyTrainingForm=document.querySelector("#training-document-verify-form");
   const verifyTraining=(form,output)=>async(event)=>{
     event.preventDefault();const token=new FormData(form).get("token").trim();output.textContent="Vérification…";
     try{const result=await verifyTrainingDocument(token);output.innerHTML=result?'<article class="training-verification '+(result.verification_status==="VALID"?"is-valid":"is-revoked")+'"><h3>'+escapeHtml(result.verification_status==="VALID"?"Document valide":"Document révoqué")+'</h3><b>'+escapeHtml(result.document_code)+'</b><p>'+escapeHtml(result.title)+' · '+escapeHtml(result.document_type)+'</p><p>Émetteur : '+escapeHtml(result.issuer_name)+' · '+escapeHtml(new Date(result.issued_at).toLocaleDateString("fr-FR"))+'</p></article>':'<p class="progress-note">Aucun document correspondant à ce jeton.</p>';}
