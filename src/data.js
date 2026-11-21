@@ -460,3 +460,7 @@ export function saveTrainingAgreement(payload) {
 export function setTrainingReferenceStatus(entityType, entityId, status, note = "") {
   return callEditorialRpc("academy_set_training_reference_status", { p_entity_type: entityType, p_entity_id: entityId, p_new_status: status, p_note: note }, "Changement du statut de référence impossible");
 }
+
+export function saveTrainingBillingRecord(payload) {
+  return callEditorialRpc("academy_save_training_billing_record", { p_payload: payload }, "Enregistrement de la facturation impossible");
+}
