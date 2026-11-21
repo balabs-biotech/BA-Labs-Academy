@@ -135,7 +135,7 @@ export function mountAcademyAtlas(container, graph) {
     const maxY = Math.max(...ys);
     const spanX = maxX - minX + 230;
     const spanY = maxY - minY + 220;
-    targetScale = clamp(Math.min((width - padX * 2) / spanX, (height - padY * 2) / spanY), 0.28, 0.82);
+    targetScale = clamp(Math.min((width - padX * 2) / spanX, (height - padY * 2) / spanY), 0.12, 0.82);
     targetOffset = { x: -((minX + maxX) / 2) * targetScale, y: -((minY + maxY) / 2) * targetScale };
   };
 
@@ -250,7 +250,7 @@ export function mountAcademyAtlas(container, graph) {
       if (history.length > 80) history.shift();
     }
     const zoomLevel = zoomTo ?? (node.level === 0 ? 0.88 : node.level === 1 ? 1.8 : 3.6);
-    targetScale = clamp(zoomLevel, 0.28, 12);
+    targetScale = clamp(zoomLevel, 0.12, 12);
     targetOffset = { x: -node.x * targetScale, y: -node.y * targetScale };
     selected = node;
     updateSelection();
@@ -258,7 +258,7 @@ export function mountAcademyAtlas(container, graph) {
   };
 
   const zoom = (factor, x = width / 2, y = height / 2) => {
-    const next = clamp(targetScale * factor, 0.28, 12);
+    const next = clamp(targetScale * factor, 0.12, 12);
     const ratio = next / targetScale;
     targetOffset.x = (x - width / 2) - (x - width / 2 - targetOffset.x) * ratio;
     targetOffset.y = (y - height / 2) - (y - height / 2 - targetOffset.y) * ratio;
