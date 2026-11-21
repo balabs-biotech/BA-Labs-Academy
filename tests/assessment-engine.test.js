@@ -34,5 +34,5 @@ test("learner UI starts assessments, submits answers and verifies certificates",
  assert.match(main,/issuePathCertificate\(/);
  assert.match(main,/verifyCertificate\(/);
  assert.match(data,/export function startAssessment/);
- assert.match(data,/export function submitAssessment/);
+ assert.match(data,/export function submitAssessment/);\n assert.match(main,/function assessmentEditorView/);\n assert.match(main,/savePathAssessments\\(pathId,requirements\\)/);\n assert.match(data,/academy_assessment_answer_keys/);
 });
