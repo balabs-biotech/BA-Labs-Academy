@@ -210,6 +210,12 @@ export function mountAcademyAtlas(container, graph) {
     }
   };
 
+  const onWheel = (event) => {
+    event.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    zoom(event.deltaY < 0 ? 1.16 : 0.86, event.clientX - rect.left, event.clientY - rect.top);
+  };
+
   const hit = (x, y) => {
     const visible = new Set(JSON.parse(canvas.dataset.visibleNodeIds || "[]"));
     const boxes = JSON.parse(canvas.dataset.visibleNodeHitBoxes || "{}");
