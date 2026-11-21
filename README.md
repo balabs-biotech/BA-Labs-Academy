@@ -96,3 +96,7 @@ La clôture d'une inscription exige désormais une présence validée pour chaqu
 ### Catalogue public des formations
 
 Une page publique `#/formations` présente uniquement les offres au statut ACTIVE et les sessions au statut OPEN. Les politiques RLS permettent la lecture publique de ces deux ensembles sans exposer les partenaires, conventions, participants, présences ou documents internes. Le catalogue ne publie ni capacité, ni code de lieu, ni données personnelles.
+
+### Facturation et suivi des règlements
+
+Le registre de facturation conserve les références de factures externes, le responsable de facturation, la devise, le montant en unités mineures et le statut de règlement. L'écriture est réservée aux Owner/Admin et contrôlée par le régime de formation et la responsabilité financière inscrite dans la convention. Les transitions de règlement sont auditées ; un changement de statut exige une note, et un paiement confirmé ne peut être rétrogradé en impayé. Ce registre de suivi ne remplace pas la comptabilité ni l'émission réglementaire des factures.
