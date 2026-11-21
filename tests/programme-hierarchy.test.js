@@ -15,7 +15,7 @@ test("programme hierarchy has its own curriculum entity and ordered tree",()=>{
 
 test("programme hierarchy enforces parent order and rejects missing parents or cycles",()=>{
  assert.match(migration,/academy_validate_program_node_parent/);
- assert.match(migration,/Programme hierarchy cannot move to the same or a higher level/);
+ assert.match(migration,/Programme hierarchy cannot move to the same or a higher level/);\n assert.match(migration,/when 'ACTIVITY' then 10/);
  assert.match(migration,/Programme hierarchy contains a missing parent or cycle/);
 });
 
