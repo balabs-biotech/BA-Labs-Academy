@@ -177,12 +177,12 @@ export function mountAcademyAtlas(container, graph) {
     updateBreadcrumbs();
     backButton.disabled = !navigation.canGoBack;
     container.querySelectorAll("[data-atlas-root]").forEach((button) => {
-      const active = button.dataset.atlasRoot === navigation.navigation.selected?.id;
+      const active = button.dataset.atlasRoot === navigation.selected?.id;
       button.classList.toggle("is-active", active);
       button.setAttribute("aria-pressed", String(active));
     });
     selection.replaceChildren();
-    if (!selected) {
+    if (!navigation.selected) {
       selection.hidden = true;
       return;
     }
