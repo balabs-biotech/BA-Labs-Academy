@@ -5,7 +5,7 @@ const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)"
 
 const typeLabels = {
   DEPARTMENT: "Département",
-  DOMAIN: "Domaine transversal",
+  DOMAIN: "Domaine",
   SECTION: "Section",
   MODULE: "Module",
   PATHWAY: "Parcours"
@@ -206,7 +206,7 @@ export function mountAcademyAtlas(container, graph) {
       body.append(status);
     } else if (selected.entity_type === "DOMAIN") {
       const status = document.createElement("small");
-      status.textContent = "Domaine transversal · rattachements disciplinaires à valider";
+      status.textContent = "Domaine scientifique · classification et rattachements à publier";
       body.append(status);
     } else if (selected.entity_type === "MODULE") {
       const status = document.createElement("small");
