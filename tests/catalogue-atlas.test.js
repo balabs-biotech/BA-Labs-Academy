@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { catalogueMap, catalogueTotals } from "../src/catalogue-map.js";
 import { buildCatalogueAtlas } from "../src/features/catalogue/atlas.js";
 
+const canonicalSectionCount = catalogueMap.reduce((sum, department) => sum + department.sections.length, 0);
+
 test("overview Atlas keeps the department and section map compact", () => {
   const graph = buildCatalogueAtlas(catalogueMap);
   assert.equal(graph.nodes.filter((node) => node.entity_type === "DEPARTMENT").length, catalogueTotals.departments);
