@@ -122,7 +122,7 @@ export function buildAcademyGraph(departments, pathways) {
       const children = item.sections.map((section) => ({
         ...section,
         route: "#/sections/" + section.code.toLowerCase(),
-        id: "domain:" + section.code,
+        id: "section:" + section.code,
         kind: "section",
         children: section.modules.map((module, moduleIndex) => ({
           id: "module:" + section.code + ":" + String(moduleIndex + 1).padStart(2, "0"),
