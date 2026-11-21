@@ -5,6 +5,7 @@ import { buildPathProgress, resolvePathItems } from "./features/learning/progres
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
+import { renderKnowledgeMap } from "./features/catalogue/render.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
@@ -97,11 +98,9 @@ function searchResultsView(query) {
 }
 
 function catalogueView() {
-  return `<section class="page-intro"><span class="eyebrow">RESSOURCES PÉDAGOGIQUES</span><h1>Catalogue</h1><p>Modules, cours, protocoles et ressources validés pour diffusion.</p></section>
-  <div class="catalogue-tools"><label for="resource-search">Rechercher une ressource</label><input id="resource-search" type="search" placeholder="Titre, thème, type de ressource…" autocomplete="off"><span id="resource-count">${data.content.length} ressource(s) publiée(s)</span></div>
-  <div class="resource-list" id="resource-results">${data.content.length ? resourceCards(data.content) : emptyState("Le catalogue est en préparation", "Aucune ressource n’est actuellement publiée. Les contenus internes ne sont pas exposés avant validation.")}</div>`;
+  return renderKnowledgeMap(escapeHtml, data.content.length) +
+    '<section class="section-block"><div class="section-heading"><div><span class="eyebrow">CONTENUS VALIDÉS</span><h2>Ressources disponibles</h2></div><span class="resource-level">' + data.content.length + ' publiée(s)</span></div><div class="resource-list" id="resource-results">' + (data.content.length ? resourceCards(data.content) : emptyState("Aucune ressource publiée", "Les fiches de cours et ressources apparaîtront ici après rédaction, validation et publication.")) + '</div></section>';
 }
-
 function filterCatalogue(query) {
   const normalized = query.trim().toLocaleLowerCase("fr");
   const filtered = data.content.filter((item) => {
@@ -946,7 +945,23 @@ function render() {
     });
   }
   if (route === "catalogue") {
-    document.querySelector("#resource-search")?.addEventListener("input", (event) => filterCatalogue(event.target.value));
+    document.querySelector("#resource-search")?.addEventListener("input", (event) => {
+      const query = event.target.value.trim().toLocaleLowerCase("fr");
+      const departments = [...document.querySelectorAll("[data-knowledge-search]")];
+      let visible = 0;
+      departments.forEach((department) => {
+        const matches = !query || department.dataset.knowledgeSearch.includes(query);
+        department.hidden = !matches;
+        if (matches) visible += 1;
+        department.querySelectorAll(".knowledge-section").forEach((section) => {
+          section.hidden = !!query && !section.textContent.toLocaleLowerCase("fr").includes(query);
+          if (query && !section.hidden) section.open = true;
+        });
+      });
+      const count = document.querySelector("#resource-count");
+      if (count) count.textContent = query ? visible + " département(s) correspondant(s)" : "Carte complète · " + catalogueMap.length + " départements";
+      filterCatalogue(event.target.value);
+    });
   }
   const sequencePanel = document.querySelector("#pathway-sequence-panel");
   if (sequencePanel) {
