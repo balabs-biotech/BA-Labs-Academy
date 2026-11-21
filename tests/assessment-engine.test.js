@@ -18,7 +18,7 @@ test("assessment attempts are server-graded and versioned",()=>{
  assert.match(hardening,/status='EXPIRED'/);
 });
 test("assessment payload validation rejects null, duplicate and foreign answers",()=>{
- assert.match(hardening,/coalesce\\(jsonb_typeof\\(p_answers\\),''\\)<>'array'/);
+ assert.match(hardening,/coalesce\(jsonb_typeof\(p_answers\),''\)<>'array'/);
  assert.match(hardening,/Duplicate question answer/);
  assert.match(hardening,/option outside its question/);
 });
@@ -28,11 +28,14 @@ test("path certificates require completed mandatory steps and passed required as
  assert.match(engine,/Required assessment results are missing or below threshold/);
  assert.match(engine,/academy_verify_certificate/);
 });
-test("learner UI starts assessments, submits answers and verifies certificates",()=>{
+test("learner and editorial UIs manage assessments and certificates",()=>{
  assert.match(main,/function assessmentDetail/);
  assert.match(main,/submitAssessment\(/);
  assert.match(main,/issuePathCertificate\(/);
  assert.match(main,/verifyCertificate\(/);
+ assert.match(main,/function assessmentEditorView/);
+ assert.match(main,/savePathAssessments\(pathId,requirements\)/);
  assert.match(data,/export function startAssessment/);
- assert.match(data,/export function submitAssessment/);\n assert.match(main,/function assessmentEditorView/);\n assert.match(main,/savePathAssessments\\(pathId,requirements\\)/);\n assert.match(data,/academy_assessment_answer_keys/);
+ assert.match(data,/export function submitAssessment/);
+ assert.match(data,/academy_assessment_answer_keys/);
 });
