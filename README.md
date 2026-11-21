@@ -57,3 +57,10 @@ Les parcours peuvent référencer des évaluations obligatoires ou complémentai
 
 
 La console éditoriale comprend un constructeur de QCM à choix unique, le paramétrage des seuils, tentatives et durées, ainsi que l’association d’évaluations publiques à un parcours. Les parcours peuvent imposer un seuil spécifique pour chaque évaluation liée.
+
+
+## Architecture disciplinaire en réseau
+
+La taxonomie comprend huit pôles disciplinaires — Microbiologie, Sciences végétales, Sols & écosystèmes, Bioprocédés, Biomatériaux, Ingénierie & instrumentation, Sciences numériques, Sciences physiques & chimiques — et un neuvième pôle central, MYCOLOGIE. Celui-ci couvre la biologie fongique, la culture, les symbioses, l’écologie, les applications et les mycomatériaux. Dans l’Atlas, MYCOLOGIE est reliée explicitement aux huit autres pôles par des relations transversales, sans hiérarchie disciplinaire.
+
+Les domaines existants sont conservés autant que possible. L’ancienne classification zootechnique est archivée et reste traçable ; les nouveaux domaines des bioprocédés, biomatériaux et sciences physiques & chimiques sont préparés comme structures éditoriales, sans remplissage de cours.
