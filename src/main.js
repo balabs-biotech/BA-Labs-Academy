@@ -84,13 +84,9 @@ function homeView() {
 
 function departmentsView() {
   const departments = mappedDepartments();
-  return `<section class="page-intro"><span class="eyebrow">ORGANISATION DES SAVOIRS · CARTOGRAPHIE DE TRAVAIL</span><h1>Départements</h1><p>Sept départements canoniques structurent l’Academy. Les trois domaines transversaux restent distincts et seront rattachés aux disciplines sans les transformer en départements supplémentaires.</p></section>
-    <div class="knowledge-catalogue-stats"><div><strong>${catalogueTotals.departments}</strong><span>départements canoniques</span></div><div><strong>${0}</strong><span>domaines transversaux</span></div><div><strong>${catalogueTotals.sections}</strong><span>sections thématiques</span></div><div><strong>${catalogueTotals.modules}</strong><span>modules cartographiés</span></div></div>
-    <div class="card-grid">${departments.map(departmentCard).join("")}</div>
-    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">CLASSIFICATION TRANSVERSALE</span><h2>Domaines transversaux</h2></div><a class="text-link" href="#/domaines">Voir les 3 domaines <span>→</span></a></div>
-      <div class="card-grid">${catalogueDomains.map(transversalDomainCard).join("")}</div>
-      <p class="taxonomy-intro">BPR, BMT et PHY sont des domaines transversaux. Leurs relations avec les neuf départements seront progressivement documentées.</p>
-    </section>`;
+  return `<section class="page-intro"><span class="eyebrow">ORGANISATION DES SAVOIRS · CARTOGRAPHIE DE TRAVAIL</span><h1>Départements</h1><p>Les neuf pôles disciplinaires de BA Labs Academy sont représentés comme des racines du graphe. MYCOLOGIE conserve son rôle central et transversal.</p></section>
+    <div class="knowledge-catalogue-stats"><div><strong>${catalogueTotals.departments}</strong><span>départements</span></div><div><strong>${catalogueTotals.sections}</strong><span>sections thématiques</span></div><div><strong>${catalogueTotals.modules}</strong><span>modules cartographiés</span></div></div>
+    <div class="card-grid">${departments.map(departmentCard).join("")}</div>`;
 }
 
 function departmentDetail(slug) {
@@ -192,23 +188,18 @@ function safeExternalUrl(value) {
 }
 
 function domainDetail(slug) {
-  if (!slug) return transversalDomainsView();
-  const published = data.domains.find((item) => item.slug === slug);
-  if (published) {
-    const department = data.departments.find((item) => item.code === published.department_code);
-    const contentIds = new Set(data.domainLinks.filter((link) => link.domain_code === published.code).map((link) => link.content_id));
-    const resources = data.content.filter((item) => contentIds.has(item.id));
-    return `<section class="page-intro"><span class="eyebrow"><a href="#/departements">RÉFÉRENTIEL DISCIPLINAIRE</a> / DOMAINE</span><h1>${escapeHtml(published.title)}</h1><p>${escapeHtml(published.summary)}</p></section>
-      <div class="detail-meta"><span>${escapeHtml(published.code)}</span>${department ? `<a href="#/departements/${encodeURIComponent(department.slug)}">${escapeHtml(department.title)} ↗</a>` : ""}</div>
-      <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RESSOURCES ASSOCIÉES</span><h2>Pour approfondir</h2></div></div><div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource associée", "Les ressources validées seront reliées à ce domaine au fil des publications.")}</div></section>`;
+  if (!slug) {
+    return `<section class="page-intro"><span class="eyebrow">RÉFÉRENTIEL DISCIPLINAIRE</span><h1>Domaines scientifiques</h1><p>Les domaines publiés seront reliés aux départements et aux ressources validées.</p></section>
+      <div class="domain-list">${data.domains.length ? data.domains.map((domain)=>`<a class="domain-row domain-link" href="#/domaines/${encodeURIComponent(domain.slug)}"><span>${escapeHtml(domain.code)}</span><div><h3>${escapeHtml(domain.title)}</h3><p>${escapeHtml(domain.summary)}</p></div><b>↗</b></a>`).join("") : emptyState("Aucun domaine publié", "Les domaines du référentiel sont en cours de structuration.")}</div>`;
   }
-  const domain = catalogueDomains.find((item) => item.code.toLowerCase() === slug);
-  if (!domain) return notFound("Domaine indisponible", "Ce domaine n’existe pas dans la cartographie actuelle.");
-  return `<section class="page-intro"><span class="eyebrow"><a href="#/domaines">DOMAINES TRANSVERSAUX</a> / ${escapeHtml(domain.code)}</span><h1>${escapeHtml(domain.title)}</h1><p>${escapeHtml(domain.description)}</p></section>
-    <div class="detail-meta"><span>DOMAINE TRANSVERSAL</span><span>${domain.sections.length} section(s)</span><span>Relations à préciser</span></div>
-    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">STRUCTURE THÉMATIQUE</span><h2>Sections cartographiées</h2></div></div>
-      <div class="domain-list">${domain.sections.map((section)=>`<a class="domain-row domain-link" href="#/sections/${encodeURIComponent(section.code.toLowerCase())}"><span>${escapeHtml(section.code)}</span><div><h3>${escapeHtml(section.title)}</h3><p>${escapeHtml(section.description)}</p><small>${section.modules.length} modules prévus</small></div><b>↗</b></a>`).join("")}</div>
-    </section>`;
+  const published = data.domains.find((item) => item.slug === slug);
+  if (!published) return notFound("Domaine indisponible", "Ce domaine n’est pas publié ou n’existe pas dans le référentiel.");
+  const department = data.departments.find((item) => item.code === published.department_code);
+  const contentIds = new Set(data.domainLinks.filter((link) => link.domain_code === published.code).map((link) => link.content_id));
+  const resources = data.content.filter((item) => contentIds.has(item.id));
+  return `<section class="page-intro"><span class="eyebrow"><a href="#/domaines">RÉFÉRENTIEL DISCIPLINAIRE</a> / DOMAINE</span><h1>${escapeHtml(published.title)}</h1><p>${escapeHtml(published.summary)}</p></section>
+    <div class="detail-meta"><span>${escapeHtml(published.code)}</span>${department ? `<a href="#/departements/${encodeURIComponent(department.slug)}">${escapeHtml(department.title)} ↗</a>` : ""}</div>
+    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">RESSOURCES ASSOCIÉES</span><h2>Pour approfondir</h2></div></div><div class="resource-list">${resources.length ? resourceCards(resources) : emptyState("Aucune ressource associée", "Les ressources validées seront reliées à ce domaine au fil des publications.")}</div></section>`;
 }
 
 function sectionDetail(slug) {
@@ -919,8 +910,7 @@ function render() {
   const routes = {
     "": homeView,
     "departements": () => slug ? departmentDetail(slug) : departmentsView(),
-    "domaines": () => catalogueDomains.some((item) => item.code.toLowerCase() === slug) ? transversalDomainsView(slug) : domainDetail(slug),
-    "axes": () => transversalDomainsView(slug),
+    "domaines": () => domainDetail(slug),
     "sections": () => sectionDetail(slug),
     "catalogue": catalogueView,
     "formations": trainingCatalogView,
