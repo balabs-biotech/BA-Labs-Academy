@@ -1,0 +1,22 @@
+// Axes transversaux conservés hors des sept départements canoniques.
+// Leur rattachement précis aux départements reste à valider.
+export const catalogueAxes = [
+{ code:"BPR", title:"Bioprocédés", description:"Transformer des matières biologiques par des procédés contrôlés et optimisés.", sections:[
+    {code:"BPR-01",title:"Fermentation et cultures",description:"Conduire des cultures biologiques en milieux liquides et solides.",modules:["Principes de fermentation","Cultures en milieu liquide","Fermentation en milieu solide","Fermentation discontinue et alimentée","Cinétique des bioprocédés","Contamination et stabilité"]},
+    {code:"BPR-02",title:"Bioconversion et valorisation",description:"Transformer les biomasses et coproduits en produits ou ressources utiles.",modules:["Caractérisation des biomasses","Prétraitements biologiques et physicochimiques","Bioconversion de coproduits","Digestion biologique","Valorisation des résidus","Bilans matière et rendement"]},
+    {code:"BPR-03",title:"Conduite et optimisation",description:"Piloter les paramètres critiques et améliorer la performance des procédés.",modules:["Paramètres critiques des bioprocédés","Transfert d'oxygène","Mélange et homogénéisation","Changement d'échelle","Suivi des lots","Analyse des défaillances"]},
+    {code:"BPR-04",title:"Séparation et formulation",description:"Récupérer, stabiliser, formuler et contrôler les produits biologiques.",modules:["Séparation solide–liquide","Concentration et stabilisation","Purification de produits biologiques","Formulation de produits microbiens","Contrôle qualité des bioproduits","Conditionnement et conservation"]}
+  ]},
+{ code:"BMT", title:"Biomatériaux", description:"Concevoir et caractériser des matériaux issus de ressources biologiques.", sections:[
+    {code:"BMT-01",title:"Mycomatériaux",description:"Développer des matériaux composites structurés par la croissance du mycélium.",modules:["Principes des matériaux à base de mycélium","Choix des souches et substrats","Moulage et biofabrication fongique","Séchage et stabilisation","Défauts et variabilité"]},
+    {code:"BMT-02",title:"Fibres et matériaux biosourcés",description:"Explorer les fibres végétales, matrices et composites biosourcés.",modules:["Fibres végétales","Matrices et liants biosourcés","Composites biologiques","Préparation des matières premières","Coproduits en matériaux"]},
+    {code:"BMT-03",title:"Caractérisation",description:"Mesurer les propriétés mécaniques, thermiques et hydriques.",modules:["Propriétés mécaniques","Propriétés thermiques","Porosité et absorption d'eau","Durabilité et vieillissement","Méthodes de caractérisation"]},
+    {code:"BMT-04",title:"Design et biofabrication",description:"Passer de la formulation au prototype puis à la petite série.",modules:["Conception d'objets biosourcés","Prototypage et fabrication","Optimisation des formulations","Évaluation du cycle de vie","Passage du prototype à la petite série"]}
+  ]},
+{ code:"PHY", title:"Sciences physiques & chimiques", description:"Apporter les fondements physiques, chimiques et mathématiques aux systèmes biologiques et techniques.", sections:[
+    {code:"PHY-01",title:"Chimie générale et analytique",description:"Comprendre la matière, les solutions, les équilibres et les méthodes analytiques.",modules:["Structure de la matière et liaisons chimiques","Solutions et concentrations","Acides, bases et systèmes tampons","Équilibres chimiques","Chimie organique appliquée au vivant","Méthodes analytiques"]},
+    {code:"PHY-02",title:"Physique et mesure",description:"Maîtriser les grandeurs physiques, les mesures et leurs incertitudes.",modules:["Grandeurs physiques et analyse dimensionnelle","Mécanique et statique","Électricité et magnétisme","Optique et méthodes de mesure","Incertitudes expérimentales"]},
+    {code:"PHY-03",title:"Thermodynamique et transferts",description:"Comprendre les échanges d'énergie, de chaleur et de matière.",modules:["Énergie et premier principe","Thermodynamique des systèmes","Transfert thermique","Diffusion et transferts de matière","Fluides et écoulements","Échanges gaz–liquide"]},
+    {code:"PHY-04",title:"Mathématiques et modélisation",description:"Construire et interpréter des modèles quantitatifs de systèmes réels.",modules:["Mathématiques appliquées aux sciences","Équations différentielles","Cinétique et modèles de croissance","Bilans matière et énergie","Statistiques et incertitudes","Modélisation numérique"]}
+  ]}
+];
