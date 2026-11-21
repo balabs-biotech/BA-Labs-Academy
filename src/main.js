@@ -959,7 +959,7 @@ function render() {
           if (query && !section.hidden) section.open = true;
         });
       });
-      const count = document.querySelector("#resource-count");
+      const count = document.querySelector("#map-count");
       if (count) count.textContent = query ? visible + " département(s) correspondant(s)" : "Carte complète · " + catalogueMap.length + " départements";
       filterCatalogue(event.target.value);
     });
