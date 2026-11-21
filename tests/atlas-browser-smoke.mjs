@@ -2,6 +2,8 @@ import { chromium } from "playwright";
 import assert from "node:assert/strict";
 
 const base = process.env.ACADEMY_URL || "http://127.0.0.1:4173/#/atlas";
+const siteBase = base.split("#")[0].replace(/\/?$/, "/");
+const routeUrl = (route) => `${siteBase}#/${route}`;
 const browser = await chromium.launch({ headless: true });
 const results = [];
 try {
@@ -28,7 +30,7 @@ try {
       status: 200, contentType: "application/json", body: "[]"
     }));
 
-    await page.goto(base, { waitUntil: "domcontentloaded" });
+    await page.goto(routeUrl("atlas"), { waitUntil: "domcontentloaded" });
     await page.waitForSelector("#academy-atlas-canvas", { state: "visible", timeout: 30000 });
     await page.waitForFunction(
       () => document.querySelector("#atlas-engine-state")?.textContent.includes("Moteur actif"),
@@ -74,10 +76,14 @@ try {
     await page.waitForURL("**/#/parcours/production-mycologique-laboratoire-fructification");
     assert.equal(await page.locator(".page-intro h1").innerText(), "Production mycologique, du laboratoire à la fructification");
 
-    await page.goto(base.replace("#/atlas", "#/departements"), { waitUntil: "domcontentloaded" });
+    await page.goto(routeUrl("departements"), { waitUntil: "domcontentloaded" });
+    await page.waitForSelector(".page-intro h1");
+    assert.equal(await page.locator(".page-intro h1").innerText(), "Départements");
     await page.waitForSelector(".department-card");
     assert.equal(await page.locator(".department-card").count(), 9, "All nine current departments must be visible");
-    await page.goto(base.replace("#/atlas", "#/parcours"), { waitUntil: "domcontentloaded" });
+    await page.goto(routeUrl("parcours"), { waitUntil: "domcontentloaded" });
+    await page.waitForSelector(".page-intro h1");
+    assert.equal(await page.locator(".page-intro h1").innerText(), "Parcours pratiques");
     await page.waitForSelector(".pathway-card");
     assert.equal(await page.locator(".pathway-card").count(), 10, "All ten cross-disciplinary pathways must be visible");
 
