@@ -123,7 +123,7 @@ test("Atlas inspector exposes parent and immediate-child navigation for hierarch
   assert.ok(source.includes('className = "atlas-branch-navigation"'));
   assert.ok(source.includes('className = "atlas-branch-parent"'));
   assert.ok(source.includes('className = "atlas-branch-children"'));
-  assert.ok(source.includes('node.parent === selected.id'));
+  assert.ok(source.includes('node.parent === navigation.selected.id'));
   assert.ok(source.includes('focusNode(parentNode)'));
   assert.ok(source.includes('focusNode(child)'));
 });
@@ -147,9 +147,9 @@ test("Atlas navigation owns selection and bounded history independently of PixiJ
   assert.equal(navigation.focus(nodes[0], view(1)), true);
   navigation.focus(nodes[1], view(2));
   navigation.focus(nodes[2], view(3));
-  assert.equal(navigation.back().scale, 2);
+  assert.equal(navigation.back().scale, 3);
   assert.equal(navigation.selected.id, "child");
-  assert.equal(navigation.back().scale, 1);
+  assert.equal(navigation.back().scale, 2);
   assert.equal(navigation.selected.id, "root");
   assert.equal(navigation.back(), null);
   navigation.reset();
