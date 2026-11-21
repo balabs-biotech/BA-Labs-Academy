@@ -180,6 +180,18 @@ export async function loadAcademyData() {
         readTable("academy_competency_prerequisites", { select: "competency_id,prerequisite_competency_id" }, accessToken).catch(() => [])
       ])
     : [[], [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []];
+  const [trainingPartners, trainingAgreements, trainingOfferings, trainingSessions, trainingEnrollments, trainingAttendance, trainingDocuments, trainingBilling] = accessToken
+    ? await Promise.all([
+        readTable("academy_training_partners", { select: "id,partner_code,legal_name,approval_number,approval_authority,approval_valid_from,approval_valid_until,approved_specialties,approved_delivery_modes,status", order: "legal_name.asc" }, accessToken).catch(() => []),
+        readTable("academy_training_agreements", { select: "id,partner_id,agreement_code,agreement_title,status,valid_from,valid_until,permitted_specialties,permitted_venues,permitted_delivery_modes,billing_responsibility,document_issuer,signed_at", order: "agreement_code.asc" }, accessToken).catch(() => []),
+        readTable("academy_training_offerings", { select: "id,offering_code,title,description,specialty_code,audience_profile,delivery_regime,partner_id,agreement_id,default_duration_days,default_capacity,status", order: "created_at.desc" }, accessToken).catch(() => []),
+        readTable("academy_training_sessions", { select: "id,offering_id,session_code,starts_at,ends_at,venue_code,delivery_mode,capacity,status,registration_opens_at,registration_closes_at", order: "starts_at.desc" }, accessToken).catch(() => []),
+        readTable("academy_training_enrollments", { select: "id,session_id,user_id,participant_name,participant_email,participant_category,enrollment_status,contract_reference,invoice_reference,enrolled_at", order: "enrolled_at.desc" }, accessToken).catch(() => []),
+        readTable("academy_training_attendance", { select: "id,enrollment_id,training_date,attendance_status,attended_minutes,note,recorded_at", order: "training_date.desc" }, accessToken).catch(() => []),
+        readTable("academy_training_documents", { select: "id,enrollment_id,document_code,document_type,issuer_kind,issuer_name,issuer_reference,title,issued_at,revoked_at,revocation_reason,evidence_snapshot", order: "issued_at.desc" }, accessToken).catch(() => []),
+        readTable("academy_training_billing_records", { select: "id,enrollment_id,billing_owner,external_invoice_reference,currency_code,amount_minor_units,payment_status,accounting_note,recorded_at", order: "recorded_at.desc" }, accessToken).catch(() => [])
+      ])
+    : [[], [], [], [], [], [], [], []];
   const nodes = resolveAtlasTitles(rawNodes, departments, domains, content, learningPaths, competencies);
   return {
     departments, domains, content, departmentLinks, domainLinks,
@@ -187,7 +199,8 @@ export async function loadAcademyData() {
     pathItems, pathPrerequisites, competencies, contentCompetencies,
     enrollments, progress, pathItemProgress, assessmentAttempts, certificates, membership, memberError, editorialMembers, nodes, edges,
     assessments, assessmentQuestions, assessmentOptions, pathAssessments,
-    editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentCompetencies, editorialCompetencyPrerequisites
+    editorialAssessments, editorialAssessmentQuestions, editorialAssessmentOptions, editorialPathAssessments, editorialAssessmentCompetencies, editorialCompetencyPrerequisites,
+    trainingPartners, trainingAgreements, trainingOfferings, trainingSessions, trainingEnrollments, trainingAttendance, trainingDocuments, trainingBilling
   };
 }
 
@@ -416,4 +429,20 @@ export async function verifyTrainingDocument(token) {
   }
   const rows = await response.json();
   return Array.isArray(rows) ? (rows[0] || null) : rows;
+}
+
+export function saveTrainingOffering(payload) {
+  return callEditorialRpc("academy_save_training_offering", { p_payload: payload }, "Enregistrement de la formation impossible");
+}
+export function saveTrainingSession(payload) {
+  return callEditorialRpc("academy_save_training_session", { p_payload: payload }, "Enregistrement de la session impossible");
+}
+export function setTrainingStatus(entityType, entityId, status, note = "") {
+  return callEditorialRpc("academy_set_training_status", { p_entity_type: entityType, p_entity_id: entityId, p_new_status: status, p_note: note }, "Changement de statut impossible");
+}
+export function recordTrainingAttendance(enrollmentId, date, status, minutes = 0, note = "") {
+  return callEditorialRpc("academy_record_training_attendance", { p_enrollment_id: enrollmentId, p_training_date: date, p_status: status, p_minutes: Number(minutes), p_note: note }, "Enregistrement de présence impossible");
+}
+export function setTrainingEnrollmentStatus(enrollmentId, status, note = "") {
+  return callEditorialRpc("academy_set_training_enrollment_status", { p_enrollment_id: enrollmentId, p_new_status: status, p_note: note }, "Changement du statut d'inscription impossible");
 }
