@@ -409,7 +409,8 @@ function contentEditorView(contentId = "nouveau") {
  (data.editorialDomains||[]).map((dom)=>'<label class="content-taxonomy-option" data-domain-parent="'+escapeHtml(dom.department_code)+'"><input type="checkbox" data-content-domain value="'+escapeHtml(dom.code)+'" '+(doms.includes(dom.code)?'checked':'')+'><span>'+escapeHtml(dom.title)+' <small>'+escapeHtml(dom.code)+'</small></span></label>').join('') +
  '</div></section><div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div><p id="content-editor-feedback" class="auth-feedback" role="status"></p></form>';
 }
-\nfunction competencyEditorView(competencyId = "nouveau") {
+
+function competencyEditorView(competencyId = "nouveau") {
   if (!currentSession?.user) return loginView();
   const membership = data.membership;
   if (!["OWNER","ADMIN","EDITOR"].includes(membership?.role) || membership.membership_status !== "ACTIVE") return notFound("Édition non autorisée", "La gestion des compétences est réservée aux rôles Owner, Admin et Editor.");
