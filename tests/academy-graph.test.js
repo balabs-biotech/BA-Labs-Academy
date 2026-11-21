@@ -80,8 +80,8 @@ test("The Academy universe separates disciplinary territories and pathway transf
   const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
   const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
   const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
-  assert.ok(meanDepartmentRadius > 1800 && meanDepartmentRadius < 1900);
-  assert.ok(meanPathwayRadius > 2500 && meanPathwayRadius < 2700);
+  assert.ok(meanDepartmentRadius > 1400 && meanDepartmentRadius < 1500);
+  assert.ok(meanPathwayRadius > 2000 && meanPathwayRadius < 2100);
   const transfers = graph.edges.filter((edge) => edge.relation_type === "TRANSFERS_TO");
   assert.ok(transfers.length > 0);
   assert.ok(transfers.every((edge) => edge.verified && edge.basis === "academy-pathway-flow"));

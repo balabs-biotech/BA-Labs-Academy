@@ -246,7 +246,7 @@ test("Atlas wheel renderer keeps pathways out of the overview and uses a restrai
   assert.ok(source.includes("filaments.circle(0,0,820)"));
   assert.ok(source.includes("filaments.circle(0,0,1600)"));
   assert.ok(source.includes('e.basis==="academy-pathway-network"'));
-  assert.ok(source.includes("Shared pathway participation"));
+  assert.ok(source.includes("const sharedPathway=e.basis===\"academy-pathway-network\""));
   assert.ok(source.includes("const departmentRoots = nodes.filter"));
   assert.ok(!source.includes('field.moveTo(x,y).quadraticCurveTo'));
   assert.ok(source.includes("Three arms echo the BA Labs Y mark"));

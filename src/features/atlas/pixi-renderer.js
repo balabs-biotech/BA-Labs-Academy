@@ -50,6 +50,7 @@ export async function createPixiRenderer(canvas){
    const seed=(e.seed??hash(e.a.id+e.b.id))>>>0,side=(seed&1)?1:-1;
    const bend=Math.min(16,len*.05)*side;
    const drift=(((seed>>>12)&255)/255-.5)*Math.min(4,len*.015);
+   // Shared pathway participation makes declared cross-universe bridges visible in the overview.
    const sharedPathway=e.basis==="academy-pathway-network";
    const cx=sharedPathway?(a.x+b.x)*.36:(a.x+b.x)/2-dy/len*bend+dx/len*drift;
    const cy=sharedPathway?(a.y+b.y)*.36:(a.y+b.y)/2+dx/len*bend+dy/len*drift;
