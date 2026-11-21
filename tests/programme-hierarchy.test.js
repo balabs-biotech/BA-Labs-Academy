@@ -34,6 +34,14 @@ test("programme editor exposes a structural outline without authoring lessons",(
  assert.match(main,/subroute === "programmes"/);
 });
 
+test("programme editor state loads all four hierarchy tables and returns them to the UI",()=>{
+ assert.match(data,/readTable\("academy_programs"/);
+ assert.match(data,/readTable\("academy_program_departments"/);
+ assert.match(data,/readTable\("academy_program_domains"/);
+ assert.match(data,/readTable\("academy_program_nodes"/);
+ assert.match(data,/editorialPrograms, editorialProgramDepartments, editorialProgramDomains, editorialProgramNodes,/);
+});
+
 test("programme draft and publication use guarded database RPCs",()=>{
  assert.match(data,/academy_save_program_draft/);
  assert.match(data,/academy_publish_program/);
