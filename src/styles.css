@@ -203,3 +203,45 @@
 .content-asset-form{padding:1rem;border:1px solid var(--line,#34404a);border-radius:14px}
 .content-asset-form h3{margin-top:0}
 @media(max-width:640px){.content-asset-row{align-items:flex-start;flex-direction:column}.content-asset-row>span{text-align:left}}
+
+
+/* Academy training operations console */
+.training-operations{display:grid;gap:1.5rem}
+.training-reference-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.training-reference-grid>section,.training-subsection{min-width:0;padding:1.1rem;border:1px solid var(--line);background:var(--panel)}
+.training-reference-grid h3,.training-subsection h3{margin:0 0 .85rem;font-size:1rem}
+.training-mini-row,.training-operation-row,.training-document-register>article{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.8rem 0;border-bottom:1px solid var(--line)}
+.training-mini-row>div,.training-operation-row>div:first-child,.training-document-register>article>div{display:grid;gap:.3rem;min-width:0}
+.training-mini-row small,.training-operation-row small,.training-document-register small{display:block;color:var(--muted);font-size:.78rem}
+.training-mini-row>span,.training-document-register>article>span{font-size:.75rem;color:var(--muted);text-align:right}
+.training-operation-row{align-items:center}
+.training-operation-actions,.training-participant-controls{display:grid;gap:.5rem;justify-items:end}
+.training-session-card{padding:1rem 0;border-bottom:1px solid var(--line)}
+.training-session-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.training-session-head h3{margin:.25rem 0}.training-session-head p{margin:.25rem 0;color:var(--muted);font-size:.85rem}
+.training-session-head small{color:var(--muted);font-size:.78rem}
+.training-participant-list{display:grid;gap:.7rem;margin-top:1rem}
+.training-participant-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:1rem;padding:.9rem;border:1px solid var(--line);background:var(--surface)}
+.training-participant-meta{display:grid;align-content:start;gap:.3rem;min-width:0}
+.training-participant-meta small{color:var(--muted);font-size:.76rem;overflow-wrap:anywhere}
+.training-inline-form{display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.training-inline-form input,.training-inline-form select,.training-form input,.training-form select,.training-form textarea{min-width:0;padding:.65rem .7rem;border:1px solid var(--line);border-radius:6px;background:#111a16;color:var(--text);font:inherit;font-size:.8rem}
+.training-inline-form input[type="date"]{max-width:145px}.training-inline-form input[type="number"]{width:76px}
+.training-inline-form select{max-width:190px}
+.training-document-list{display:grid;gap:.35rem;margin-top:.4rem}
+.training-document-list>div{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;justify-content:space-between;font-size:.74rem;color:var(--muted)}
+.training-form{display:grid;gap:.8rem;margin-top:1rem;padding:1rem;border:1px solid var(--line);background:var(--surface)}
+.training-form h3{margin:0}
+.training-form>input,.training-form>textarea,.training-form>label{width:100%}
+.training-form label{display:grid;gap:.35rem;color:var(--muted);font-size:.78rem}
+.training-form textarea{min-height:72px;resize:vertical}
+.training-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}
+.training-issued-result{display:grid;gap:.5rem;margin:.6rem 0;padding:1rem;border:1px solid var(--accent);background:var(--surface);overflow-wrap:anywhere}
+.training-issued-result code{white-space:normal;word-break:break-all;font-size:.75rem}
+.training-issued-result p{margin:0;color:var(--muted);font-size:.8rem}
+.training-document-register{display:grid;gap:.2rem}
+.training-document-register .is-valid{color:#68c99a}.training-document-register .is-revoked{color:#d99a78}
+.training-verification{margin-top:1rem;padding:1rem;border:1px solid var(--line);background:var(--surface)}
+.training-verification.is-valid{border-color:#368b68}.training-verification.is-revoked{border-color:#a66a50}
+.training-verification h3{margin:0 0 .6rem}.training-verification p{font-size:.85rem;color:var(--muted)}
+@media(max-width:760px){.training-reference-grid{grid-template-columns:1fr}.training-participant-row{grid-template-columns:1fr}.training-participant-controls{justify-items:stretch}.training-inline-form{align-items:stretch}.training-inline-form>*{flex:1 1 auto}.training-session-head{flex-direction:column}.training-form-grid{grid-template-columns:1fr}.training-mini-row,.training-operation-row{align-items:flex-start;flex-direction:column}.training-operation-actions{justify-items:start}}
