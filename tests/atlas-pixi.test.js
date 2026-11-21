@@ -42,3 +42,22 @@ test("all graph coordinates are finite and all edge endpoints belong to the grap
     assert.ok(ids.has(edge.b.id));
   }
 });
+
+
+test("published domains are nested under their department instead of becoming new roots", () => {
+  const department = catalogueMap[0];
+  const domain = {
+    code: "TEST-DOM",
+    slug: "test-domain",
+    department_code: department.code,
+    title: "Domaine test",
+    summary: "Domaine publié de test"
+  };
+  const graph = buildAcademyGraph(catalogueMap, [domain], cataloguePathways);
+  const node = graph.nodes.find((item) => item.entity_type === "DOMAIN");
+  assert.ok(node);
+  assert.equal(node.parent, graph.departmentNodes.get(department.code).id);
+  assert.equal(node.data.route, "#/domaines/test-domain");
+  assert.equal(graph.stats.domains, 1);
+  assert.equal(graph.nodes.filter((item) => item.level === 0).length, 19);
+});
