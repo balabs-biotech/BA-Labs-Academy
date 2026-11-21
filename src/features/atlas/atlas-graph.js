@@ -1,3 +1,5 @@
+import { getAtlasRootPosition, getAtlasChildPosition } from "./atlas-geometry.js";
+
 const hash = (value) => {
   let result = 2166136261;
   for (let index = 0; index < value.length; index += 1) {
@@ -103,15 +105,11 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     const isMycologyCore = parent.entity_type === "DEPARTMENT" && parent.entity_key === "MYC";
     const isDepartmentRoot = parent.entity_type === "DEPARTMENT";
     // Mycology occupies the central hub; each outer department owns a narrow radial petal.
-    const spread = isMycologyCore ? Math.PI * 2 : isDepartmentRoot ? 0.82 : 1.15;
-    const distance = depth === 1 ? 390 : depth === 2 ? 260 : Math.max(58, 92 - depth * 4);
     items.forEach((item, index) => {
-      const fraction = items.length === 1 ? 0 : index / (items.length - 1) - 0.5;
-      const angle = isMycologyCore
-        ? branchAngle + (index / items.length) * spread
-        : branchAngle + fraction * spread;
-      const x = parent.x + Math.cos(angle) * distance;
-      const y = parent.y + Math.sin(angle) * distance;
+      const { x, y, angle } = getAtlasChildPosition({
+        parent, index, count: items.length, depth, branchAngle,
+        isMycologyCore, isDepartmentRoot
+      });
       const entityType = item.kind === "section" ? "SECTION" : item.kind === "domain" ? "DOMAIN" : "MODULE";
       const node = addNode(makeNode(item, parent, rootId, depth, x, y, angle, entityType));
       addEdge(parent, node, {
@@ -132,23 +130,12 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
   const satelliteDepartments = departments.filter((department) => department.code !== "MYC");
   const pathwayItems = rootItems.filter((item) => item.kind === "pathway");
   rootItems.forEach((item) => {
-    const seed = hash(item.code || item.id);
-    let angle;
-    let radius;
-    if (item.kind === "department" && item.code === "MYC") {
-      angle = -Math.PI / 2;
-      radius = 0;
-    } else if (item.kind === "department") {
-      const orbitIndex = satelliteDepartments.findIndex((department) => department.code === item.code);
-      angle = -Math.PI / 2 + orbitIndex * (Math.PI * 2 / satelliteDepartments.length);
-      radius = 1850;
-    } else {
-      const orbitIndex = pathwayItems.findIndex((pathway) => pathway.code === item.code);
-      angle = -Math.PI / 2 + (orbitIndex + 0.5) * (Math.PI * 2 / pathwayItems.length);
-      radius = 2600;
-    }
-    const x = item.kind === "department" && item.code === "MYC" ? 0 : Math.cos(angle) * radius;
-    const y = item.kind === "department" && item.code === "MYC" ? 0 : Math.sin(angle) * radius;
+    const { x, y, angle } = getAtlasRootPosition({
+      kind: item.kind,
+      code: item.code,
+      departmentCodes: satelliteDepartments.map((department) => department.code),
+      pathwayCodes: pathwayItems.map((pathway) => pathway.code)
+    });
     const rootId = item.kind === "pathway" ? "pathways" : item.code.toLowerCase();
     const shortTitle = item.kind === "pathway"
       ? (PATHWAY_LABELS[item.code] || item.title)
