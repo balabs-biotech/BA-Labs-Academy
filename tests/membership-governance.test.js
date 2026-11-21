@@ -4,7 +4,11 @@ import { readFile } from "node:fs/promises";
 const sql=await readFile(new URL("../supabase/migrations/20261121213000_academy_membership_governance_v1.sql",import.meta.url),"utf8");
 const main=await readFile(new URL("../src/main.js",import.meta.url),"utf8");
 const data=await readFile(new URL("../src/data.js",import.meta.url),"utf8");
-test("membership changes require active Owner/Admin and restrict Admin grants",()=>{
+test("membership read policy avoids recursive RLS evaluation",()=>{
+ assert.match(sql,/academy_is_owner_or_admin/);
+ assert.match(sql,/security definer/);
+});
+test("membership changes require active Owner\/Admin and restrict Admin grants",()=>{
  assert.match(sql,/v_actor_role not in \('OWNER','ADMIN'\)/);
  assert.match(sql,/Admins may assign only Editor or Reviewer roles/);
  assert.match(sql,/At least one active Owner must remain/);
