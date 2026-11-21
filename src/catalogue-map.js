@@ -1,6 +1,6 @@
 // Cartographie éditoriale de départ. Ces entrées sont des propositions en préparation,
 // distinctes des ressources publiées dans Supabase.
-import { catalogueAxes } from "./catalogue-axes.js";
+import { catalogueDomains } from "./catalogue-domains.js";
 
 export const catalogueMap = [
 { code:"MIC", title:"Microbiologie", description:"Étudier les microorganismes, leurs fonctions, leurs interactions et leurs applications.", sections:[
@@ -53,13 +53,13 @@ export const catalogueMap = [
   ]}
 ];
 
-const allGroups = [...catalogueMap, ...catalogueAxes];
+const allGroups = [...catalogueMap, ...catalogueDomains];
 export const catalogueTotals = allGroups.reduce((total, group) => {
   const sections = group.sections || [];
   return {
     departments: catalogueMap.length,
-    axes: catalogueAxes.length,
+    domains: catalogueDomains.length,
     sections: total.sections + sections.length,
     modules: total.modules + sections.reduce((sum, section) => sum + section.modules.length, 0)
   };
-}, { departments: catalogueMap.length, axes: catalogueAxes.length, sections: 0, modules: 0 });
+}, { departments: catalogueMap.length, axes: catalogueDomains.length, sections: 0, modules: 0 });
