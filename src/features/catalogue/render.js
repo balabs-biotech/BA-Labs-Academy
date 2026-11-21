@@ -1,38 +1,29 @@
 import { catalogueMap, catalogueTotals } from "../../catalogue-map.js";
-import { catalogueDomains } from "../../catalogue-domains.js";
 
-function renderGroup(group, escapeHtml, kind) {
-  const label = kind === "domain" ? "DOMAINE TRANSVERSAL" : "DÉPARTEMENT";
-  const className = kind === "domain" ? "knowledge-domain" : "knowledge-department";
-  return `<article class="knowledge-map-card ${className}">
-    <div class="knowledge-map-card-head"><span class="eyebrow">${label} · ${escapeHtml(group.code)}</span><span>${group.sections.length} section(s)</span></div>
-    <h3>${escapeHtml(group.title)}</h3>
-    <p>${escapeHtml(group.description)}</p>
+function renderDepartment(department, escapeHtml) {
+  return `<article class="knowledge-map-card knowledge-department">
+    <div class="knowledge-map-card-head"><span class="eyebrow">DÉPARTEMENT · ${escapeHtml(department.code)}</span><span>${department.sections.length} section(s)</span></div>
+    <h3>${escapeHtml(department.title)}</h3>
+    <p>${escapeHtml(department.description)}</p>
     <div class="knowledge-section-list">
-      ${group.sections.map((section) => `<details class="knowledge-section">
+      ${department.sections.map((section) => `<details class="knowledge-section">
         <summary><span><b>${escapeHtml(section.code)}</b> · ${escapeHtml(section.title)}</span><small>${section.modules.length} modules</small></summary>
         <p>${escapeHtml(section.description)}</p>
         <ul>${section.modules.map((module) => `<li class="knowledge-module">${escapeHtml(module)}</li>`).join("")}</ul>
-      </details>`).join("") || '<p class="taxonomy-intro">Sections à cartographier.</p>'}
+      </details>`).join("")}
     </div>
   </article>`;
 }
 
 export function renderKnowledgeMap(escapeHtml, publishedCount = 0) {
-  const groups = [...catalogueMap, ...catalogueDomains];
-  return `<section class="page-intro"><span class="eyebrow">RÉFÉRENTIEL · CARTOGRAPHIE DE TRAVAIL</span><h1>Catalogue des connaissances</h1><p>Une carte de travail qui distingue les sept départements canoniques, les domaines transversaux, les sections thématiques et les modules réutilisables.</p></section>
+  return `<section class="page-intro"><span class="eyebrow">RÉFÉRENTIEL · CARTOGRAPHIE DE TRAVAIL</span><h1>Catalogue des connaissances</h1><p>Neuf pôles disciplinaires, organisés en sections thématiques et modules réutilisables. MYCOLOGIE joue un rôle central et transversal.</p></section>
     <div class="knowledge-catalogue-stats">
       <div><strong>${catalogueTotals.departments}</strong><span>départements</span></div>
-      <div><strong>${catalogueTotals.domains}</strong><span>domaines transversaux</span></div>
       <div><strong>${catalogueTotals.sections}</strong><span>sections</span></div>
       <div><strong>${catalogueTotals.modules}</strong><span>modules</span></div>
       <div><strong>${publishedCount}</strong><span>ressources publiées</span></div>
     </div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">STRUCTURE DISCIPLINAIRE</span><h2>Départements</h2></div></div>
-      <div class="knowledge-map-grid">${catalogueMap.map((item) => renderGroup(item, escapeHtml, "department")).join("")}</div>
-    </section>
-    <section class="section-block"><div class="section-heading"><div><span class="eyebrow">CLASSIFICATION TRANSVERSALE</span><h2>Domaines transversaux</h2></div></div>
-      <div class="knowledge-map-grid">${catalogueDomains.map((item) => renderGroup(item, escapeHtml, "domain")).join("")}</div>
-      <p class="taxonomy-intro">Les domaines sont conservés séparément des départements ; leurs rattachements disciplinaires restent à valider.</p>
+      <div class="knowledge-map-grid">${catalogueMap.map((item) => renderDepartment(item, escapeHtml)).join("")}</div>
     </section>`;
 }
