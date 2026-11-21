@@ -328,6 +328,7 @@ test("Atlas pointer controller zooms around the midpoint of a two-pointer pinch"
   });
   controller.onPointerDown({ pointerId: 1, clientX: 30, clientY: 40 });
   controller.onPointerDown({ pointerId: 2, clientX: 50, clientY: 40 });
+  controller.onPointerMove({ pointerId: 2, clientX: 50, clientY: 40 });
   controller.onPointerMove({ pointerId: 2, clientX: 70, clientY: 40 });
   assert.equal(zooms.length, 1);
   assert.deepEqual(zooms[0], [2, 40, 20]);
