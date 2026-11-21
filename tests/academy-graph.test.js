@@ -40,3 +40,24 @@ test("Every department has its sections and modules in the connected graph", () 
     }
   }
 });
+
+
+test("Mycology is the spatial core and carries the BA Labs Y marker", () => {
+  const core = graph.nodes.find((node) => node.entity_type === "DEPARTMENT" && node.entity_key === "MYC");
+  assert.ok(core);
+  assert.equal(core.isAcademyCore, true);
+  assert.equal(core.x, 0);
+  assert.equal(core.y, 0);
+  assert.ok(core.r > 20);
+  const satellites = graph.nodes.filter((node) => node.parent === core.id);
+  assert.ok(satellites.length > 0, "Mycology must expose its own satellite branches");
+});
+
+test("Other departments and pathways occupy separate orbital bands", () => {
+  const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
+  const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
+  const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
+  const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
+  assert.ok(meanDepartmentRadius > 600 && meanDepartmentRadius < 720);
+  assert.ok(meanPathwayRadius > 1050 && meanPathwayRadius < 1170);
+});

@@ -9,15 +9,6 @@ const hash = (value) => {
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 // Organic field: nine disciplinary departments, ten pathways and their linked sections/modules.
-const ROOT_ANCHORS = [
-  [-690, -310], [-360, -520], [80, -610], [520, -420], [790, -60],
-  [620, 390], [210, 620],
-  [-760, 230], [-310, 570], [140, 310],
-  [-510, -20], [-90, -260], [310, -90],
-  [-430, -610], [-80, -740], [320, -690], [710, -470],
-  [900, 40], [520, 760], [-520, 790]
-];
-
 const DEPARTMENT_LABELS = {
   MIC: "Microbiologie",
   MYC: "MYCOLOGIE",
@@ -98,7 +89,9 @@ export function buildAcademyGraph(departments, domains, pathways) {
 
   const walk = (items, parent, rootId, depth, branchAngle) => {
     if (!items?.length) return;
-    const spread = Math.min(2.5, 1.08 + Math.log2(items.length + 1) * 0.4);
+    const spread = parent.entity_type === "DEPARTMENT" && parent.entity_key === "MYC"
+      ? Math.PI * 1.72
+      : Math.min(2.5, 1.08 + Math.log2(items.length + 1) * 0.4);
     const distance = depth === 1
       ? 245 + Math.sqrt(items.length) * 15
       : depth === 2
@@ -135,12 +128,28 @@ export function buildAcademyGraph(departments, domains, pathways) {
     });
   };
 
-  rootItems.forEach((item, index) => {
-    const anchor = ROOT_ANCHORS[index];
+  const satelliteDepartments = departments.filter((department) => department.code !== "MYC");
+  const pathwayItems = rootItems.filter((item) => item.kind === "pathway");
+  rootItems.forEach((item) => {
     const seed = hash(item.code || item.id);
-    const x = anchor[0] + ((seed & 255) / 255 - 0.5) * 34;
-    const y = anchor[1] + (((seed >>> 8) & 255) / 255 - 0.5) * 30;
-    const angle = Math.atan2(y, x) + (((seed >>> 16) & 255) / 255 - 0.5) * 0.24;
+    let angle;
+    let radius;
+    if (item.kind === "department" && item.code === "MYC") {
+      angle = -Math.PI / 2;
+      radius = 0;
+    } else if (item.kind === "department") {
+      const orbitIndex = satelliteDepartments.findIndex((department) => department.code === item.code);
+      angle = -Math.PI / 2 + orbitIndex * (Math.PI * 2 / satelliteDepartments.length);
+      radius = 660;
+    } else {
+      const orbitIndex = pathwayItems.findIndex((pathway) => pathway.code === item.code);
+      angle = -Math.PI / 2 + (orbitIndex + 0.5) * (Math.PI * 2 / pathwayItems.length);
+      radius = 1110;
+    }
+    const jitter = (((seed >>> 8) & 255) / 255 - 0.5) * 16;
+    const x = Math.cos(angle) * (radius + jitter);
+    const y = Math.sin(angle) * (radius + jitter);
+    if (item.kind !== "department" || item.code !== "MYC") angle += (((seed >>> 16) & 255) / 255 - 0.5) * 0.08;
     const rootId = item.kind === "pathway" ? "pathways" : item.code.toLowerCase();
     const shortTitle = item.kind === "pathway"
       ? (PATHWAY_LABELS[item.code] || item.title)
@@ -162,6 +171,11 @@ export function buildAcademyGraph(departments, domains, pathways) {
       angle,
       entityType
     ));
+    if (item.kind === "department" && item.code === "MYC") {
+      root.isAcademyCore = true;
+      root.r = 27;
+      root.data.isAcademyCore = true;
+    }
 
     if (item.kind === "department") {
       root.data.route = "#/departements/" + item.code.toLowerCase();
@@ -195,7 +209,7 @@ export function buildAcademyGraph(departments, domains, pathways) {
           kind: "module"
         }))
       }));
-      walk([...domainChildren, ...sectionChildren], root, rootId, 1, angle);
+      walk([...domainChildren, ...sectionChildren], root, rootId, 1, item.code === "MYC" ? 0 : angle);
     }
   });
 

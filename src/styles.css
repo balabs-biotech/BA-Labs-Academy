@@ -597,3 +597,26 @@
   .atlas-root-chip{transition:none}
   .atlas-root-chip:hover{transform:none}
 }
+
+
+/* BA Labs constellation layout — central mycology core and orbital disciplines */
+.academy-atlas .atlas-stage{
+  background:
+    radial-gradient(circle at 50% 48%,rgba(200,135,115,.15),transparent 17%),
+    radial-gradient(circle at 50% 48%,rgba(117,200,189,.09),transparent 30%),
+    radial-gradient(ellipse at 50% 48%,#1c2c2b 0%,#111b1d 72%);
+}
+.academy-atlas .atlas-stage:before{
+  content:"";position:absolute;inset:8% 12%;border:1px solid rgba(135,177,160,.075);
+  border-radius:50%;pointer-events:none;transform:scaleY(.62);z-index:0;
+}
+.academy-atlas #academy-atlas-canvas{position:relative;z-index:1}
+.academy-atlas .atlas-stage-heading,.academy-atlas .atlas-controls,.academy-atlas .atlas-breadcrumbs,
+.academy-atlas .atlas-selection,.academy-atlas .atlas-accessible-nodes,.academy-atlas .atlas-loading{z-index:2}
+.academy-atlas .atlas-root-group--departments .atlas-root-chip[data-atlas-root="department:MYC"]{
+  border-color:rgba(200,135,115,.48);background:linear-gradient(110deg,rgba(200,135,115,.13),rgba(117,200,189,.08));
+}
+@media(max-width:700px){
+  .academy-atlas .atlas-stage{min-height:560px;height:72vh}
+  .academy-atlas .atlas-stage:before{inset:16% 4%;}
+}

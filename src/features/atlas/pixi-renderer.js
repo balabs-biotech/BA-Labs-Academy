@@ -1,7 +1,7 @@
 import { Application, Container, Graphics, Text, TextStyle } from "pixi.js";
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const PALETTE={mic:0x80aeb8,myc:0xb18fc2,bio:0x79a991,agr:0xc19b73,inf:0x8da8b5,gen:0x7eaaa3,bpr:0xc88773,bmt:0xb18a83,phy:0xb5b58d,pathways:0xa9a0d4};
+const PALETTE={mic:0x80aeb8,myc:0xc88773,bio:0x79a991,agr:0xc19b73,inf:0x8da8b5,gen:0x7eaaa3,bpr:0xc88773,bmt:0xb18a83,phy:0xb5b58d,pathways:0xa9a0d4};
 const hash=s=>{let n=2166136261;for(let i=0;i<s.length;i++)n=Math.imul(n^s.charCodeAt(i),16777619);return n>>>0};
 
 export async function createPixiRenderer(canvas){
@@ -65,6 +65,15 @@ export async function createPixiRenderer(canvas){
    if(n.level<=1)junctions.circle(n.x,n.y,r*3.3).fill({color,alpha:alpha*.07});
    const polygon=[];for(let k=0;k<lobes;k++){const a=k/lobes*Math.PI*2,v=.78+(((seed>>>((k%4)*5))&31)/31)*.42;polygon.push(n.x+Math.cos(a)*r*v,n.y+Math.sin(a)*r*v);}
    junctions.poly(polygon).fill({color:0x111b1d,alpha}).stroke({color,alpha:alpha*(n.level===0?.88:n.level===1?.68:.42),width:n.level===0?1.6:.9});
+   if(n.isAcademyCore){
+    junctions.circle(n.x,n.y,r*2.05).stroke({color:0xc88773,alpha:alpha*.62,width:1.15});
+    junctions.moveTo(n.x,n.y+10).lineTo(n.x,n.y-1).stroke({color:0xe7d9c6,alpha:alpha,width:2.7,cap:"round"});
+    junctions.moveTo(n.x,n.y-1).quadraticCurveTo(n.x-1,n.y-9,n.x-11,n.y-14).stroke({color:0xc88773,alpha:alpha,width:2.8,cap:"round"});
+    junctions.moveTo(n.x,n.y-1).quadraticCurveTo(n.x+1,n.y-9,n.x+11,n.y-14).stroke({color:0x75c8bd,alpha:alpha,width:2.8,cap:"round"});
+    junctions.circle(n.x-11,n.y-14,2.6).fill({color:0xe3a078,alpha});
+    junctions.circle(n.x+11,n.y-14,2.6).fill({color:0x8bd9ce,alpha});
+    junctions.circle(n.x,n.y+10,2.2).fill({color:0xe7d9c6,alpha});
+   }
    if(selected?.id===n.id)junctions.circle(n.x,n.y,r+7/scale+5/scale).stroke({color:0xe4e7dd,alpha:.9,width:1/scale});
   }
   // One camera transform controls all biological geometry; labels remain screen-readable.

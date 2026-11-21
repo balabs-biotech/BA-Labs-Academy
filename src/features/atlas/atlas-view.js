@@ -32,7 +32,7 @@ export function renderAcademyAtlas(graph) {
     <section class="page-intro atlas-page-intro">
       <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
       <h1>Atlas des connaissances</h1>
-      <p>Un réseau unique : neuf départements, sections, modules et parcours pratiques. Approche-toi pour révéler les ramifications, sélectionne un nœud pour en lire la fiche.</p>
+      <p>La mycologie forme le noyau vivant de l’Atlas. Autour d’elle, les autres disciplines déploient leurs propres constellations ; les parcours relient les espaces entre eux.</p>
     </section>
     <section class="academy-atlas" id="academy-atlas">
       <div class="atlas-topline">
@@ -49,8 +49,8 @@ export function renderAcademyAtlas(graph) {
       <div class="atlas-stage" id="academy-atlas-stage">
         <canvas id="academy-atlas-canvas" aria-label="Réseau de connaissances interactif BA Labs Academy"></canvas>
         <div class="atlas-stage-heading">
-          <span class="eyebrow">UN SEUL RÉSEAU · ZOOM PROGRESSIF</span>
-          <p>Glisser pour déplacer · Pincer ou molette pour zoomer · Toucher un nœud pour le centrer</p>
+          <span class="eyebrow">NOYAU MYCOLOGIE · CONSTELLATIONS DISCIPLINAIRES</span>
+          <p>Le Y BA Labs structure le noyau central · Explorer les disciplines par zoom</p>
         </div>
         <nav class="atlas-controls" aria-label="Contrôles de la carte">
           <button type="button" class="btn btn-square btn-sm" data-atlas-action="in" aria-label="Zoom avant">＋</button>
