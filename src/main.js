@@ -1,4 +1,4 @@
-import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, saveCompetencyDomains, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, saveAssessmentCompetencies, publishAssessment, savePathAssessments } from "./data.js";
+import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, publishDepartment, publishDomain, saveCompetency, saveCompetencyDomains, saveCompetencyPrerequisites, publishCompetency, saveContentEditorial, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, saveAssessmentCompetencies, publishAssessment, savePathAssessments } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
 import { bindAtlasGraph, renderAtlasGraph } from "./features/atlas/renderer.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
@@ -10,7 +10,7 @@ const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
 let data = {
   departments: [], domains: [], content: [], departmentLinks: [], domainLinks: [],
-  learningPaths: [], editorialPaths: [], editorialCompetencies: [], editorialContentCompetencies: [], editorialCompetencyDomains: [], editorialAssessmentCompetencies: [], editorialContent: [], editorialDepartmentLinks: [], editorialDomainLinks: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
+  learningPaths: [], editorialPaths: [], editorialCompetencies: [], editorialContentCompetencies: [], editorialCompetencyDomains: [], editorialAssessmentCompetencies: [], editorialCompetencyPrerequisites: [], editorialContent: [], editorialDepartmentLinks: [], editorialDomainLinks: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
   enrollments: [], progress: [], pathItemProgress: [], nodes: [], edges: []
 };
 let loadError = null;
@@ -547,6 +547,10 @@ function competencyEditorView(competencyId = "nouveau") {
       <section class="competency-mapping-panel"><span class="eyebrow">ANCRAGE DISCIPLINAIRE</span><h2>Domaines de rattachement</h2><p>Une compétence peut être transversale. Sélectionne un ou plusieurs domaines ; le premier sélectionné devient son ancrage principal.</p>
         <div class="competency-domain-grid">\${data.editorialDepartments.filter((department)=>department.status!=="ARCHIVED").map((department)=>{const domains=data.editorialDomains.filter((domain)=>domain.department_code===department.code&&domain.status!=="ARCHIVED");return domains.length?\`<fieldset class="competency-domain-group"><legend>\${escapeHtml(department.title)}</legend>\${domains.map((domain)=>{const link=(data.editorialCompetencyDomains||[]).find((item)=>item.competency_id===competency?.id&&item.domain_code===domain.code);return \`<label><input type="checkbox" data-competency-domain value="\${escapeHtml(domain.code)}" \${link?"checked":""}><span>\${escapeHtml(domain.title)}</span></label>\`}).join("")}</fieldset>\`:""}).join("")}</div>
       </section>
+
+      <section class="competency-mapping-panel"><span class="eyebrow">PROGRESSION DES COMPÉTENCES</span><h2>Prérequis</h2><p>Déclare les compétences dont la maîtrise doit précéder celle-ci. Les dépendances sont contrôlées contre les cycles et intégrées à l’Atlas.</p>
+        <div class="competency-prerequisite-list">\${(data.editorialCompetencies||[]).filter((item)=>item.status==="PUBLISHED"&&item.id!==competency?.id).map((item)=>{const link=(data.editorialCompetencyPrerequisites||[]).some((edge)=>edge.competency_id===competency?.id&&edge.prerequisite_competency_id===item.id);return \`<label><input type="checkbox" data-competency-prerequisite value="\${escapeHtml(item.id)}" \${link?"checked":""}><span><b>\${escapeHtml(item.title)}</b><small>\${escapeHtml(item.code)} · \${escapeHtml(item.competency_level)}</small></span></label>\`}).join("")||emptyState("Aucun prérequis disponible","Les compétences publiées pourront être sélectionnées ici.")}</div>
+      </section>
       <div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour à l’espace éditorial</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div>
       <p id="competency-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
     </form>
@@ -891,6 +895,8 @@ function render() {
       const id = await saveCompetency({ id: form.dataset.competencyId || null, code: values.get("code").trim().toUpperCase(), title: values.get("title").trim(), description: values.get("description"), level: values.get("level"), mappings });
       const domainCodes = [...form.querySelectorAll("[data-competency-domain]:checked")].map((checkbox) => checkbox.value);
       await saveCompetencyDomains(id, domainCodes);
+      const prerequisiteIds = [...form.querySelectorAll("[data-competency-prerequisite]:checked")].map((checkbox) => checkbox.value);
+      await saveCompetencyPrerequisites(id, prerequisiteIds);
       location.hash = `#/administration/competences/${encodeURIComponent(id)}`;
       await refresh();
     } catch (error) {
