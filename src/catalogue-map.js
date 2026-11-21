@@ -62,4 +62,4 @@ export const catalogueTotals = allGroups.reduce((total, group) => {
     sections: total.sections + sections.length,
     modules: total.modules + sections.reduce((sum, section) => sum + section.modules.length, 0)
   };
-}, { departments: catalogueMap.length, axes: catalogueDomains.length, sections: 0, modules: 0 });
+}, { departments: catalogueMap.length, domains: catalogueDomains.length, sections: 0, modules: 0 });
