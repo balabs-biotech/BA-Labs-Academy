@@ -8,7 +8,7 @@ const hash = (value) => {
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-// Organic field: seven departments, three transversal axes, ten pathways.
+// Organic field: seven departments, three transversal domains, ten pathways.
 const ROOT_ANCHORS = [
   [-690, -310], [-360, -520], [80, -610], [520, -420], [790, -60],
   [620, 390], [210, 620],
@@ -28,7 +28,7 @@ const DEPARTMENT_LABELS = {
   GEN: "Génie biologique et instrumentation"
 };
 
-const AXIS_LABELS = {
+const DOMAIN_LABELS = {
   BPR: "Bioprocédés",
   BMT: "Biomatériaux",
   PHY: "Sciences physiques & chimiques"
@@ -67,16 +67,16 @@ function makeNode(item, parent, rootId, level, x, y, angle, entityType) {
   };
 }
 
-export function buildAcademyGraph(departments, axes, pathways) {
+export function buildAcademyGraph(departments, domains, pathways) {
   const nodes = [];
   const edges = [];
   const byId = new Map();
   const departmentNodes = new Map();
-  const axisNodes = new Map();
+  const domainNodes = new Map();
   const sectionNodes = new Map();
   const rootItems = [
     ...departments.map((department) => ({ ...department, kind: "department" })),
-    ...axes.map((axis) => ({ ...axis, kind: "axis" })),
+    ...domains.map((axis) => ({ ...axis, kind: "domain" })),
     ...pathways.map((pathway) => ({ ...pathway, kind: "pathway" }))
   ];
 
@@ -142,13 +142,13 @@ export function buildAcademyGraph(departments, axes, pathways) {
     const rootId = item.kind === "pathway" ? "pathways" : item.code.toLowerCase();
     const shortTitle = item.kind === "pathway"
       ? (PATHWAY_LABELS[item.code] || item.title)
-      : item.kind === "axis"
-        ? (AXIS_LABELS[item.code] || item.title)
+      : item.kind === "domain"
+        ? (DOMAIN_LABELS[item.code] || item.title)
         : (DEPARTMENT_LABELS[item.code] || item.title);
     const entityType = item.kind === "pathway"
       ? "PATHWAY"
-      : item.kind === "axis"
-        ? "TRANSVERSAL"
+      : item.kind === "domain"
+        ? "DOMAIN"
         : "DEPARTMENT";
     const root = addNode(makeNode(
       { ...item, id: item.kind + ":" + item.code, shortTitle },
@@ -164,15 +164,15 @@ export function buildAcademyGraph(departments, axes, pathways) {
     if (item.kind === "department") {
       root.data.route = "#/departements/" + item.code.toLowerCase();
       departmentNodes.set(item.code, root);
-    } else if (item.kind === "axis") {
-      root.data.route = "#/axes/" + item.code.toLowerCase();
-      axisNodes.set(item.code, root);
+    } else if (item.kind === "domain") {
+      root.data.route = "#/domains/" + item.code.toLowerCase();
+      domainNodes.set(item.code, root);
     } else {
       root.data.route = "#/parcours/" + item.slug;
       root.data.kind = "pathway";
     }
 
-    if (item.kind === "department" || item.kind === "axis") {
+    if (item.kind === "department" || item.kind === "domain") {
       const children = (item.sections || []).map((section) => ({
         ...section,
         route: "#/sections/" + section.code.toLowerCase(),
@@ -190,7 +190,7 @@ export function buildAcademyGraph(departments, axes, pathways) {
     }
   });
 
-  // Pathways connect canonical departments and transversal axes without duplicating modules.
+  // Pathways connect canonical departments and transversal domains without duplicating modules.
   pathways.forEach((pathway) => {
     const source = byId.get("pathway:" + pathway.code);
     if (!source) return;
@@ -205,15 +205,15 @@ export function buildAcademyGraph(departments, axes, pathways) {
         label: "Département mobilisé"
       });
     }
-    for (const axisCode of pathway.axisCodes || []) {
-      const target = axisNodes.get(axisCode);
+    for (const domainCode of pathway.domainCodes || []) {
+      const target = domainNodes.get(domainCode);
       if (target) addEdge(source, target, {
-        id: "pathway-axis:" + pathway.code + ":" + axisCode,
+        id: "pathway-axis:" + pathway.code + ":" + domainCode,
         relationType: "USES",
         cross: true,
         verified: true,
-        basis: "academy-axis",
-        label: "Axe transversal mobilisé"
+        basis: "academy-domain",
+        label: "Domaine transversal mobilisé"
       });
     }
     for (const sectionCode of pathway.sectionCodes || []) {
@@ -280,7 +280,7 @@ export function buildAcademyGraph(departments, axes, pathways) {
     edges,
     stats: {
       departments: departments.length,
-      axes: axes.length,
+      domains: domains.length,
       pathways: pathways.length,
       sections: sectionNodes.size,
       modules: nodes.filter((node) => node.entity_type === "MODULE").length,
@@ -288,7 +288,7 @@ export function buildAcademyGraph(departments, axes, pathways) {
     },
     byId,
     departmentNodes,
-    axisNodes,
+    domainNodes,
     sectionNodes
   };
 }
