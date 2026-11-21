@@ -1253,7 +1253,7 @@ function render() {
     programmeForm.querySelector("#add-programme-node")?.addEventListener("click",()=>{
       const count=nodeList.querySelectorAll("[data-program-node-row]").length;
       nodeList.insertAdjacentHTML("beforeend",programmeNodeRowMarkup({node_type:"BLOCK",sort_order:count+1,is_required:true},count,[]));
-      refreshParentOptions();
+      refreshParentOptions();refreshHierarchyPreview();
     });
     const selectedDepartments=()=>[...programmeForm.querySelectorAll("[data-program-department]:checked")].map(input=>input.value);
     const primarySelect=programmeForm.querySelector('[name="primary_department"]');
@@ -1269,6 +1269,7 @@ function render() {
     };
     programmeForm.querySelectorAll("[data-program-department]").forEach(checkbox=>checkbox.addEventListener("change",updateDisciplineOptions));
     updateDisciplineOptions();
+    refreshHierarchyPreview();
     programmeForm.addEventListener("submit",async event=>{
       event.preventDefault();
       const button=programmeForm.querySelector('button[type="submit"]');
