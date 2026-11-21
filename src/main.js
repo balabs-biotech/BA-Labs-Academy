@@ -287,13 +287,22 @@ function learningPathDetail(slug) {
     <p class="progress-note">${currentSession ? "Ta progression est synchronisée avec ton compte apprenant." : "Connecte-toi à l’espace apprenant pour enregistrer tes acquis et déverrouiller les étapes suivantes."}</p>`;
 }
 
-function atlasView() {
-  const graph = buildCatalogueAtlas(catalogueMap);
+function atlasView(sectionCode = "") {
+  const section = sectionCode
+    ? catalogueMap.flatMap((department) => department.sections.map((item) => ({ ...item, department }))).find((item) => item.code === sectionCode)
+    : null;
+  const graph = buildCatalogueAtlas(catalogueMap, section?.code || null);
   atlasViewNodes = graph.nodes;
   atlasViewEdges = graph.edges;
-  return '<section class="page-intro"><span class="eyebrow">CARTOGRAPHIE DES CONNAISSANCES</span><h1>Atlas 2D</h1><p>Vue générale des départements et de leurs sections. Sélectionne un nœud, déplace la carte et utilise la molette pour explorer.</p></section>' +
-    '<div class="atlas-panel"><div class="atlas-toolbar"><span><b>' + atlasViewNodes.length + '</b> nœuds cartographiés</span><span>' + atlasViewEdges.length + ' relations de rattachement</span></div>' + renderAtlasGraph(atlasViewNodes, atlasViewEdges) + '</div>' +
-    '<div class="atlas-legend"><span class="legend-department">Département</span><span class="legend-section">Section</span></div>';
+  const heading = section
+    ? '<span class="eyebrow"><a href="#/atlas">ATLAS 2D</a> / ' + escapeHtml(section.department.title) + '</span><h1>' + escapeHtml(section.title) + '</h1><p>' + escapeHtml(section.description) + ' Sélectionne un module pour afficher son statut de préparation.</p>'
+    : '<span class="eyebrow">CARTOGRAPHIE DES CONNAISSANCES</span><h1>Atlas 2D</h1><p>Vue générale des départements et de leurs sections. Sélectionne une section pour ouvrir ses modules, déplace la carte et utilise la molette pour explorer.</p>';
+  const back = section ? '<a class="button button-outline atlas-back" href="#/atlas">← Vue générale</a>' : '';
+  const legend = section
+    ? '<div class="atlas-legend"><span class="legend-section">Section</span><span class="legend-content">Module prévu · fiche à développer</span></div>'
+    : '<div class="atlas-legend"><span class="legend-department">Département</span><span class="legend-section">Section</span></div>';
+  return '<section class="page-intro">' + heading + '</section>' + back +
+    '<div class="atlas-panel"><div class="atlas-toolbar"><span><b>' + atlasViewNodes.length + '</b> nœuds visibles</span><span>' + atlasViewEdges.length + ' relations · ' + (section ? 'vue détaillée' : 'vue générale') + '</span></div>' + renderAtlasGraph(atlasViewNodes, atlasViewEdges) + '</div>' + legend;
 }
 function loginView() {
   return `<section class="page-intro"><span class="eyebrow">ESPACE PERSONNEL</span><h1>Espace apprenant</h1><p>Connecte-toi pour t’inscrire aux parcours et conserver ton historique d’apprentissage.</p></section>
@@ -886,7 +895,7 @@ function render() {
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "espace": learnerView,
     "administration": () => subroute === "programmes" ? programmeEditorView(subId) : subroute === "parcours" ? learningPathEditorView(subId) : subroute === "competences" ? competencyEditorView(subId) : subroute === "ressources" ? contentEditorView(subId) : subroute === "evaluations" ? assessmentEditorView(subId) : administrationView(),
-    "atlas": atlasView,
+    "atlas": () => atlasView(slug),
     "apropos": aboutView
   };
   root.innerHTML = (routes[route] || (() => notFound("Page introuvable", "Cette adresse ne correspond à aucune page publique de l’Academy.")))();
@@ -897,7 +906,8 @@ function render() {
         if (item) location.hash = `#/departements/${encodeURIComponent(item.slug)}`;
         else location.hash = "#/catalogue";
       } else if (node.entity_type === "SECTION") {
-        location.hash = "#/catalogue";
+        const isSectionDetail = location.hash.includes(encodeURIComponent(node.entity_key));
+        if (!isSectionDetail) location.hash = `#/atlas/${encodeURIComponent(node.entity_key)}`;
       } else if (node.entity_type === "DOMAIN") {
         const item = data.domains.find((entry) => entry.code === node.entity_key);
         if (item) location.hash = `#/domaines/${encodeURIComponent(item.slug)}`;
