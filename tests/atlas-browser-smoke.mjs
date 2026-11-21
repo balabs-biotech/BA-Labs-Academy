@@ -74,15 +74,16 @@ try {
     assert.match(await page.locator("#academy-atlas-selection").innerText(), /séquence et ressources à construire/);
     await page.locator("#academy-atlas-selection .atlas-selection-link").click();
     await page.waitForURL("**/#/parcours/production-mycologique-laboratoire-fructification");
+    await page.waitForFunction(() => document.querySelector(".page-intro h1")?.textContent.trim() === "Production mycologique, du laboratoire à la fructification");
     assert.equal(await page.locator(".page-intro h1").innerText(), "Production mycologique, du laboratoire à la fructification");
 
     await page.goto(routeUrl("departements"), { waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".page-intro h1");
+    await page.waitForFunction(() => document.querySelector(".page-intro h1")?.textContent.trim() === "Départements");
     assert.equal(await page.locator(".page-intro h1").innerText(), "Départements");
     await page.waitForSelector(".department-card");
     assert.equal(await page.locator(".department-card").count(), 9, "All nine current departments must be visible");
     await page.goto(routeUrl("parcours"), { waitUntil: "domcontentloaded" });
-    await page.waitForSelector(".page-intro h1");
+    await page.waitForFunction(() => document.querySelector(".page-intro h1")?.textContent.trim() === "Parcours pratiques");
     assert.equal(await page.locator(".page-intro h1").innerText(), "Parcours pratiques");
     await page.waitForSelector(".pathway-card");
     assert.equal(await page.locator(".pathway-card").count(), 10, "All ten cross-disciplinary pathways must be visible");
