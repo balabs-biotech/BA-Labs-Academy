@@ -104,7 +104,7 @@ export function bindAtlasGraph(container, nodes, onSelect = () => {}) {
     if (!node) return;
     const selection = container.querySelector(".atlas-selection");
     const title = node.title || node.title_override || node.entity_key || node.node_key;
-    selection.textContent = `${title} · ${node.entity_type}`;
+    selection.textContent = `${title} · ${node.entity_type}${node.summary ? " — " + node.summary : ""}`;
     onSelect(node);
   };
   const onKeyDown = (event) => {
