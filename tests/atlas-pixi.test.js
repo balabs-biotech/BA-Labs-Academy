@@ -127,3 +127,11 @@ test("Atlas inspector exposes parent and immediate-child navigation for hierarch
   assert.ok(source.includes('focusNode(parentNode)'));
   assert.ok(source.includes('focusNode(child)'));
 });
+
+
+test("Atlas viewport resize preserves the active exploration focus", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(source.includes("let hasInitialFit = false;"));
+  assert.match(source, /if \(!hasInitialFit\)\s*\{\s*fitOverview\(\);\s*hasInitialFit = true;/);
+  assert.ok(source.includes("Subsequent resizes preserve the"));
+});

@@ -104,6 +104,7 @@ export function mountAcademyAtlas(container, graph) {
   let frame = 0;
   let width = 0;
   let height = 0;
+  let hasInitialFit = false;
   let scale = 1;
   let targetScale = 1;
   let offset = { x: 0, y: 0 };
@@ -388,7 +389,12 @@ export function mountAcademyAtlas(container, graph) {
     width = rect.width;
     height = rect.height;
     if (renderer) renderer.resize(width, height);
-    fitOverview();
+    // Fit the universe only on first mount. Subsequent resizes preserve the
+    // current world-space focus instead of silently ejecting the user to overview.
+    if (!hasInitialFit) {
+      fitOverview();
+      hasInitialFit = true;
+    }
     scale = targetScale;
     offset = { ...targetOffset };
     draw();
