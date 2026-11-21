@@ -29,7 +29,9 @@ test("search is accent-insensitive and returns related resources", () => {
 
 test("search uses linked department and competency metadata", () => {
   assert.ok(searchAcademy("biologie", data).some((entry) => entry.title === "Culture du Pleurote"));
-  assert.equal(searchAcademy("aseptique", data)[0].type, "COMPETENCY");
+  const competency = searchAcademy("aseptique", data)[0];
+  assert.equal(competency.type, "COMPETENCY");
+  assert.equal(competency.href, "#/ressource/culture-pleurote");
 });
 
 test("empty and unmatched queries return no results", () => {
