@@ -359,3 +359,15 @@ test("Atlas view preserves cursor-centered wheel zoom", () => {
   const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
   assert.match(source, /const onWheel = \(event\) => \{[\s\S]*?event\.preventDefault\(\)[\s\S]*?zoom\(event\.deltaY < 0 \? 1\.16 : 0\.86, event\.clientX - rect\.left, event\.clientY - rect\.top\)/);
 });
+
+
+test("Atlas connection rendering is isolated from Pixi node rendering", async () => {
+  const { renderAtlasConnections } = await import("../src/features/atlas/atlas-connections.js");
+  assert.equal(typeof renderAtlasConnections, "function");
+  const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  assert.ok(source.includes("renderAtlasConnections({"));
+  const connections = readFileSync(new URL("../src/features/atlas/atlas-connections.js", import.meta.url), "utf8");
+  for (const basis of ["academy-hierarchy", "academy-pathway-flow", "academy-pathway-network", "academy-knowledge-relation"]) {
+    assert.ok(connections.includes(basis), `Missing connection basis: ${basis}`);
+  }
+});
