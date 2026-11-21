@@ -64,7 +64,8 @@ try {
     const pathway = page.locator("#academy-atlas-accessible button").filter({
       hasText: "Production mycologique, du laboratoire à la fructification"
     });
-    await pathway.click();
+    await pathway.focus();
+    await pathway.press("Enter");
     await page.waitForFunction(
       () => document.querySelector("#academy-atlas-selection")?.textContent.includes("Production mycologique, du laboratoire à la fructification")
     );
