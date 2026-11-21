@@ -24,7 +24,7 @@ test("Atlas exposes the full thematic map progressively", () => {
   assert.equal(graph.nodes.filter((node) => node.entity_type === "MODULE").length, catalogueTotals.modules);
 });
 
-test("every pathway has valid department and domain references", () => {
+test("every pathway has valid department, axis and section references", () => {
   const departmentCodes = new Set(catalogueMap.map((department) => department.code));
   const sectionCodes = new Set([...catalogueMap, ...catalogueAxes].flatMap((group) => group.sections.map((section) => section.code)));
   const axisCodes = new Set(catalogueAxes.map((axis) => axis.code));
@@ -32,6 +32,7 @@ test("every pathway has valid department and domain references", () => {
     assert.ok(departmentCodes.has(pathway.departmentCode), pathway.code + " primary department");
     assert.ok(pathway.departmentCodes.every((code) => departmentCodes.has(code)), pathway.code + " linked departments");
     assert.ok(pathway.sectionCodes.every((code) => sectionCodes.has(code)), pathway.code + " linked sections");
+    assert.ok(pathway.axisCodes.every((code) => axisCodes.has(code)), pathway.code + " linked axes");
   }
 });
 
