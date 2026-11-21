@@ -104,3 +104,16 @@
 .competency-resource-settings{display:grid;grid-template-columns:135px minmax(0,1fr);gap:7px}
 .competency-resource-settings select,.competency-resource-settings input{min-width:0;width:100%;padding:9px;border:1px solid var(--line);background:#0d1511;color:var(--text);font:inherit;font-size:10px}
 @media(max-width:680px){.competency-resource-row{grid-template-columns:1fr}.competency-resource-settings{grid-template-columns:1fr}.competency-row-actions{flex-wrap:wrap}}
+
+.resource-editorial{margin-top:55px}.resource-editorial-queue{display:grid;gap:0}
+.resource-editorial-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:15px;align-items:center;padding:15px 0;border-bottom:1px solid var(--line)}
+.resource-editorial-info{display:grid;gap:5px;min-width:0}.resource-editorial-info>b{font-size:13px;font-weight:500}.resource-editorial-info>small{font-size:10px;color:var(--muted)}
+.resource-editorial-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}.resource-editorial-actions .button{padding:8px 10px;font-size:9px}
+.content-editor-form{max-width:1040px;padding:22px;border:1px solid var(--line);background:var(--panel)}
+.content-classification{margin-top:28px;padding-top:22px;border-top:1px solid var(--line)}.content-classification h2{margin:20px 0 8px;font-size:17px;font-weight:450}
+.content-classification>p{margin:0 0 14px;color:var(--muted);font-size:11px;line-height:1.7}.content-taxonomy-list{display:grid;gap:6px}
+.content-taxonomy-option{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--line);background:#111a16;font-size:11px;cursor:pointer}
+.content-taxonomy-option>span:first-of-type{display:grid;gap:3px;flex:1}.content-taxonomy-option small{font-size:9px;color:var(--muted)}
+.content-taxonomy-option input{accent-color:var(--green)}.content-taxonomy-option .primary-choice{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:9px}
+.content-taxonomy-option[hidden]{display:none}
+@media(max-width:680px){.resource-editorial-row{grid-template-columns:1fr}.resource-editorial-actions{justify-content:flex-start}.content-editor-form{padding:14px}}
