@@ -228,10 +228,19 @@ function domainDetail(slug) {
 }
 
 function sectionDetail(slug) {
-  const mapped = catalogueMap.flatMap((department) => department.sections.map((section) => ({ ...section, department })))
+  const mapped = [...catalogueMap, ...catalogueAxes]
+    .flatMap((group) => group.sections.map((section) => ({
+      ...section,
+      parent: group,
+      parentType: catalogueAxes.includes(group) ? "axis" : "department"
+    })))
     .find((section) => section.code.toLowerCase() === slug);
   if (!mapped) return notFound("Section indisponible", "Cette section n’existe pas dans la cartographie actuelle.");
-  return `<section class="page-intro"><span class="eyebrow"><a href="#/departements/${mapped.department.code.toLowerCase()}">${escapeHtml(mapped.department.title)}</a> / SECTION</span><h1>${escapeHtml(mapped.title)}</h1><p>${escapeHtml(mapped.description)}</p></section>
+  const parentRoute = mapped.parentType === "axis"
+    ? "#/axes/" + mapped.parent.code.toLowerCase()
+    : "#/departements/" + mapped.parent.code.toLowerCase();
+  const parentLabel = mapped.parentType === "axis" ? "AXE TRANSVERSAL" : "DÉPARTEMENT";
+  return `<section class="page-intro"><span class="eyebrow"><a href="${parentRoute}">${escapeHtml(mapped.parent.title)}</a> / SECTION · ${parentLabel}</span><h1>${escapeHtml(mapped.title)}</h1><p>${escapeHtml(mapped.description)}</p></section>
     <div class="detail-meta"><span>${escapeHtml(mapped.code)}</span><span>${mapped.modules.length} modules cartographiés</span><span>Fiches non rédigées</span></div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">MODULES ASSOCIÉS</span><h2>Connaissances à développer</h2></div></div>
       <div class="knowledge-module-grid">${mapped.modules.map((module,index)=>`<article class="knowledge-module"><span>${escapeHtml(mapped.code)} · ${String(index+1).padStart(2,"0")}</span><h4>${escapeHtml(module)}</h4><small>Module cartographié · fiche à développer</small></article>`).join("")}</div>
