@@ -92,3 +92,7 @@ Les fiches partenaires et conventions sont créées en brouillon par Owner/Admin
 ### Intégrité des preuves de présence
 
 La clôture d'une inscription exige désormais une présence validée pour chaque journée calendaire de la session (heure locale d'Algérie). L'émission d'un document applique la même règle. Après clôture ou émission d'un document actif, les preuves de présence sont verrouillées pour éviter leur altération rétroactive. L'interface d'émission demande explicitement l'émetteur et sa référence pour les documents relevant d'un partenaire ou d'une autorité ; les ateliers privés restent limités aux attestations BA Labs.
+
+### Catalogue public des formations
+
+Une page publique `#/formations` présente uniquement les offres au statut ACTIVE et les sessions au statut OPEN. Les politiques RLS permettent la lecture publique de ces deux ensembles sans exposer les partenaires, conventions, participants, présences ou documents internes. Le catalogue ne publie ni capacité, ni code de lieu, ni données personnelles.
