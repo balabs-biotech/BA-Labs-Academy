@@ -80,7 +80,7 @@ Le type `TRANSVERSAL` permet de construire des programmes qui traversent plusieu
 | `academy_competencies` | Référentiel des compétences et prérequis |
 | `academy_assessments` | Évaluations et contrôle des acquis |
 
-Les liens entre nœuds de programme, parcours, compétences et évaluations seront ajoutés comme relations explicites. Ils ne doivent pas être simulés par des copies de contenu ou des intitulés libres.
+Les relations sont désormais prévues dans des tables dédiées : `academy_program_node_competencies` (acquis attendus et niveau), `academy_program_node_resources` (ressources réutilisables), `academy_program_node_assessments` (évaluations) et `academy_program_node_paths` (parcours réutilisables). Une offre de formation peut également être rattachée à un programme entier ou à un nœud précis. Ces relations restent vides tant que l'architecture des cursus n'est pas validée ; elles ne dupliquent jamais les contenus.
 
 ## 5. Workflow éditorial
 
