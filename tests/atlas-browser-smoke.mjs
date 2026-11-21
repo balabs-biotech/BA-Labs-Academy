@@ -72,6 +72,20 @@ try {
     await page.waitForFunction(
       () => document.querySelector("#academy-atlas-selection")?.textContent.includes("Mycologie appliquée")
     );
+    await page.locator('[data-atlas-root="domain:BPR"]').click();
+    await page.waitForFunction(
+      () => document.querySelector("#academy-atlas-selection")?.textContent.includes("Bioprocédés")
+    );
+    await page.locator("#academy-atlas-selection .atlas-selection-link").click();
+    await page.waitForURL("**/#/domaines/bpr");
+    assert.equal(await page.locator(".page-intro h1").innerText(), "Bioprocédés");
+
+    await page.goto(base, { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(
+      () => document.querySelector("#atlas-engine-state")?.textContent.includes("Moteur actif"),
+      undefined,
+      { timeout: 30000 }
+    );
     await page.locator('[data-atlas-root="pathway:MYC-PAR-001"]').click();
     await page.waitForFunction(
       () => document.querySelector("#academy-atlas-selection")?.textContent.includes("Production mycologique, du laboratoire à la fructification")
