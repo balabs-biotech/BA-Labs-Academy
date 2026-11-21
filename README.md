@@ -1,24 +1,41 @@
 # BA Labs Academy
 
-Frontend statique de BA Labs Academy, hébergé sur GitHub Pages et connecté en lecture seule au projet Supabase Academy.
+Frontend public de BA Labs Academy. Le site est conçu comme une application statique, hébergée sur GitHub Pages, avec Supabase comme source de données publiques.
 
-## Architecture actuelle
+## Architecture
 
-- `index.html` : point d'entrée.
-- `src/main.js` : navigation et vues publiques.
-- `src/data.js` : adaptateur de lecture des données publiques.
-- `src/config.js` : URL Supabase et clé publishable publique.
-- `src/styles.css` : interface responsive.
-- `.github/workflows/deploy-pages.yml` : déploiement automatique à chaque push sur `main`.
+- `index.html` — point d'entrée et structure globale.
+- `src/main.js` — routes, vues et orchestration de l'interface.
+- `src/data.js` — adaptateur de lecture Supabase et résolution des libellés de l'Atlas.
+- `src/core/` — fonctions partagées du runtime.
+- `src/features/atlas/layout.js` — moteur de positionnement 2D déterministe.
+- `src/features/atlas/renderer.js` — rendu SVG, sélection, déplacement et zoom.
+- `src/styles.css` — système visuel responsive.
+- `scripts/build.mjs` — génération du site statique dans `dist/`.
+- `tests/` — tests unitaires du moteur Atlas.
+- `.github/workflows/deploy-pages.yml` — tests, build et déploiement.
 
-## Sécurité des données
+## Données et sécurité
 
-Le navigateur utilise exclusivement une clé Supabase publishable. Aucune clé `service_role` ou clé secrète n'est incluse. La visibilité des données dépend des privilèges SQL et des politiques RLS du projet Supabase.
+Le frontend utilise exclusivement une clé Supabase publishable, destinée à être exposée dans le navigateur. Aucune clé `service_role` ni aucun secret serveur ne doit être ajouté au dépôt.
 
-Les contenus internes, brouillons et fiches non publiées ne doivent pas être rendus accessibles au public. La publication reste contrôlée par les procédures éditoriales du backend.
+Les lectures sont filtrées par les statuts de publication et les politiques PostgreSQL RLS. Les brouillons, données internes et fiches non publiées ne doivent jamais être rendus accessibles au public. Les opérations éditoriales restent réservées aux fonctions contrôlées du backend.
+
+L'absence actuelle de contenus publics est un état valide : l'interface affiche des états vides explicites au lieu de données de démonstration.
+
+## Développement local
+
+Prérequis : Node.js 22 ou supérieur.
+
+```bash
+npm test
+npm run build
+```
+
+Le résultat statique est généré dans `dist/`.
 
 ## Déploiement
 
-Dans GitHub : Settings → Pages → Build and deployment → Source : GitHub Actions.
+Dans GitHub : **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 
-Le workflow prépare le dossier `dist` et le publie avec GitHub Pages.
+Chaque push sur `main` exécute les tests, génère le site, puis tente le déploiement Pages.
