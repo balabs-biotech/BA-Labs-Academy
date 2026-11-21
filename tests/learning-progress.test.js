@@ -10,8 +10,8 @@ const items = [
 
 test("path progress counts completed required resources only", () => {
   const progress = buildPathProgress(items, [
-    { content_id: "content-a", progress_status: "COMPLETED", progress_percent: 100 },
-    { content_id: "content-c", progress_status: "COMPLETED", progress_percent: 100 }
+    { path_item_id: "item-a", progress_status: "COMPLETED", progress_percent: 100 },
+    { path_item_id: "item-c", progress_status: "COMPLETED", progress_percent: 100 }
   ]);
   assert.deepEqual(progress, {
     completedRequired: 1,
@@ -23,8 +23,8 @@ test("path progress counts completed required resources only", () => {
 
 test("path is complete only when every required item is completed", () => {
   const progress = buildPathProgress(items, [
-    { content_id: "content-a", progress_status: "COMPLETED" },
-    { content_id: "content-b", progress_status: "COMPLETED" }
+    { path_item_id: "item-a", progress_status: "COMPLETED" },
+    { path_item_id: "item-b", progress_status: "COMPLETED" }
   ]);
   assert.equal(progress.percent, 100);
   assert.equal(progress.isComplete, true);
@@ -56,7 +56,7 @@ test("sequence resolves prerequisites and locks inaccessible items", () => {
 test("completed prerequisites unlock the next item", () => {
   const prerequisites = [{ item_id: "item-b", prerequisite_item_id: "item-a" }];
   const result = resolvePathItems(items, prerequisites, [
-    { content_id: "content-a", progress_status: "COMPLETED" }
+    { path_item_id: "item-a", progress_status: "COMPLETED" }
   ]);
   assert.equal(result[1].isLocked, false);
   assert.deepEqual(result[1].missingPrerequisiteIds, []);
