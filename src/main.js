@@ -896,6 +896,22 @@ function render() {
     verifyForm.addEventListener("submit",(event)=>{event.preventDefault();verify(new FormData(verifyForm).get("code").trim());});
     if(verifyForm.elements.code.value.trim())verify(verifyForm.elements.code.value.trim());
   }
+  document.querySelector("#training-partner-form")?.addEventListener("submit",async(event)=>{
+    event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button[type="submit"]');const feedback=document.querySelector("#training-partner-feedback");const v=new FormData(form);button.disabled=true;feedback.textContent="Enregistrement du partenaire en brouillon…";
+    const list=(value)=>value.split(",").map(x=>x.trim()).filter(Boolean);
+    try{await saveTrainingPartner({partner_code:v.get("partner_code").trim().toUpperCase(),legal_name:v.get("legal_name").trim(),approval_number:v.get("approval_number").trim(),approval_authority:v.get("approval_authority").trim(),approval_valid_from:v.get("approval_valid_from"),approval_valid_until:v.get("approval_valid_until"),approved_specialties:list(v.get("approved_specialties")),approved_delivery_modes:v.getAll("approved_delivery_modes")});await refresh();}
+    catch(error){feedback.textContent=error.message||"Enregistrement impossible.";button.disabled=false;}
+  });
+  document.querySelector("#training-agreement-form")?.addEventListener("submit",async(event)=>{
+    event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button[type="submit"]');const feedback=document.querySelector("#training-agreement-feedback");const v=new FormData(form);button.disabled=true;feedback.textContent="Enregistrement de la convention en brouillon…";
+    const list=(value)=>value.split(",").map(x=>x.trim()).filter(Boolean);
+    try{await saveTrainingAgreement({partner_id:v.get("partner_id"),agreement_code:v.get("agreement_code").trim().toUpperCase(),agreement_title:v.get("agreement_title").trim(),valid_from:v.get("valid_from"),valid_until:v.get("valid_until"),signed_at:v.get("signed_at"),billing_responsibility:v.get("billing_responsibility"),document_issuer:v.get("document_issuer"),permitted_specialties:list(v.get("permitted_specialties")),permitted_venues:list(v.get("permitted_venues")),permitted_delivery_modes:v.getAll("permitted_delivery_modes")});await refresh();}
+    catch(error){feedback.textContent=error.message||"Enregistrement impossible.";button.disabled=false;}
+  });
+  document.querySelectorAll("[data-training-reference-status]").forEach(button=>button.addEventListener("click",async()=>{
+    button.disabled=true;try{await setTrainingReferenceStatus(button.dataset.trainingReferenceStatus,button.dataset.id,button.dataset.next,"Validation documentaire depuis la console Academy");await refresh();}
+    catch(error){window.alert(error.message||"Activation impossible.");button.disabled=false;}
+  }));
   document.querySelector("#training-offering-form")?.addEventListener("submit",async(event)=>{
     event.preventDefault();const form=event.currentTarget;const button=form.querySelector('button[type="submit"]');const feedback=document.querySelector("#training-offering-feedback");const v=new FormData(form);button.disabled=true;feedback.textContent="Enregistrement du brouillon…";
     try{const regime=v.get("delivery_regime");await saveTrainingOffering({offering_code:v.get("offering_code").trim().toUpperCase(),title:v.get("title").trim(),specialty_code:v.get("specialty_code").trim(),description:v.get("description"),audience_profile:v.get("audience_profile"),delivery_regime:regime,partner_id:regime==="PRIVATE_WORKSHOP"?null:(v.get("partner_id")||null),agreement_id:regime==="PRIVATE_WORKSHOP"?null:(v.get("agreement_id")||null),default_duration_days:v.get("default_duration_days"),default_capacity:v.get("default_capacity")});await refresh();}
