@@ -6,12 +6,13 @@ import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { enrollInPath, saveResourceProgress, savePathItemProgress } from "./data.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
 import { searchAcademy, searchTypeLabel } from "./features/search/index.js";
+import { saveLearningPathDraft, saveLearningPathItems, publishLearningPath } from "./data.js";
 
 const root = document.querySelector("#app");
 const connection = document.querySelector("#connection-state");
 let data = {
   departments: [], domains: [], content: [], departmentLinks: [], domainLinks: [],
-  learningPaths: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
+  learningPaths: [], editorialPaths: [], pathItems: [], pathPrerequisites: [], competencies: [], contentCompetencies: [],
   enrollments: [], progress: [], pathItemProgress: [], nodes: [], edges: []
 };
 let loadError = null;
@@ -329,7 +330,47 @@ function administrationView() {
     </div>
     <section class="section-block"><div class="section-heading"><div><span class="eyebrow">WORKFLOW ÉDITORIAL</span><h2>Chaîne de publication</h2></div></div>
     <div class="editorial-stages"><article><b>01</b><h3>Brouillon</h3><p>Préparation et structuration d’un contenu.</p></article><article><b>02</b><h3>Revue</h3><p>Soumission et examen par les rôles autorisés.</p></article><article><b>03</b><h3>Publication</h3><p>Validation finale et diffusion publique contrôlée.</p></article></div></section>
+    ${["OWNER","ADMIN","EDITOR"].includes(membership.role) ? `
+    <section class="section-block pathway-editorial">
+      <div class="section-heading"><div><span class="eyebrow">GESTION DES PARCOURS</span><h2>Parcours pédagogiques</h2></div><a class="button button-primary" href="#/administration/parcours/nouveau">Créer un parcours ↗</a></div>
+      <div class="editorial-path-list">${(data.editorialPaths || []).map((path) => `<a class="editorial-path-row" href="#/administration/parcours/${encodeURIComponent(path.id)}"><div><span class="eyebrow">${escapeHtml(path.code)} · ${escapeHtml(path.status)}</span><h3>${escapeHtml(path.title)}</h3><p>${escapeHtml(path.summary || "Aucun résumé.")}</p></div><b>Modifier ↗</b></a>`).join("") || emptyState("Aucun parcours", "Crée le premier brouillon pédagogique.")}</div>
+    </section>` : ""}
     <p class="progress-note">Le contrôle d’accès de cette interface est indicatif. Chaque opération éditoriale reste protégée par les contrôles de rôle des fonctions PostgreSQL ; aucun droit n’est accordé par le frontend seul.</p>`;
+}
+
+function learningPathEditorView(pathId = "nouveau") {
+  if (!currentSession?.user) return loginView();
+  const membership = data.membership;
+  if (!["OWNER","ADMIN","EDITOR"].includes(membership?.role) || membership.membership_status !== "ACTIVE") {
+    return notFound("Édition non autorisée", "La gestion des parcours est réservée aux rôles Owner, Admin et Editor.");
+  }
+  const isNew = !pathId || pathId === "nouveau";
+  const path = isNew ? null : (data.editorialPaths || []).find((item) => item.id === pathId);
+  if (!isNew && (!path || path.status !== "DRAFT")) return notFound("Brouillon indisponible", "Seuls les parcours au statut DRAFT peuvent être modifiés.");
+  const selected = new Set(data.pathItems.filter((item) => item.path_id === path?.id).map((item) => item.content_id));
+  const resources = [...data.content].sort((a,b) => a.title.localeCompare(b.title, "fr"));
+  const canPublish = ["OWNER","ADMIN"].includes(membership.role);
+  return `<section class="page-intro"><span class="eyebrow"><a href="#/administration">ESPACE ÉDITORIAL</a> / PARCOURS</span><h1>${isNew ? "Nouveau parcours" : escapeHtml(path.title)}</h1><p>Configurer les métadonnées et la séquence pédagogique. Les ressources proposées sont limitées au catalogue public validé.</p></section>
+    <form class="pathway-editor-form" id="pathway-editor-form" data-path-id="${escapeHtml(path?.id || "")}">
+      <div class="editor-form-grid">
+        <label>Code interne<input name="code" required maxlength="48" value="${escapeHtml(path?.code || "")}" placeholder="BIO-MYCO-01"></label>
+        <label>Identifiant URL<input name="slug" required maxlength="80" value="${escapeHtml(path?.slug || "")}" placeholder="initiation-mycologie"></label>
+        <label class="wide">Titre<input name="title" required maxlength="180" value="${escapeHtml(path?.title || "")}" placeholder="Initiation à la mycologie"></label>
+        <label class="wide">Résumé<textarea name="summary" rows="3">${escapeHtml(path?.summary || "")}</textarea></label>
+        <label class="wide">Public cible<input name="target_audience" value="${escapeHtml(path?.target_audience || "")}" placeholder="Étudiants, techniciens, débutants…"></label>
+        <label>Niveau<select name="difficulty_level">${["INTRODUCTORY","FOUNDATION","INTERMEDIATE","ADVANCED"].map((level) => `<option value="${level}" ${(path?.difficulty_level || "FOUNDATION") === level ? "selected" : ""}>${level}</option>`).join("")}</select></label>
+        <label>Durée estimée (minutes)<input name="duration" type="number" min="1" step="1" value="${escapeHtml(path?.estimated_duration_minutes || "")}" placeholder="120"></label>
+        <label>Version<input name="version_label" value="${escapeHtml(path?.version_label || "0.1")}" maxlength="24"></label>
+      </div>
+      <div class="pathway-resource-picker">
+        <div><span class="eyebrow">SÉQUENCE</span><h2>Ressources du parcours</h2><p>Sélectionne les ressources ; l’ordre alphabétique du catalogue devient l’ordre initial des étapes. Les prérequis sont contrôlés par le moteur backend.</p></div>
+        <select name="content_ids" multiple size="10" aria-label="Ressources à inclure dans le parcours">${resources.map((resource) => `<option value="${escapeHtml(resource.id)}" ${selected.has(resource.id) ? "selected" : ""}>${escapeHtml(resource.title)} · ${escapeHtml(resource.resource_type || "RESSOURCE")}</option>`).join("")}</select>
+        <span class="search-count">${resources.length} ressource(s) publiées disponibles · Ctrl/Cmd pour sélection multiple</span>
+      </div>
+      <div class="pathway-editor-actions"><a class="text-link" href="#/administration">Retour à l’espace éditorial</a><button class="button button-primary" type="submit">Enregistrer le brouillon ↗</button></div>
+      <p id="pathway-editor-feedback" class="auth-feedback" role="status" aria-live="polite"></p>
+    </form>
+    ${!isNew && canPublish ? `<section class="pathway-publish-panel"><div><span class="eyebrow">VALIDATION FINALE</span><h2>Publier ce parcours</h2><p>La publication exige au moins une ressource encore publiée et publique. Elle rend le parcours visible dans le catalogue.</p></div><button class="button button-outline" id="publish-pathway" data-path-id="${escapeHtml(path.id)}">Publier ↗</button></section>` : ""}`;
 }
 
 function learnerView() {
@@ -365,6 +406,7 @@ function render() {
   const path = decodeURIComponent(location.hash.replace(/^#\/?/, ""));
   const [route = "", routeTail = ""] = path.split("/");
   const [slug = "", query = ""] = routeTail.split("?");
+  const [subroute = "", subId = ""] = slug.split("/");
   const pathItemId = new URLSearchParams(query).get("pathItem") || "";
   updateNavigation(route);
   if (loadError) {
@@ -384,7 +426,7 @@ function render() {
     "ressource": () => resourceDetail(slug, pathItemId),
     "parcours": () => slug ? learningPathDetail(slug) : learningPathsView(),
     "espace": learnerView,
-    "administration": administrationView,
+    "administration": () => subroute === "parcours" ? learningPathEditorView(subId) : administrationView(),
     "atlas": atlasView,
     "apropos": aboutView
   };
@@ -427,6 +469,44 @@ function render() {
   if (route === "catalogue") {
     document.querySelector("#resource-search")?.addEventListener("input", (event) => filterCatalogue(event.target.value));
   }
+  document.querySelector("#pathway-editor-form")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    const feedback = document.querySelector("#pathway-editor-feedback");
+    button.disabled = true;
+    feedback.textContent = "Enregistrement du brouillon…";
+    try {
+      const values = new FormData(form);
+      const pathId = await saveLearningPathDraft({
+        id: form.dataset.pathId || null, code: values.get("code"), slug: values.get("slug"),
+        title: values.get("title"), summary: values.get("summary"),
+        targetAudience: values.get("target_audience"), difficultyLevel: values.get("difficulty_level"),
+        durationMinutes: values.get("duration"), versionLabel: values.get("version_label")
+      });
+      const contentIds = values.getAll("content_ids");
+      await saveLearningPathItems(pathId, contentIds.map((contentId) => ({
+        content_id: contentId, is_required: true, prerequisites: []
+      })));
+      location.hash = `#/administration/parcours/${encodeURIComponent(pathId)}`;
+      await refresh();
+    } catch (error) {
+      feedback.textContent = error.message || "Enregistrement impossible.";
+      button.disabled = false;
+    }
+  });
+  document.querySelector("#publish-pathway")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    try {
+      await publishLearningPath(button.dataset.pathId);
+      await refresh();
+      location.hash = "#/administration";
+    } catch (error) {
+      window.alert(error.message || "Publication impossible.");
+      button.disabled = false;
+    }
+  });
   document.querySelector("#login-form")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const feedback = document.querySelector("#auth-feedback");
