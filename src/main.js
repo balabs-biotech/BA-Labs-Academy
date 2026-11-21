@@ -338,6 +338,18 @@ function learnerDashboardView() {
     <button class="button button-outline" id="logout">Se déconnecter</button>`;
 }
 
+function trainingCatalogView() {
+  const offerings=data.publicTrainingOfferings||[];
+  const sessions=data.publicTrainingSessions||[];
+  const labels={PRIVATE_WORKSHOP:"Atelier BA Labs",PARTNER_DELIVERED:"Programme opéré avec partenaire",APPROVED_ESTABLISHMENT:"Programme via établissement partenaire"};
+  const modes={IN_PERSON:"Présentiel",HYBRID:"Hybride",DISTANCE:"À distance",ALTERNATING:"Alterné"};
+  return `<section class="page-intro"><span class="eyebrow">BA LABS ACADEMY · FORMATIONS COURTES</span><h1>Formations & ateliers</h1><p>Catalogue public des offres activées et des prochaines sessions ouvertes. Les informations de lieu et d'inscription sont communiquées dans le cadre de chaque session.</p></section>
+  ${offerings.length?`<div class="training-public-grid">${offerings.map(o=>{
+    const upcoming=sessions.filter(s=>s.offering_id===o.id);
+    return `<article class="training-public-card"><span class="eyebrow">${escapeHtml(o.specialty_code)} · ${escapeHtml(o.audience_profile==="MIXED"?"Public mixte":o.audience_profile==="PROFESSIONAL"?"Professionnels":"Tout public")}</span><h2>${escapeHtml(o.title)}</h2><p>${escapeHtml(o.description||"Présentation détaillée à venir.")}</p><div class="training-public-meta"><span>${escapeHtml(labels[o.delivery_regime]||"Formation")}</span><span>${Number(o.default_duration_days||0)} jour(s)</span></div>${upcoming.length?`<div class="training-public-sessions"><b>Sessions ouvertes</b>${upcoming.map(s=>`<div><span>${new Date(s.starts_at).toLocaleDateString("fr-FR")} – ${new Date(s.ends_at).toLocaleDateString("fr-FR")}</span><small>${escapeHtml(modes[s.delivery_mode]||s.delivery_mode)}</small></div>`).join("")}</div>`:'<p class="progress-note">Aucune session ouverte pour le moment.</p>'}</article>`;
+  }).join("")}</div>`:emptyState("Le catalogue de formations est en préparation","Les offres seront affichées ici après leur validation et leur activation dans l’espace Academy.")}`;
+}
+
 function trainingOperationsView(membership) {
   const canEdit = ["OWNER","ADMIN","EDITOR"].includes(membership.role);
   const canManage = ["OWNER","ADMIN"].includes(membership.role);
@@ -751,6 +763,7 @@ function render() {
     "departements": () => slug ? departmentDetail(slug) : departmentsView(),
     "domaines": () => domainDetail(slug),
     "catalogue": catalogueView,
+    "formations": trainingCatalogView,
     "recherche": () => searchResultsView(new URLSearchParams(query).get("q") || ""),
     "ressource": () => resourceDetail(slug, pathItemId),
     "evaluations": () => assessmentDetail(slug, new URLSearchParams(query).get("attempt") || ""),
