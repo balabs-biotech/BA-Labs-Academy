@@ -90,3 +90,30 @@ test("The Academy universe separates disciplinary territories and pathway transf
     assert.equal(edge.b.entity_type, "SECTION");
   }
 });
+
+
+test("The graph accepts explicit, typed module-to-module knowledge relations", () => {
+  const relation = {
+    source: "module:MYC-01:01",
+    target: "module:MIC-03:01",
+    type: "METHOD_TRANSFER",
+    evidence: "Validated editorial relation",
+    status: "verified"
+  };
+  const linked = buildAcademyGraph(catalogueMap, [], cataloguePathways, [relation]);
+  const edge = linked.edges.find((item) => item.id === "knowledge:module:MYC-01:01:METHOD_TRANSFER:module:MIC-03:01");
+  assert.ok(edge, "explicit module relation should be represented as a graph edge");
+  assert.equal(edge.a.id, relation.source);
+  assert.equal(edge.b.id, relation.target);
+  assert.equal(edge.relation_type, "METHOD_TRANSFER");
+  assert.equal(edge.verified, true);
+  assert.equal(edge.basis, "academy-knowledge-relation");
+});
+
+test("Unknown relation types and unresolved endpoints are excluded from the graph", () => {
+  const linked = buildAcademyGraph(catalogueMap, [], cataloguePathways, [
+    { source: "module:MYC-01:01", target: "module:MIC-03:01", type: "MADE_UP", status: "verified" },
+    { source: "module:MYC-01:01", target: "module:DOES-NOT-EXIST:01", type: "PREREQUISITE", status: "verified" }
+  ]);
+  assert.equal(linked.edges.filter((edge) => edge.basis === "academy-knowledge-relation").length, 0);
+});
