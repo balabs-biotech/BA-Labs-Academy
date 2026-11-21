@@ -52,6 +52,7 @@ export function renderAcademyAtlas(graph) {
       <nav class="atlas-root-navigation" aria-label="Accès direct aux départements">
         ${rootNavigation(departmentRoots, "departments", "DÉPARTEMENTS")}
       </nav>
+      ${rootNavigation(pathwayRoots, "pathways", "PARCOURS PRATIQUES")}
       <details class="atlas-utility-disclosure atlas-filter-disclosure">
         <summary>FILTRES DES CONNEXIONS <span>7</span></summary>
         <div class="atlas-relation-filters" role="group" aria-label="Filtres des connexions pédagogiques">
