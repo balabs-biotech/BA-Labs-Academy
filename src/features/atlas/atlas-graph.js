@@ -235,6 +235,22 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     }
   });
 
+  // Eight visual trunks connect the central BA Labs core to the eight disciplinary roots.
+  // They are morphology-only: never inserted into graph.edges or the academic taxonomy.
+  const academyCore = departmentNodes.get("MYC");
+  const morphologyBranches = [...departmentNodes.entries()]
+    .filter(([code]) => code !== "MYC")
+    .map(([code, target]) => ({
+      id: "morphology:MYC:" + code,
+      sourceId: academyCore.id,
+      targetId: target.id,
+      source: academyCore,
+      target,
+      rootId: target.rootId,
+      seed: hash(academyCore.id + "|morphology|" + target.id),
+      visualOnly: true
+    }));
+
   // Pathways connect canonical departments and transversal domains without duplicating modules.
   pathways.forEach((pathway) => {
     const source = byId.get("pathway:" + pathway.code);
@@ -336,6 +352,7 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
   return {
     nodes,
     edges,
+    morphologyBranches,
     stats: {
       departments: departments.length,
       domains: domainNodes.size,
