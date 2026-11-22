@@ -6,14 +6,17 @@ import { PALETTE } from "./atlas-palette.js";
  * The backdrop is deliberately separate from graph edges: rings and radial
  * guides establish spatial orientation without asserting knowledge relations.
  */
-export function createAtlasRenderStage(app) {
-  const field = new Graphics();
+export function createAtlasRenderStage(app, pixi = {}) {
+  const LayerGraphics = pixi.Graphics || Graphics;
+  const LayerContainer = pixi.Container || Container;
+  const LayerTextStyle = pixi.TextStyle || TextStyle;
+  const field = new LayerGraphics();
   const filaments = new Graphics();
   const junctions = new Graphics();
-  const labels = new Container();
+  const labels = new LayerContainer();
   app.stage.addChild(field, filaments, junctions, labels);
 
-  const style = new TextStyle({
+  const style = new LayerTextStyle({
     fontFamily: "Inter, system-ui, sans-serif",
     fontSize: 12,
     fill: 0xf2f1e9,
