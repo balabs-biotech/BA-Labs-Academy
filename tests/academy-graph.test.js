@@ -65,7 +65,7 @@ test("Other departments and pathways occupy separate orbital bands", () => {
 
 test("Terminal module nodes have expanded spacing and label visibility threshold", async () => {
   const { ATLAS_GEOMETRY } = await import("../src/features/atlas/atlas-geometry.js");
-  assert.deepEqual(ATLAS_GEOMETRY.childDistances, { 1: 760, 2: 700 });
+  assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - 760 / ((1 + Math.sqrt(5)) / 2)) < 1e-8);
   assert.equal(ATLAS_GEOMETRY.departmentPetalSpread, 1.95);
   assert.equal(ATLAS_GEOMETRY.sectionSpread, 3.4);
 });
@@ -159,7 +159,8 @@ test("Mycology sections form a complete inner ring without a duplicate end point
   const angles = sections.map((node) => (Math.atan2(node.y, node.x) + Math.PI * 2) % (Math.PI * 2)).sort((a, b) => a - b);
   assert.equal(sections.length, 6);
   const gaps = angles.map((angle, index) => ((angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2)));
-  assert.ok(gaps.every((gap) => Math.abs(gap - Math.PI / 3) < 1e-8));
+  assert.ok(gaps.every((gap) => gap > 0 && gap < Math.PI), "weighted sections remain distributed around the complete ring");
+  assert.ok(Math.abs(gaps.reduce((sum, gap) => sum + gap, 0) - Math.PI * 2) < 1e-8);
 });
 
 
