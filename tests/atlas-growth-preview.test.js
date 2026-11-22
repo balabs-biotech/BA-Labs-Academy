@@ -176,8 +176,8 @@ test("fractal growth adds bounded deterministic biological irregularity", () => 
   }
   for (const child of children) {
     const distance = Math.hypot(child.x - parent.x, child.y - parent.y);
-    assert.ok(distance >= 1250 * 0.94 - 0.001);
-    assert.ok(distance <= 1250 * 1.06 + 0.001);
+    assert.ok(distance >= ATLAS_GEOMETRY.childDistances[1] * 0.94 - 0.001);
+    assert.ok(distance <= ATLAS_GEOMETRY.childDistances[1] * 1.06 + 0.001);
   }
 });
 
