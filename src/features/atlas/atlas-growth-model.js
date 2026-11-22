@@ -1,0 +1,144 @@
+import { ATLAS_GOLDEN_RATIO, ATLAS_GEOMETRY } from "./atlas-geometry.js";
+import { createAtlasConnectionCurve } from "./atlas-curve.js";
+
+const DEFAULT_OCCUPANCY = 1 - 1 / (ATLAS_GOLDEN_RATIO ** 3);
+
+function descendantsWeight(nodeId, childrenByParent, memo, visiting) {
+  if (memo.has(nodeId)) return memo.get(nodeId);
+  if (visiting.has(nodeId)) throw new Error("Atlas hierarchy contains a cycle at " + nodeId);
+  visiting.add(nodeId);
+  const children = childrenByParent.get(nodeId) || [];
+  const weight = children.length
+    ? children.reduce((sum, child) => sum + descendantsWeight(child.id, childrenByParent, memo, visiting), 0)
+    : 1;
+  visiting.delete(nodeId);
+  memo.set(nodeId, Math.max(1, weight));
+  return Math.max(1, weight);
+}
+
+function allocateSectors(children, parentSector, weights, occupancy) {
+  const totalWeight = children.reduce((sum, child) => sum + weights.get(child.id), 0);
+  const start = parentSector.fullRing ? 0 : -parentSector.spread / 2;
+  let cursor = start;
+  return children.map((child) => {
+    const width = parentSector.spread * weights.get(child.id) / totalWeight;
+    const sector = {
+      angle: parentSector.angle + cursor + width / 2,
+      spread: width * occupancy,
+      fullRing: false
+    };
+    cursor += width;
+    return sector;
+  });
+}
+
+function branchLength(generation) {
+  const base = ATLAS_GEOMETRY.childDistances[1] || 760;
+  return Math.max(96, base / (ATLAS_GOLDEN_RATIO ** Math.max(0, generation - 1)));
+}
+
+/**
+ * Builds a deterministic, recursive growth skeleton from the canonical
+ * parent-child hierarchy. Cross-disciplinary edges remain relationships,
+ * never growth instructions.
+ *
+ * All positions are computed before visibility is filtered. Increasing
+ * visibleDepth therefore reveals another generation without moving any
+ * previously visible node.
+ */
+export function createAtlasGrowthModel({
+  nodes,
+  visibleDepth = Number.POSITIVE_INFINITY,
+  occupancy = DEFAULT_OCCUPANCY
+}) {
+  if (!Array.isArray(nodes)) throw new TypeError("Atlas growth requires a node array");
+  if (!(occupancy > 0 && occupancy <= 1)) throw new RangeError("occupancy must be in (0, 1]");
+
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const childrenByParent = new Map();
+  for (const node of nodes) {
+    if (!node.parent) continue;
+    if (!byId.has(node.parent)) throw new Error("Missing Atlas parent: " + node.parent);
+    if (!childrenByParent.has(node.parent)) childrenByParent.set(node.parent, []);
+    childrenByParent.get(node.parent).push(node);
+  }
+
+  const weights = new Map();
+  // Validate every connected component, including malformed components with no root.
+  for (const node of nodes) descendantsWeight(node.id, childrenByParent, weights, new Set());
+  const roots = nodes.filter((node) => !node.parent);
+  const positioned = new Map();
+  const branches = [];
+
+  function grow(parent, parentSector) {
+    const children = childrenByParent.get(parent.id) || [];
+    if (!children.length) return;
+    const sectors = allocateSectors(children, parentSector, weights, occupancy);
+
+    children.forEach((child, index) => {
+      const sector = sectors[index];
+      const generation = Number.isFinite(child.level) ? child.level : (parent.level || 0) + 1;
+      const distance = branchLength(generation);
+      const point = {
+        ...child,
+        x: parent.x + Math.cos(sector.angle) * distance,
+        y: parent.y + Math.sin(sector.angle) * distance,
+        angle: sector.angle,
+        generation,
+        growthSector: { angle: sector.angle, spread: sector.spread }
+      };
+      positioned.set(child.id, point);
+      const source = positioned.get(parent.id) || parent;
+      const curve = createAtlasConnectionCurve(source, point, {
+        seed: hashString(parent.id + "|" + child.id),
+        depth: generation
+      });
+      branches.push({
+        id: parent.id + "->" + child.id,
+        sourceId: parent.id,
+        targetId: child.id,
+        generation,
+        source,
+        target: point,
+        curve
+      });
+      grow(point, sector);
+    });
+  }
+
+  for (const root of roots) {
+    positioned.set(root.id, { ...root, generation: 0 });
+    const isMycologyCore = root.entity_type === "DEPARTMENT" && root.entity_key === "MYC";
+    const spread = isMycologyCore ? Math.PI * 2 : ATLAS_GEOMETRY.departmentPetalSpread;
+    grow(root, {
+      angle: Number.isFinite(root.angle) ? root.angle : -Math.PI / 2,
+      spread,
+      fullRing: isMycologyCore
+    });
+  }
+
+  const allNodes = nodes.map((node) => positioned.get(node.id) || { ...node, generation: node.level || 0 });
+  const allBranches = branches;
+  return {
+    nodes: allNodes,
+    branches: allBranches,
+    visibleNodes: allNodes.filter((node) => node.generation <= visibleDepth),
+    visibleBranches: allBranches.filter((branch) => branch.generation <= visibleDepth),
+    byId: new Map(allNodes.map((node) => [node.id, node])),
+    maxDepth: allNodes.reduce((max, node) => Math.max(max, node.generation || 0), 0)
+  };
+}
+
+function hashString(value) {
+  let result = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    result = Math.imul(result ^ value.charCodeAt(index), 16777619);
+  }
+  return result >>> 0;
+}
+
+export const ATLAS_GROWTH_DEFAULTS = Object.freeze({
+  occupancy: DEFAULT_OCCUPANCY,
+  generationLengthBase: ATLAS_GEOMETRY.childDistances[1],
+  generationLengthRatio: ATLAS_GOLDEN_RATIO
+});
