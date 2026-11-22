@@ -15,13 +15,14 @@ export async function createPixiRenderer(canvas){
  const stage=createAtlasRenderStage(app, { Container, Graphics, TextStyle });
  const {field,filaments,junctions,labels,style}=stage;
  const labelPool=new Map();
- const renderContext=createAtlasRenderContext(nodes);
+ let renderContext=null,renderNodes=null;
  let lastWidth=0,lastHeight=0;
  function resize(width,height){lastWidth=width;lastHeight=height;app.renderer.resize(width,height);}
  const alphaFor=level=>{const thresholds=[0,.10,.16,.24,.4,.7,1.1],t=thresholds[Math.min(level,thresholds.length-1)];return level===0?1:clamp((cameraScale-t*.72)/(t*.42),0,1);};
  let cameraScale=1;
  function render({nodes,edges,selected,scale,offset,width,height,reduced,relationFilter="all",lang="fr",time=performance.now()}){
   cameraScale=scale;
+  if(renderNodes!==nodes){renderNodes=nodes;renderContext=createAtlasRenderContext(nodes);}
   stage.drawBackdrop({nodes,width,height});
   junctions.clear();
   const {lineage,activeBranch}=renderContext.resolveSelection(selected);
