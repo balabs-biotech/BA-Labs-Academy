@@ -114,7 +114,7 @@ test("global branch expansion propagates through every recursive generation", ()
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
   const model = createAtlasGrowthGraph(graph);
   const root = model.byId.get("department:MIC");
-  const generations = Array.from({ length: model.maxDepth }, (_, index) => index + 1);
+  const generations = Array.from({ length: model.growthPreview.maxDepth }, (_, index) => index + 1);
   for (const generation of generations) {
     const sample = model.nodes.find((node) => node.rootId === "mic" && node.generation === generation);
     assert.ok(sample, `missing generation ${generation}`);
