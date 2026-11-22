@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildAcademyGraph } from "../src/features/atlas/atlas-graph.js";
+import { ATLAS_GEOMETRY } from "../src/features/atlas/atlas-geometry.js";
 
 test("academy graph exports each department's reserved growth sector without changing its anchor", () => {
   const departments = [
@@ -16,6 +17,6 @@ test("academy graph exports each department's reserved growth sector without cha
   assert.equal(bio.growthSector.fullRing, false);
   assert.equal(myc.growthSector.spread, Math.PI * 2);
   assert.equal(myc.growthSector.fullRing, true);
-  assert.equal(bio.x, Math.cos(bio.angle) * 1480);
-  assert.equal(bio.y, Math.sin(bio.angle) * 1480);
+  assert.ok(Math.abs(bio.x - Math.cos(bio.angle) * ATLAS_GEOMETRY.departmentOrbitRadius) < 1e-9);
+  assert.ok(Math.abs(bio.y - Math.sin(bio.angle) * ATLAS_GEOMETRY.departmentOrbitRadius) < 1e-9);
 });
