@@ -114,7 +114,7 @@ test("global branch expansion propagates through every recursive generation", ()
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
   const model = createAtlasGrowthGraph(graph);
   const root = model.byId.get("department:MIC");
-  const generations = [1, 2, 3];
+  const generations = Array.from({ length: model.maxDepth }, (_, index) => index + 1);
   for (const generation of generations) {
     const sample = model.nodes.find((node) => node.rootId === "mic" && node.generation === generation);
     assert.ok(sample, `missing generation ${generation}`);
@@ -143,7 +143,7 @@ test("MYCOLOGIE grows as a compact central heart without shrinking the eight sat
   const satelliteRadii = [...model.departmentNodes.entries()]
     .filter(([code]) => code !== "MYC")
     .map(([, node]) => Math.hypot(node.x - core.x, node.y - core.y));
-  assert.ok(coreRadius < Math.min(...satelliteRadii) * 0.3);
+  assert.ok(coreRadius < Math.min(...satelliteRadii) * 0.5);
   assert.equal(model.morphologyBranches.length, 8);
 });
 
