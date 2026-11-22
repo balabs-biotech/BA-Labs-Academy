@@ -2,7 +2,7 @@ export const ATLAS_GEOMETRY = Object.freeze({
   departmentOrbitRadius: 1480,
   pathwayOrbitRadius: 2080,
   mycologyCoreAngle: -Math.PI / 2,
-  childDistances: Object.freeze({ 1: 760, 2: 700 }),
+  childDistances: Object.freeze({ 1: 760, 2: 620 }),
   departmentPetalSpread: 1.95,
   sectionSpread: 3.4,
   minimumModuleGap: 0.98,
@@ -45,6 +45,27 @@ export function createAtlasDepartmentLayout(departments) {
   }
 
   return { angles, spreads, sectorWidths };
+}
+
+/**
+ * Reserves a proportional angular sector for each intermediate branch.
+ * Sections with more modules receive more room, preventing dense terminal
+ * fans from being compressed into the same narrow wedge as small sections.
+ */
+export function createAtlasChildSectors(items, parentSpread, centerAngle = 0, fullRing = false) {
+  if (!items?.length || !Number.isFinite(parentSpread) || parentSpread <= 0) return [];
+  const weights = items.map((item) => Math.max(1, item.children?.length || 1));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  let cursor = fullRing ? 0 : -parentSpread / 2;
+  return items.map((item, index) => {
+    const width = parentSpread * weights[index] / totalWeight;
+    const sector = {
+      angle: centerAngle + cursor + width / 2,
+      spread: width * 0.94
+    };
+    cursor += width;
+    return sector;
+  });
 }
 
 export function getAtlasNestedBranchSpread(parentSpread, siblingCount, fullRing = false) {
