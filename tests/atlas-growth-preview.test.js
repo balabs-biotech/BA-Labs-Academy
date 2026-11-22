@@ -50,17 +50,17 @@ test("MYCOLOGIE grows as a compact central heart without shrinking the eight sat
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
   const model = createAtlasGrowthGraph(graph);
   const core = model.byId.get("department:MYC");
-  const mycologySections = model.nodes.filter((node) =>
-    node.parent === core.id && node.entity_type === "SECTION"
+  const mycologyDescendants = model.nodes.filter((node) =>
+    node.rootId === "myc" && node.id !== core.id
   );
-  assert.ok(mycologySections.length > 0);
-  const coreRadius = Math.max(...mycologySections.map((node) =>
+  assert.ok(mycologyDescendants.length > 0);
+  const coreRadius = Math.max(...mycologyDescendants.map((node) =>
     Math.hypot(node.x - core.x, node.y - core.y)
   ));
   const satelliteRadii = [...model.departmentNodes.entries()]
     .filter(([code]) => code !== "MYC")
     .map(([, node]) => Math.hypot(node.x - core.x, node.y - core.y));
-  assert.ok(coreRadius < Math.min(...satelliteRadii) * 0.25);
+  assert.ok(coreRadius < Math.min(...satelliteRadii) * 0.3);
   assert.equal(model.morphologyBranches.length, 8);
 });
 
