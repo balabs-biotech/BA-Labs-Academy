@@ -123,18 +123,9 @@ function distanceBetweenSegments(a, b, c, d) {
 export function atlasConnectionCurvesClearance(first, second, options = {}) {
   const a = sampleAtlasConnectionCurve(first, options);
   const b = sampleAtlasConnectionCurve(second, options);
-  const bounds = (points) => ({
-    minX: Math.min(...points.map((point) => point.x)),
-    maxX: Math.max(...points.map((point) => point.x)),
-    minY: Math.min(...points.map((point) => point.y)),
-    maxY: Math.max(...points.map((point) => point.y))
-  });
-  const firstBounds = bounds(a);
-  const secondBounds = bounds(b);
-  const gapX = Math.max(0, firstBounds.minX - secondBounds.maxX, secondBounds.minX - firstBounds.maxX);
-  const gapY = Math.max(0, firstBounds.minY - secondBounds.maxY, secondBounds.minY - firstBounds.maxY);
-  let minimum = Math.hypot(gapX, gapY);
-  if (minimum > 0) return minimum;
+  // Do not substitute a bounding-box gap for the true curve clearance:
+  // the boxes provide only a lower bound, not the distance between filaments.
+  let minimum = Number.POSITIVE_INFINITY;
 
   for (let i = 0; i < a.length - 1; i += 1) {
     for (let j = 0; j < b.length - 1; j += 1) {
