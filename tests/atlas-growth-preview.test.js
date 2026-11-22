@@ -210,6 +210,14 @@ test("sibling curve correction remains bounded and deterministic", () => {
   }
   assert.deepEqual(first.crossGenerationDiagnostics, second.crossGenerationDiagnostics);
   assert.ok(Number.isInteger(first.crossGenerationDiagnostics.comparedPairs));
+  assert.ok(Number.isInteger(first.crossGenerationDiagnostics.broadPhaseRejectedPairs));
+  assert.ok(Number.isInteger(first.crossGenerationDiagnostics.narrowPhasePairs));
+  assert.equal(
+    first.crossGenerationDiagnostics.comparedPairs,
+    first.crossGenerationDiagnostics.broadPhaseRejectedPairs +
+      first.crossGenerationDiagnostics.narrowPhasePairs
+  );
+  assert.ok(first.crossGenerationDiagnostics.broadPhaseRejectedPairs >= 0);
   assert.ok(Number.isInteger(first.crossGenerationDiagnostics.crossingCount));
   assert.ok(first.crossGenerationDiagnostics.crossingCount >= 0);
   assert.ok(Number.isInteger(first.crossGenerationDiagnostics.nearMissCount));
