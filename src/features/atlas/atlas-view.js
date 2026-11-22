@@ -209,7 +209,13 @@ export function mountAcademyAtlas(container, graph) {
   lifecycle.add(() => animation.dispose());
 
   const fitOverview = () => {
-    const camera = fitAtlasCamera(nodes.filter((node) => node.level === 0 && node.entity_type === "DEPARTMENT"), width, height);
+    // Frame the eight disciplinary anchors together with their first fractal
+    // generation. Fitting only department roots clips the actual morphology
+    // trunks at overview scale; deeper taxonomy remains available by zoom.
+    const overviewAnchors = nodes.filter((node) =>
+      node.entity_type === "DEPARTMENT" || (node.level === 1 && node.entity_type !== "PATHWAY")
+    );
+    const camera = fitAtlasCamera(overviewAnchors, width, height);
     if (!camera) return;
     targetScale = camera.scale;
     targetOffset = camera.offset;
