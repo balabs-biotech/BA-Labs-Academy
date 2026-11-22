@@ -247,6 +247,7 @@ test("Atlas wheel renderer keeps the restrained radial motif", () => {
   const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
   assert.ok(source.includes("filaments.circle(0,0,820)"));
   assert.ok(source.includes("filaments.circle(0,0,1600)"));
+  assert.ok(source.includes(".bezierCurveTo(root.x*.32"));
   assert.ok(source.includes("const departmentRoots = nodes.filter"));
   assert.ok(!source.includes('field.moveTo(x,y).quadraticCurveTo'));
   assert.ok(nodesSource.includes("Three arms echo the BA Labs Y mark"));

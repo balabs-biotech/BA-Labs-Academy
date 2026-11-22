@@ -29,7 +29,12 @@ export async function createPixiRenderer(canvas){
   filaments.circle(0,0,1600).stroke({color:0x91a99b,alpha:.055,width:2});
   const departmentRoots = nodes.filter((node) => node.level === 0 && node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
   for (const root of departmentRoots) {
-    filaments.moveTo(0,0).lineTo(root.x,root.y).stroke({color:PALETTE[root.rootId]||0x91a99b,alpha:.12,width:2.2});
+    const angle=Math.atan2(root.y,root.x);
+    const tangent={x:-Math.sin(angle),y:Math.cos(angle)};
+    const side=(root.rootId.charCodeAt(0)%2?1:-1);
+    filaments.moveTo(0,0)
+      .bezierCurveTo(root.x*.32+tangent.x*side*34,root.y*.32+tangent.y*side*34,root.x*.72-tangent.x*side*22,root.y*.72-tangent.y*side*22,root.x,root.y)
+      .stroke({color:PALETTE[root.rootId]||0x91a99b,alpha:.16,width:2.4,cap:"round"});
   }
   const byId=new Map(nodes.map(n=>[n.id,n]));
   const lineage=new Set();let ancestor=selected;

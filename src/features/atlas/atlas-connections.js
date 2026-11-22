@@ -35,16 +35,17 @@ export function renderAtlasConnections({
     // A restrained, deterministic lateral sweep gives branches a living rhythm
     // without implying relationships that are not present in the graph.
     const sharedPathway=e.basis==="academy-pathway-network";
-    const bend=Math.min(sharedPathway?150:42,len*(sharedPathway?.17:.12))*side;
-    const drift=(((seed>>>12)&255)/255-.5)*Math.min(sharedPathway?18:9,len*.025);
-    const c1={x:a.x+dx*.30+nx*bend+tx*drift,y:a.y+dy*.30+ny*bend+ty*drift};
-    const c2={x:a.x+dx*.70+nx*bend*.72-tx*drift*.5,y:a.y+dy*.70+ny*bend*.72-ty*drift*.5};
+    const bend=Math.min(sharedPathway?150:68,len*(sharedPathway?.17:.19))*side;
+    const drift=(((seed>>>12)&255)/255-.5)*Math.min(sharedPathway?18:14,len*.035);
+    const secondaryBend=(((seed>>>20)&127)/127-.5)*Math.min(sharedPathway?24:18,len*.045);
+    const c1={x:a.x+dx*.28+nx*bend+tx*drift,y:a.y+dy*.28+ny*bend+ty*drift};
+    const c2={x:a.x+dx*.72+nx*(bend*.58-secondaryBend)-tx*drift*.45,y:a.y+dy*.72+ny*(bend*.58-secondaryBend)-ty*drift*.45};
     const relationColors={PREREQUISITE:0x80aeb8,COMPLEMENTARY:0xa9a0d4,METHOD_TRANSFER:0xe8c99d,TECHNICAL_DEPENDENCY:0xc88773,APPLIED_IN:0x79a991,INTERDISCIPLINARY:0x7eaaa3};
     const color=PALETTE[e.a.rootId]||0x91a99b;
     const widthBase=sharedPathway?2.2:knowledge?1.35:e.basis==="academy-pathway-flow"?1.05:e.verified?1.2:e.cross?.55:Math.max(.45,(e.depth===1?1.5:e.depth===2?1.15:.85));
     const path=()=>filaments.moveTo(a.x,a.y).bezierCurveTo(c1.x,c1.y,c2.x,c2.y,b.x,b.y);
     if((!e.cross&&depth<=2&&len>34)||sharedPathway){
-      path().stroke({color,alpha:alpha*(sharedPathway?.17:.075),width:widthBase*(sharedPathway?3.5:2.6),cap:"round"});
+      path().stroke({color,alpha:alpha*(sharedPathway?.17:.105),width:widthBase*(sharedPathway?3.5:3.0),cap:"round"});
     }
     path().stroke({color:sharedPathway?0xb8a9df:knowledge?(relationColors[e.relation_type]||0x7eaaa3):e.basis==="academy-pathway-flow"?0xe8c99d:e.verified?(e.basis==="notion-link"?0xb96b4d:e.basis==="academy-pathway"?0xa9a0d4:e.basis==="academy-domain"?0xb5b58d:e.basis==="academy-hierarchy"?color:0x7eaaa3):e.cross?0xb96b4d:color,alpha:alpha*(sharedPathway?.62:knowledge?.88:e.basis==="academy-pathway-flow"?.72:e.verified?.82:e.cross?.34:depth>=3?.42:depth===2?.68:.82),width:widthBase,cap:"round"});
     const midpoint={x:(a.x+3*c1.x+3*c2.x+b.x)/8,y:(a.y+3*c1.y+3*c2.y+b.y)/8};

@@ -58,8 +58,8 @@ test("Other departments and pathways occupy separate orbital bands", () => {
   const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
   const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
   const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
-  assert.ok(meanDepartmentRadius > 1270 && meanDepartmentRadius < 1370);
-  assert.ok(meanPathwayRadius > 1790 && meanPathwayRadius < 1890);
+  assert.ok(meanDepartmentRadius > 1210 && meanDepartmentRadius < 1310);
+  assert.ok(meanPathwayRadius > 1710 && meanPathwayRadius < 1810);
 });
 
 
@@ -123,7 +123,7 @@ test("The overview geometry follows an eight-spoke wheel around the Mycology hub
   const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
   assert.equal(departments.length, 8);
   const radii = departments.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(radii.every((radius) => Math.abs(radius - 1320) < 1e-8));
+  assert.ok(radii.every((radius) => Math.abs(radius - 1260) < 1e-8));
   const angles = departments.map((node) => (Math.atan2(node.y, node.x) + Math.PI * 2) % (Math.PI * 2)).sort((a, b) => a - b);
   const gaps = angles.map((angle, index) => ((angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2)));
   assert.ok(gaps.every((gap) => Math.abs(gap - Math.PI / 4) < 1e-8));
