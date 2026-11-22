@@ -166,15 +166,25 @@ export function createAtlasGrowthModel({
       // Radial spacing responds to both fan population and actual angular
       // crowding. Narrow sectors receive a small bounded extension; the eight
       // generation-1 department anchors are deliberately unchanged.
+      const childCount = (childrenByParent.get(child.id) || []).length;
+      const isTerminal = childCount === 0;
+      // Dense intermediate fans reserve more radial room for their subtrees.
+      // This changes only visual coordinates; hierarchy and node identity stay canonical.
       const populationScale = generation >= 2
-        ? 1 + Math.log2(Math.max(1, children.length)) * 0.075
+        ? 1 + Math.log2(Math.max(1, children.length)) * 0.11
         : 1;
       const angularCrowding = generation >= 2
-        ? Math.max(0, Math.min(1, (0.5 - allocatedWidth) / 0.5)) * 0.08
+        ? Math.max(0, Math.min(1, (0.72 - allocatedWidth) / 0.72)) * 0.14
         : 0;
-      const densityScale = Math.min(1.28, populationScale + angularCrowding);
+      const densityScale = Math.min(1.48, populationScale + angularCrowding);
+      // Terminal endpoints need a wider outer envelope than their parent fan.
+      // The bounded expansion is stronger for crowded sibling groups and does
+      // not move the eight disciplinary root anchors.
+      const terminalExpansion = isTerminal && generation >= 2
+        ? Math.min(1.62, 1.34 + Math.log2(Math.max(1, children.length)) * 0.075)
+        : 1;
       const distance = branchLength(generation, parent.rootId, densityScale) *
-        (0.94 + lengthUnit * 0.12);
+        terminalExpansion * (0.94 + lengthUnit * 0.12);
       const point = {
         ...child,
         x: parent.x + Math.cos(angle) * distance,
