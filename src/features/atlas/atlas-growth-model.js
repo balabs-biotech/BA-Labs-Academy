@@ -255,6 +255,7 @@ export function createAtlasGrowthModel({
     branchesByParent.get(branch.sourceId).push(branch);
   }
   let crossGenerationComparedPairs = 0;
+  let crossGenerationBroadPhaseRejectedPairs = 0;
   let crossGenerationCrossingCount = 0;
   let crossGenerationNearMissCount = 0;
   let crossGenerationMinimumClearance = Number.POSITIVE_INFINITY;
@@ -270,6 +271,15 @@ export function createAtlasGrowthModel({
         startProgress: 0.12,
         endProgress: 0.9
       };
+      // Reject curve pairs whose sampled world-space bounds cannot approach
+      // within the clearance threshold. This broad phase is conservative:
+      // intersecting curves necessarily have overlapping bounds.
+      if (!atlasConnectionCurvesMayBeNear(
+        a.curve, b.curve, CROSS_GENERATION_CLEARANCE_THRESHOLD, comparisonOptions
+      )) {
+        crossGenerationBroadPhaseRejectedPairs += 1;
+        continue;
+      }
       if (atlasConnectionCurvesIntersect(a.curve, b.curve, comparisonOptions)) {
         crossGenerationCrossingCount += 1;
         crossGenerationMinimumClearance = 0;
@@ -319,6 +329,8 @@ export function createAtlasGrowthModel({
     fanDiagnostics,
     crossGenerationDiagnostics: {
       comparedPairs: crossGenerationComparedPairs,
+      broadPhaseRejectedPairs: crossGenerationBroadPhaseRejectedPairs,
+      narrowPhasePairs: crossGenerationComparedPairs - crossGenerationBroadPhaseRejectedPairs,
       crossingCount: crossGenerationCrossingCount,
       nearMissCount: crossGenerationNearMissCount,
       minimumClearance: Number.isFinite(crossGenerationMinimumClearance)
