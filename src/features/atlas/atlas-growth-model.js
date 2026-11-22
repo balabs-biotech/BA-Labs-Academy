@@ -181,7 +181,7 @@ export function createAtlasGrowthModel({
       // The bounded expansion is stronger for crowded sibling groups and does
       // not move the eight disciplinary root anchors.
       const terminalExpansion = isTerminal && generation >= 2
-        ? Math.min(1.62, 1.34 + Math.log2(Math.max(1, children.length)) * 0.075)
+        ? Math.min(2.3, 1.92 + Math.log2(Math.max(1, children.length)) * 0.1)
         : 1;
       const distance = branchLength(generation, parent.rootId, densityScale) *
         terminalExpansion * (0.94 + lengthUnit * 0.12);
