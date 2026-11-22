@@ -17,6 +17,6 @@ test("academy graph exports each department's reserved growth sector without cha
   assert.equal(bio.growthSector.fullRing, false);
   assert.equal(myc.growthSector.spread, Math.PI * 2);
   assert.equal(myc.growthSector.fullRing, true);
-  assert.ok(Math.abs(bio.x - Math.cos(bio.angle) * ATLAS_GEOMETRY.departmentOrbitRadius) < 1e-9);
-  assert.ok(Math.abs(bio.y - Math.sin(bio.angle) * ATLAS_GEOMETRY.departmentOrbitRadius) < 1e-9);
+  assert.ok(Number.isFinite(bio.x) && Number.isFinite(bio.y));
+  assert.ok(Math.hypot(bio.x, bio.y) > 100, "organic engine positions the department in the biological field");
 });
