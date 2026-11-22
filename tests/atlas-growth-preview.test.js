@@ -195,8 +195,11 @@ test("sibling curve correction remains bounded and deterministic", () => {
     assert.ok(repeated);
     assert.equal(branch.bendScale, repeated.bendScale);
     assert.equal(branch.curveAdjustmentAttempts, repeated.curveAdjustmentAttempts);
+    assert.equal(branch.crowdingAdjustmentAttempts, repeated.crowdingAdjustmentAttempts);
     assert.ok(branch.bendScale >= 0.2 && branch.bendScale <= 1);
     assert.ok(branch.curveAdjustmentAttempts >= 0 && branch.curveAdjustmentAttempts <= 8);
+    assert.ok(branch.crowdingAdjustmentAttempts >= 0 &&
+      branch.crowdingAdjustmentAttempts <= branch.curveAdjustmentAttempts);
     assert.equal(branch.crossGenerationChecked, true);
     assert.ok(branchesById.has(branch.id));
   }
