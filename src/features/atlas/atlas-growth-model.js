@@ -208,6 +208,21 @@ export function createAtlasGrowthModel({
     if (!branchesByParent.has(branch.sourceId)) branchesByParent.set(branch.sourceId, []);
     branchesByParent.get(branch.sourceId).push(branch);
   }
+  let crossGenerationComparedPairs = 0;
+  let crossGenerationCrossingCount = 0;
+  for (let first = 0; first < allBranches.length; first += 1) {
+    for (let second = first + 1; second < allBranches.length; second += 1) {
+      const a = allBranches[first];
+      const b = allBranches[second];
+      if (a.sourceId === b.sourceId || a.targetId === b.sourceId || b.targetId === a.sourceId) continue;
+      crossGenerationComparedPairs += 1;
+      if (atlasConnectionCurvesIntersect(a.curve, b.curve, {
+        steps: 16,
+        startProgress: 0.12,
+        endProgress: 0.9
+      })) crossGenerationCrossingCount += 1;
+    }
+  }
   const fanDiagnostics = [...branchesByParent.entries()].map(([parentId, siblings]) => {
     let crossingCount = 0;
     let adjustedBranchCount = 0;
@@ -246,6 +261,10 @@ export function createAtlasGrowthModel({
     nodes: allNodes,
     branches: allBranches,
     fanDiagnostics,
+    crossGenerationDiagnostics: {
+      comparedPairs: crossGenerationComparedPairs,
+      crossingCount: crossGenerationCrossingCount
+    },
     visibleNodes: allNodes.filter((node) => node.generation <= visibleDepth),
     visibleBranches: allBranches.filter((branch) => branch.generation <= visibleDepth),
     byId: new Map(allNodes.map((node) => [node.id, node])),
