@@ -87,7 +87,7 @@ export function createAtlasGrowthModel({
     children.forEach((child, index) => {
       const sector = sectors[index];
       const generation = Number.isFinite(child.level) ? child.level : (parent.level || 0) + 1;
-      const distance = branchLength(generation, parent.rootId || parent.rootId === "" ? parent.rootId : child.rootId);
+      const distance = branchLength(generation, parent.rootId);
       const point = {
         ...child,
         x: parent.x + Math.cos(sector.angle) * distance,
