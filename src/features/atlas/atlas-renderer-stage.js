@@ -9,8 +9,8 @@ export function createAtlasRenderStage(app, pixi) {
   const { Graphics: LayerGraphics, Container: LayerContainer, TextStyle: LayerTextStyle } = pixi || {};
   if (!LayerGraphics || !LayerContainer || !LayerTextStyle) throw new TypeError("Pixi layer constructors are required");
   const field = new LayerGraphics();
-  const filaments = new Graphics();
-  const junctions = new Graphics();
+  const filaments = new LayerGraphics();
+  const junctions = new LayerGraphics();
   const labels = new LayerContainer();
   app.stage.addChild(field, filaments, junctions, labels);
 
