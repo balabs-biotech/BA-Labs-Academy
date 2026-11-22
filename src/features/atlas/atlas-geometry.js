@@ -1,8 +1,10 @@
+export const ATLAS_GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
+
 export const ATLAS_GEOMETRY = Object.freeze({
   departmentOrbitRadius: 1480,
   pathwayOrbitRadius: 2080,
   mycologyCoreAngle: -Math.PI / 2,
-  childDistances: Object.freeze({ 1: 760, 2: 620 }),
+  childDistances: Object.freeze({ 1: 760, 2: 760 / ATLAS_GOLDEN_RATIO }),
   departmentPetalSpread: 1.95,
   sectionSpread: 3.4,
   minimumModuleGap: 0.98,
@@ -10,6 +12,7 @@ export const ATLAS_GEOMETRY = Object.freeze({
 });
 
 const TAU = Math.PI * 2;
+const GOLDEN_OCCUPANCY = 1 / ATLAS_GOLDEN_RATIO;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 /**
@@ -61,11 +64,21 @@ export function createAtlasChildSectors(items, parentSpread, centerAngle = 0, fu
     const width = parentSpread * weights[index] / totalWeight;
     const sector = {
       angle: centerAngle + cursor + width / 2,
-      spread: width * 0.94
+      spread: width * GOLDEN_OCCUPANCY
     };
     cursor += width;
     return sector;
   });
+}
+
+export function getAtlasGoldenConnectionProfile(length, depth = 1) {
+  const safeLength = Math.max(0, Number(length) || 0);
+  const safeDepth = Math.max(1, Number(depth) || 1);
+  return {
+    controlPointRatio: 1 / ATLAS_GOLDEN_RATIO,
+    bend: safeLength / (ATLAS_GOLDEN_RATIO ** 2),
+    width: 1.5 / (ATLAS_GOLDEN_RATIO ** (safeDepth - 1))
+  };
 }
 
 export function getAtlasNestedBranchSpread(parentSpread, siblingCount, fullRing = false) {
