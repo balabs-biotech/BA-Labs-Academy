@@ -37,17 +37,12 @@ function allocateSectors(children, parentSector, weights, occupancy) {
   });
 }
 
-function branchLength(generation, rootId, siblingCount) {
+function branchLength(generation, rootId, densityScale) {
   const base = ATLAS_GEOMETRY.childDistances[1] || 760;
   const recursiveLength = base / (ATLAS_GOLDEN_RATIO ** Math.max(0, generation - 1));
   // MYCOLOGIE is the central heart, not a ninth satellite arm. Keep its
   // internal taxonomy compact so the eight disciplinary trunks stay legible.
   const coreScale = rootId === "myc" ? 0.28 : 1;
-  // Dense secondary fans need a little more radial room to keep adjacent
-  // filaments legible. Primary department anchors remain geometrically fixed.
-  const densityScale = generation >= 2
-    ? Math.min(1.28, 1 + Math.log2(Math.max(1, siblingCount)) * 0.075)
-    : 1;
   return Math.max(72, recursiveLength * coreScale * densityScale);
 }
 
@@ -101,10 +96,17 @@ export function createAtlasGrowthModel({
         ? (angularUnit - 0.5) * allocatedWidth * 0.18
         : 0;
       const angle = sector.angle + angularJitter;
-      const densityScale = generation >= 2
-        ? Math.min(1.28, 1 + Math.log2(Math.max(1, children.length)) * 0.075)
+      // Radial spacing responds to both fan population and actual angular
+      // crowding. Narrow sectors receive a small bounded extension; the eight
+      // generation-1 department anchors are deliberately unchanged.
+      const populationScale = generation >= 2
+        ? 1 + Math.log2(Math.max(1, children.length)) * 0.075
         : 1;
-      const distance = branchLength(generation, parent.rootId, children.length) *
+      const angularCrowding = generation >= 2
+        ? Math.max(0, Math.min(1, (0.5 - allocatedWidth) / 0.5)) * 0.08
+        : 0;
+      const densityScale = Math.min(1.28, populationScale + angularCrowding);
+      const distance = branchLength(generation, parent.rootId, densityScale) *
         (0.94 + lengthUnit * 0.12);
       const point = {
         ...child,
@@ -118,6 +120,7 @@ export function createAtlasGrowthModel({
           angularOffset: angularJitter,
           allocatedSpread: allocatedWidth,
           densityScale,
+          angularCrowding,
           spread: sector.spread
         }
       };
