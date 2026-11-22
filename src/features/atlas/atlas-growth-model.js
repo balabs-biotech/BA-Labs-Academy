@@ -37,13 +37,18 @@ function allocateSectors(children, parentSector, weights, occupancy) {
   });
 }
 
-function branchLength(generation, rootId) {
+function branchLength(generation, rootId, siblingCount) {
   const base = ATLAS_GEOMETRY.childDistances[1] || 760;
   const recursiveLength = base / (ATLAS_GOLDEN_RATIO ** Math.max(0, generation - 1));
   // MYCOLOGIE is the central heart, not a ninth satellite arm. Keep its
   // internal taxonomy compact so the eight disciplinary trunks stay legible.
   const coreScale = rootId === "myc" ? 0.28 : 1;
-  return Math.max(72, recursiveLength * coreScale);
+  // Dense secondary fans need a little more radial room to keep adjacent
+  // filaments legible. Primary department anchors remain geometrically fixed.
+  const densityScale = generation >= 2
+    ? Math.min(1.28, 1 + Math.log2(Math.max(1, siblingCount)) * 0.075)
+    : 1;
+  return Math.max(72, recursiveLength * coreScale * densityScale);
 }
 
 /**
@@ -96,7 +101,10 @@ export function createAtlasGrowthModel({
         ? (angularUnit - 0.5) * allocatedWidth * 0.18
         : 0;
       const angle = sector.angle + angularJitter;
-      const distance = branchLength(generation, parent.rootId) *
+      const densityScale = generation >= 2
+        ? Math.min(1.28, 1 + Math.log2(Math.max(1, children.length)) * 0.075)
+        : 1;
+      const distance = branchLength(generation, parent.rootId, children.length) *
         (0.94 + lengthUnit * 0.12);
       const point = {
         ...child,
@@ -109,6 +117,7 @@ export function createAtlasGrowthModel({
           centerAngle: sector.angle,
           angularOffset: angularJitter,
           allocatedSpread: allocatedWidth,
+          densityScale,
           spread: sector.spread
         }
       };
