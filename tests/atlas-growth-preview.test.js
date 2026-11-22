@@ -98,14 +98,14 @@ test("terminal department anchors and first-generation endpoints use the expande
   assert.equal(departments.length, 8);
   for (const department of departments) {
     const radius = Math.hypot(department.x - core.x, department.y - core.y);
-    assert.ok(Math.abs(radius - 1850) < 1e-6);
+    assert.ok(Math.abs(radius - ATLAS_GEOMETRY.departmentOrbitRadius) < 1e-6);
     const firstGeneration = model.nodes.filter((node) =>
       node.parent === department.id && node.generation === 1
     );
     for (const endpoint of firstGeneration) {
       const distance = Math.hypot(endpoint.x - department.x, endpoint.y - department.y);
-      assert.ok(distance >= 1250 * 0.94 - 0.001);
-      assert.ok(distance <= 1250 * 1.06 + 0.001);
+      assert.ok(distance >= ATLAS_GEOMETRY.childDistances[1] * 0.94 - 0.001);
+      assert.ok(distance <= ATLAS_GEOMETRY.childDistances[1] * 1.06 + 0.001);
     }
   }
 });
@@ -120,13 +120,13 @@ test("global branch expansion propagates through every recursive generation", ()
     assert.ok(sample, `missing generation ${generation}`);
     const parent = model.byId.get(sample.parent);
     const distance = Math.hypot(sample.x - parent.x, sample.y - parent.y);
-    const expected = (1250 / ((1 + Math.sqrt(5)) / 2) ** (generation - 1)) *
+    const expected = (ATLAS_GEOMETRY.childDistances[1] / ((1 + Math.sqrt(5)) / 2) ** (generation - 1)) *
       sample.growthSector.densityScale;
     assert.ok(distance >= expected * 0.94 - 0.001);
     assert.ok(distance <= expected * 1.06 + 0.001);
   }
   assert.ok(root);
-  assert.equal(ATLAS_GEOMETRY.branchOccupancy, 0.9);
+  assert.equal(ATLAS_GEOMETRY.branchOccupancy, 0.96);
 });
 
 test("MYCOLOGIE grows as a compact central heart without shrinking the eight satellite axes", () => {
