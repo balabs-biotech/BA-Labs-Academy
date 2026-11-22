@@ -684,6 +684,23 @@ test("Atlas label placement searches alternate positions instead of suppressing 
  assert.ok(placement.box.left>=0&&placement.box.right<=400);
 });
 
+test("Atlas label placement uses local collision candidates instead of scanning the full label set", async () => {
+ const { placeAtlasLabel } = await import("../src/features/atlas/atlas-label-placement.js");
+ const occupied=Array.from({length:240},(_,index)=>{
+  const x=(index%24)*140;
+  const y=Math.floor(index/24)*140;
+  return {left:x,right:x+24,top:y,bottom:y+18};
+ });
+ const collisionStats={comparisons:0};
+ const placement=placeAtlasLabel({
+  x:70,y:70,width:28,height:18,anchorX:0.5,anchorY:0.5,angle:0,
+  bounds:{left:0,right:3400,top:0,bottom:1500},occupied,collisionStats
+ });
+ assert.ok(placement);
+ assert.ok(collisionStats.comparisons<occupied.length/4,
+  "a sparse label field should only compare against nearby labels");
+});
+
 test("Atlas label placement returns the least-overlapping bounded position when space is dense", async () => {
  const { placeAtlasLabel } = await import("../src/features/atlas/atlas-label-placement.js");
  const occupied=Array.from({length:8},(_,index)=>({left:0,right:300,top:index*30,bottom:index*30+30}));
