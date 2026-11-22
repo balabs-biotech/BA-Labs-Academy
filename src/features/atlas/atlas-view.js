@@ -31,15 +31,17 @@ export function renderAcademyAtlas(graph) {
   const pathwayRoots = graph.nodes.filter((node) => node.entity_type === "PATHWAY" && node.level === 0);
   const growthControls = graph.growthPreview
     ? `<div class="atlas-growth-preview-controls">
-        <span class="eyebrow">APERÇU EXPÉRIMENTAL · CROISSANCE ORGANIQUE</span>
-        <span>Profondeur ${graph.growthPreview.depth} / ${graph.growthPreview.maxDepth} · ${graph.growthPreview.visibleNodes} nœuds visibles</span>
+        <span class="eyebrow">STRUCTURE FRACTALE ACTIVE · ${graph.growthPreview.visibleNodes} NŒUDS VISIBLES</span>
+        <span>${Number.isFinite(graph.growthPreview.depth)
+          ? `Génération ${graph.growthPreview.depth} / ${graph.growthPreview.maxDepth}`
+          : "Toutes les ramifications sont déployées"}</span>
         ${Array.from({ length: graph.growthPreview.maxDepth + 1 }, (_, depth) =>
-          `<a class="text-link" href="?atlas-growth=1&atlas-depth=${depth}#/atlas" aria-current="${depth === graph.growthPreview.depth ? "page" : "false"}">Génération ${depth}</a>`
+          `<a class="text-link" href="?atlas-depth=${depth}#/atlas" aria-current="${depth === graph.growthPreview.depth ? "page" : "false"}">Génération ${depth}</a>`
         ).join("")}
-        <a class="text-link" href="?atlas-growth=0#/atlas">Vue actuelle</a>
+        <a class="text-link" href="?atlas-growth=0#/atlas">Vue orbitale de référence</a>
       </div>`
     : `<div class="atlas-growth-preview-controls">
-        <a class="text-link" href="?atlas-growth=1&atlas-depth=2#/atlas">Tester l'aperçu de croissance organique ↗</a>
+        <a class="text-link" href="?atlas-growth=1#/atlas">Activer la structure fractale</a>
       </div>`;
   const rootNavigation = (items, kind, label) => {
     const content = `
