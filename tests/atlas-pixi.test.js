@@ -615,11 +615,15 @@ test("Atlas animation stops scheduling frames when the renderer reports a settle
   });
   animation.start();
   let id = nextId;
-  callbacks.get(id)();
+  const firstFrame = callbacks.get(id);
+  callbacks.delete(id);
+  firstFrame();
   assert.equal(callbacks.size, 1, "active scenes keep their frame loop");
   continueFrames = false;
   id = nextId;
-  callbacks.get(id)();
+  const settlingFrame = callbacks.get(id);
+  callbacks.delete(id);
+  settlingFrame();
   assert.equal(frames, 2);
   assert.equal(animation.running, false, "settled scenes stop the frame loop");
   assert.equal(callbacks.size, 0);
