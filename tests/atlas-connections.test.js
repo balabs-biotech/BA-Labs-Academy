@@ -72,3 +72,14 @@ test("recursive branch curvature tapers with hierarchy depth", () => {
   assert.ok(Math.abs(secondaryBend / primaryBend - 1 / Math.sqrt(2)) < 0.001);
   assert.ok(Math.abs(tertiaryBend / primaryBend - 1 / Math.sqrt(3)) < 0.001);
 });
+
+
+test("narrow hierarchy sectors constrain lateral curve excursions", () => {
+  const a = { id: "parent", x: 0, y: 0 };
+  const b = { id: "child", x: 300, y: 0 };
+  const broad = createAtlasConnectionCurve(a, b, { seed: 17, bendScale: 1 });
+  const narrow = createAtlasConnectionCurve(a, b, { seed: 17, bendScale: 0.35 });
+  assert.ok(Math.abs(narrow.c1.y) < Math.abs(broad.c1.y));
+  assert.ok(Math.abs(narrow.c2.y) < Math.abs(broad.c2.y));
+  assert.ok(Math.abs(narrow.c1.y / broad.c1.y - 0.35) < 0.001);
+});
