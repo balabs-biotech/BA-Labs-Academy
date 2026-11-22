@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { getAtlasConnectionCurveForEdge } from "../src/features/atlas/atlas-connections.js";
-import { createAtlasConnectionCurve } from "../src/features/atlas/atlas-curve.js";
+import { atlasConnectionCurvesIntersect, createAtlasConnectionCurve, sampleAtlasConnectionCurve } from "../src/features/atlas/atlas-curve.js";
 
 function makeEdge() {
   return {
@@ -82,4 +82,22 @@ test("narrow hierarchy sectors constrain lateral curve excursions", () => {
   assert.ok(Math.abs(narrow.c1.y) < Math.abs(broad.c1.y));
   assert.ok(Math.abs(narrow.c2.y) < Math.abs(broad.c2.y));
   assert.ok(Math.abs(narrow.c1.y / broad.c1.y - 0.35) < 0.001);
+});
+
+test("fixed-step curve sampling is stable and excludes the shared launch region", () => {
+  const a = { id: "parent", x: 0, y: 0 };
+  const b = { id: "child", x: 300, y: 0 };
+  const curve = createAtlasConnectionCurve(a, b, { seed: 17 });
+  const samples = sampleAtlasConnectionCurve(curve, { steps: 12, startProgress: 0.2 });
+  assert.equal(samples.length, 13);
+  assert.ok(Math.abs(samples[0].progress - 0.2) < 1e-12);
+  assert.equal(samples.at(-1).progress, 1);
+  assert.deepEqual(samples, sampleAtlasConnectionCurve(curve, { steps: 12, startProgress: 0.2 }));
+});
+
+test("crossing diagnostics distinguish separated and intersecting cubic filaments", () => {
+  const origin = { id: "parent", x: 0, y: 0 };
+  const upper = createAtlasConnectionCurve(origin, { id: "upper", x: 300, y: 100 }, { seed: 17, bendScale: 0.2 });
+  const lower = createAtlasConnectionCurve(origin, { id: "lower", x: 300, y: -100 }, { seed: 17, bendScale: 0.2 });
+  assert.equal(atlasConnectionCurvesIntersect(upper, lower, { steps: 32, startProgress: 0.12 }), false);
 });
