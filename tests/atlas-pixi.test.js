@@ -354,6 +354,15 @@ test("Atlas accessible node index is rendered by its own view adapter", async ()
 });
 
 
+test("Atlas accessible navigation is populated before the graphics backend initializes", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  const accessibleCall = source.indexOf("renderAccessible();");
+  const rendererInitialization = source.indexOf("rendererHost.initialize()");
+  assert.notEqual(accessibleCall, -1, "accessible navigation must be initialized");
+  assert.ok(accessibleCall < rendererInitialization,
+    "keyboard navigation must not depend on successful Pixi/WebGL initialization");
+});
+
 test("Atlas selection panel has a dedicated rendering module", async () => {
   const { renderAtlasSelectionPanel } = await import("../src/features/atlas/atlas-selection.js");
   assert.equal(typeof renderAtlasSelectionPanel, "function");
