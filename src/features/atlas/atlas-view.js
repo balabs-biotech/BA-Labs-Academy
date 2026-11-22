@@ -405,11 +405,13 @@ export function mountAcademyAtlas(container, graph) {
     lifecycle.listen(window, "resize", resize, { passive: true });
   }
 
+  // Keep the semantic navigation available even when Pixi/WebGL cannot start.
+  renderAccessible();
+
   rendererHost.initialize().then(() => {
     if (lifecycle.disposed) return;
     renderer = rendererHost;
     resize();
-    renderAccessible();
     updateSelection();
     engineState.textContent = "Moteur actif · WebGL 2D";
     loading.hidden = true;
@@ -417,7 +419,7 @@ export function mountAcademyAtlas(container, graph) {
   }).catch((error) => {
     console.error("Academy PixiJS Atlas initialization failed", error);
     engineState.textContent = "Moteur indisponible";
-    loading.querySelector("p").textContent = "Le moteur graphique n’a pas pu démarrer. Vérifie la prise en charge WebGL du navigateur.";
+    loading.querySelector("p").textContent = "Le moteur graphique n’a pas pu démarrer. La navigation textuelle reste disponible ci-dessous.";
     loading.classList.add("is-error");
   });
 
