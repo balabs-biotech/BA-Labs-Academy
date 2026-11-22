@@ -5,8 +5,7 @@ import { renderAtlasNodes } from "./atlas-nodes.js";
 import { renderAtlasLabels } from "./atlas-labels.js";
 import { createAtlasPixiFrameRenderer } from "./atlas-pixi-frame-renderer.js";
 import { createAtlasLabelResources } from "./atlas-label-resources.js";
-
-const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+import { getAtlasLevelAlpha } from "./atlas-lod.js";
 
 export async function createPixiRenderer(canvas) {
   const app = new Application();
@@ -30,13 +29,9 @@ export async function createPixiRenderer(canvas) {
     container: stage.labels,
     createLabel
   });
-  let cameraScale = 1;
 
-  const alphaFor = (level) => {
-    const thresholds = [0, 0.10, 0.16, 0.24, 0.4, 0.7, 1.1];
-    const threshold = thresholds[Math.min(level, thresholds.length - 1)];
-    return level === 0 ? 1 : clamp((cameraScale - threshold * 0.72) / (threshold * 0.42), 0, 1);
-  };
+  const alphaFor = (level) => getAtlasLevelAlpha(level, cameraScale);
+  let cameraScale = 1;
 
   const frameRenderer = createAtlasPixiFrameRenderer({
     stage,
