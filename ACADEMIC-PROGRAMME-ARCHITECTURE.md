@@ -5,7 +5,7 @@
 L’Academy distingue les objets suivants :
 
 - **Département** : discipline scientifique de référence.
-- **Domaine** : axe thématique ou transversal, rattaché à un ou plusieurs départements selon le modèle éditorial.
+- **Domaine** : axe thématique rattaché à un département ; ses liens transversaux avec d'autres disciplines passent par des relations explicites du graphe et des parcours.
 - **Programme** : offre structurée autour d'une finalité, d'un public, de prérequis et de résultats attendus.
 - **Structure de programme** : organisation des blocs et modules qui composent l'offre.
 - **Parcours pédagogique** : progression ordonnée qui mobilise des modules, activités et ressources réutilisables.
