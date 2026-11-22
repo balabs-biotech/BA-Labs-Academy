@@ -258,11 +258,11 @@ export function mountAcademyAtlas(container, graph) {
   };
 
   const hit = (x, y) => {
-    const { visibleNodeIds: visible, hitBoxes: boxes } = getAtlasLabelHitData(canvas);
+    const { visibleNodes, hitBoxes: boxes } = getAtlasLabelHitData(canvas);
     let labelHit = null;
     let labelArea = Infinity;
-    for (const node of nodes) {
-      if (!visible.has(node.id)) continue;
+    for (const candidate of visibleNodes) {
+      const node = candidate.n;
       const box = boxes[node.id];
       if (!box) continue;
       if (x >= box.left - 8 && x <= box.right + 8 && y >= box.top - 6 && y <= box.bottom + 6) {
@@ -276,8 +276,8 @@ export function mountAcademyAtlas(container, graph) {
     if (labelHit) return labelHit;
     let found = null;
     let best = 22;
-    for (const node of nodes) {
-      if (!visible.has(node.id)) continue;
+    for (const candidate of visibleNodes) {
+      const node = candidate.n;
       const point = screen(node);
       const distance = Math.hypot(point.x - x, point.y - y);
       const limit = Math.max(best, node.r * Math.sqrt(scale) + 8);

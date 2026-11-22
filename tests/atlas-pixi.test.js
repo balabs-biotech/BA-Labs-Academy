@@ -946,13 +946,33 @@ test("Atlas label renderer reuses per-canvas frame buffers and removes stale hit
   const first = getAtlasLabelHitData(canvas);
   const visibleSet = first.visibleNodeIds;
   const hitBoxes = first.hitBoxes;
+  const visibleNodes = first.visibleNodes;
   assert.ok(visibleSet.has("root"));
   assert.ok(hitBoxes.root);
   render([]);
   const second = getAtlasLabelHitData(canvas);
   assert.strictEqual(second.visibleNodeIds, visibleSet, "visible-node set is reused per canvas");
   assert.strictEqual(second.hitBoxes, hitBoxes, "hit-box dictionary is reused per canvas");
+  assert.strictEqual(second.visibleNodes, visibleNodes, "ordered visible-node index is reused per canvas");
   assert.equal(second.visibleNodeIds.size, 0);
+  assert.equal(second.visibleNodes.length, 0, "stale hit-test candidates are removed");
   assert.deepEqual(Object.keys(second.hitBoxes), [], "hit boxes from the previous frame are removed");
   assert.equal(canvas.dataset.visibleNodeCount, "0");
+});
+
+test("Atlas label hit-test index preserves graph order while rendering prioritizes selected and nearby labels", async () => {
+  const { renderAtlasLabels, getAtlasLabelHitData } = await import("../src/features/atlas/atlas-labels.js");
+  const canvas = { dataset: {} };
+  const makeNode = (id, x) => ({ id, entity_type: "DEPARTMENT", level: 0, rootId: id, title: id, shortTitle: id, x, y: 0, r: 10, angle: 0 });
+  const firstInGraph = makeNode("far", 180);
+  const secondInGraph = makeNode("near", 0);
+  renderAtlasLabels({
+    canvas, labels: { addChild() {} }, labelPool: new Map(), style: {},
+    createLabel: () => ({ style: {}, width: 42, height: 18, visible: false, anchor: { set() {} }, position: { set() {} } }),
+    nodes: [firstInGraph, secondInGraph], selected: null, scale: 1, offset: { x: 0, y: 0 },
+    width: 500, height: 400, alphaFor: () => 1, activeBranch: new Set(), lineage: new Set(), lang: "fr"
+  });
+  const hitData = getAtlasLabelHitData(canvas);
+  assert.deepEqual(hitData.visibleNodes.map((candidate) => candidate.n.id), ["far", "near"]);
+  assert.equal(hitData.visibleNodes.length, 2);
 });
