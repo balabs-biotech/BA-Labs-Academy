@@ -26,6 +26,8 @@ jobs:
           node-version: 22
       - name: Run tests
         run: npm test
+      - name: Measure Atlas 2D model baseline
+        run: npm run benchmark:atlas
       - name: Build static application
         run: npm run build
       - name: Install Playwright for visual smoke tests
