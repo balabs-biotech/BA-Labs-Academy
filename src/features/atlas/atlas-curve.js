@@ -64,3 +64,43 @@ export function getAtlasConnectionCurvePoint(curve, progress) {
     y: u ** 3 * a.y + 3 * u ** 2 * t * c1.y + 3 * u * t ** 2 * c2.y + t ** 3 * b.y
   };
 }
+
+/** Fixed-step samples for deterministic geometry diagnostics and fan layout. */
+export function sampleAtlasConnectionCurve(curve, {
+  steps = 24,
+  startProgress = 0.12,
+  endProgress = 1
+} = {}) {
+  const count = Math.max(2, Math.floor(steps));
+  const start = clamp(Number(startProgress) || 0, 0, 1);
+  const end = clamp(Number(endProgress) || 1, start, 1);
+  return Array.from({ length: count + 1 }, (_, index) => {
+    const progress = start + (end - start) * index / count;
+    return { ...getAtlasConnectionCurvePoint(curve, progress), progress };
+  });
+}
+
+function orientation(a, b, c) {
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+}
+
+function segmentsIntersect(a, b, c, d) {
+  const abC = orientation(a, b, c);
+  const abD = orientation(a, b, d);
+  const cdA = orientation(c, d, a);
+  const cdB = orientation(c, d, b);
+  return ((abC > 0 && abD < 0) || (abC < 0 && abD > 0)) &&
+    ((cdA > 0 && cdB < 0) || (cdA < 0 && cdB > 0));
+}
+
+/** Ignores the shared launch area where sibling filaments necessarily meet. */
+export function atlasConnectionCurvesIntersect(first, second, options = {}) {
+  const a = sampleAtlasConnectionCurve(first, options);
+  const b = sampleAtlasConnectionCurve(second, options);
+  for (let i = 0; i < a.length - 1; i += 1) {
+    for (let j = 0; j < b.length - 1; j += 1) {
+      if (segmentsIntersect(a[i], a[i + 1], b[j], b[j + 1])) return true;
+    }
+  }
+  return false;
+}
