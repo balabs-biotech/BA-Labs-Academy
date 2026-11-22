@@ -766,3 +766,7 @@
 .atlas-growth-preview-controls a:focus-visible {
   color: var(--text, #f4f1e8);
 }
+
+/* Atlas spatial legibility: give the full fractal field more usable canvas. */
+.academy-atlas .atlas-stage{height:min(86vh,1040px);min-height:680px}
+@media(max-width:700px){.academy-atlas .atlas-stage{height:82vh;min-height:600px}}
