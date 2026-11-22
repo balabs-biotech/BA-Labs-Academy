@@ -242,6 +242,7 @@ export function createAtlasGrowthModel({
         endpointAdjustment += 1;
       }
       point.growthSector.endpointAdjustment = endpointAdjustment;
+      point.growthSector.angle = point.angle;
       point.growthSector.angularOffset = point.angle - sector.angle;
       positioned.set(child.id, point);
       const source = positioned.get(parent.id) || parent;
