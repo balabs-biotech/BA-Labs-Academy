@@ -4,7 +4,7 @@ import { catalogueMap } from "../src/catalogue-map.js";
 import { cataloguePathways } from "../src/catalogue-pathways.js";
 import { buildAcademyGraph } from "../src/features/atlas/atlas-graph.js";
 import { createAtlasGrowthGraph, createAtlasGrowthModel } from "../src/features/atlas/atlas-growth-model.js";
-import { atlasConnectionCurvesClearance } from "../src/features/atlas/atlas-curve.js";
+import { atlasConnectionCurvesClearance, atlasConnectionCurvesMayBeNear } from "../src/features/atlas/atlas-curve.js";
 
 
 test("filament clearance measures segment distance rather than sample-point distance", () => {
@@ -26,6 +26,24 @@ test("filament clearance measures segment distance rather than sample-point dist
   assert.equal(atlasConnectionCurvesClearance(horizontal, crossing, {
     steps: 4, startProgress: 0, endProgress: 1
   }), 0);
+});
+
+test("curve proximity broad phase retains nearby bounds and rejects distant bounds", () => {
+  const first = {
+    a: { x: 0, y: 0 }, c1: { x: 3, y: 0 },
+    c2: { x: 7, y: 0 }, b: { x: 10, y: 0 }
+  };
+  const nearby = {
+    a: { x: 0, y: 12 }, c1: { x: 3, y: 12 },
+    c2: { x: 7, y: 12 }, b: { x: 10, y: 12 }
+  };
+  const distant = {
+    a: { x: 0, y: 40 }, c1: { x: 3, y: 40 },
+    c2: { x: 7, y: 40 }, b: { x: 10, y: 40 }
+  };
+  const options = { steps: 8, startProgress: 0, endProgress: 1 };
+  assert.equal(atlasConnectionCurvesMayBeNear(first, nearby, 18, options), true);
+  assert.equal(atlasConnectionCurvesMayBeNear(first, distant, 18, options), false);
 });
 
 test("growth preview remaps hierarchy and transversal edges to the same visible node objects", () => {
