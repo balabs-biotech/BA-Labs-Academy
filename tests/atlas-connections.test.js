@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { getAtlasConnectionCurveForEdge } from "../src/features/atlas/atlas-connections.js";
+import { createAtlasConnectionCurve } from "../src/features/atlas/atlas-curve.js";
 
 function makeEdge() {
   return {
@@ -54,4 +55,20 @@ test("connection curve cache invalidates when seed, depth or pathway profile cha
   assert.notStrictEqual(seeded, first);
   assert.notStrictEqual(deeper, seeded);
   assert.notStrictEqual(pathway, deeper);
+});
+
+
+test("recursive branch curvature tapers with hierarchy depth", () => {
+  const a = { id: "parent", x: 0, y: 0 };
+  const b = { id: "child", x: 300, y: 0 };
+  const primary = createAtlasConnectionCurve(a, b, { seed: 17, depth: 1 });
+  const secondary = createAtlasConnectionCurve(a, b, { seed: 17, depth: 2 });
+  const tertiary = createAtlasConnectionCurve(a, b, { seed: 17, depth: 3 });
+  const primaryBend = Math.abs(primary.c1.y);
+  const secondaryBend = Math.abs(secondary.c1.y);
+  const tertiaryBend = Math.abs(tertiary.c1.y);
+  assert.ok(primaryBend > secondaryBend);
+  assert.ok(secondaryBend > tertiaryBend);
+  assert.ok(Math.abs(secondaryBend / primaryBend - 1 / Math.sqrt(2)) < 0.001);
+  assert.ok(Math.abs(tertiaryBend / primaryBend - 1 / Math.sqrt(3)) < 0.001);
 });
