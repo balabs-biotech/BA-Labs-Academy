@@ -5,7 +5,7 @@
 L'Atlas représente l'écosystème pédagogique comme un réseau organique, et non comme une arborescence linéaire.
 
 - **MYC / Mycologie** est le noyau spatial central, placé à l'origine du repère.
-- Les huit autres départements occupent une couronne orbitale pondérée selon la taille réelle de leur hiérarchie.
+- Les huit autres départements occupent une couronne orbitale pondérée selon la taille réelle de leur hiérarchie. Chacun est relié au cœur par un tronc morphologique organique ; ces huit troncs sont des primitives visuelles dédiées, séparées des relations académiques.
 - Les parcours pratiques occupent une couronne extérieure distincte. Ils restent des objets transversaux reliés aux départements, domaines et sections déclarés.
 - Les domaines, sections et modules restent des satellites hiérarchiques de leur département. Les modules ne sont pas dupliqués pour matérialiser les parcours.
 - Les relations de connaissances ne sont rendues que si elles sont explicitement vérifiées et documentées.
@@ -48,7 +48,7 @@ Le rendu des connexions est isolé dans `atlas-connections.js`. Les familles res
 - ponts entre départements mobilisés par un même parcours ;
 - relations de connaissances vérifiées (prérequis, complémentarité, transfert de méthode, dépendance technique, application et interdisciplinarité).
 
-Une courbe ne crée pas une relation scientifique : elle ne fait que représenter une relation déclarée dans le graphe. Les guides circulaires du fond sont purement spatiaux et ne portent aucune signification relationnelle.
+Une courbe ne crée pas une relation scientifique : elle ne fait que représenter une relation déclarée dans le graphe. Les guides circulaires du fond sont purement spatiaux et ne portent aucune signification relationnelle. Les huit troncs morphologiques sont rendus dans une couche dédiée, hors du tableau des relations pédagogiques.
 
 ## Comportement de navigation
 
