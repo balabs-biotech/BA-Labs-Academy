@@ -214,7 +214,8 @@ export function createAtlasGrowthModel({
     for (let second = first + 1; second < allBranches.length; second += 1) {
       const a = allBranches[first];
       const b = allBranches[second];
-      if (a.sourceId === b.sourceId || a.targetId === b.sourceId || b.targetId === a.sourceId) continue;
+      if (a.generation === b.generation || a.sourceId === b.sourceId ||
+          a.targetId === b.sourceId || b.targetId === a.sourceId) continue;
       crossGenerationComparedPairs += 1;
       if (atlasConnectionCurvesIntersect(a.curve, b.curve, {
         steps: 16,
