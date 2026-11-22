@@ -242,15 +242,18 @@ test("Atlas view delegates projection, fit, zoom and animation interpolation to 
 });
 
 
-test("Atlas wheel renderer keeps the restrained radial motif", () => {
+test("Atlas backdrop keeps spatial guides separate from organic morphology trunks", () => {
   const source = readFileSync(new URL("../src/features/atlas/atlas-renderer-stage.js", import.meta.url), "utf8");
   const frameRendererSource = readFileSync(new URL("../src/features/atlas/atlas-pixi-frame-renderer.js", import.meta.url), "utf8");
+  const connectionsSource = readFileSync(new URL("../src/features/atlas/atlas-connections.js", import.meta.url), "utf8");
   const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
   assert.ok(source.includes("filaments.circle(0, 0, 820)"));
   assert.ok(source.includes("filaments.circle(0, 0, 1600)"));
-  assert.ok(source.includes(".bezierCurveTo("));
-  assert.ok(source.includes("const roots = nodes.filter"));
+  assert.ok(!source.includes(".bezierCurveTo("), "backdrop must not draw semantic or morphology branches");
+  assert.ok(connectionsSource.includes("morphologyBranches"));
+  assert.ok(connectionsSource.includes(".bezierCurveTo("), "organic trunks belong to the connection layer");
   assert.ok(frameRendererSource.includes("stage.drawBackdrop({ nodes, width: plan.width, height: plan.height })"));
+  assert.ok(frameRendererSource.includes("edges, morphologyBranches"));
   assert.ok(!source.includes('field.moveTo(x,y).quadraticCurveTo'));
   assert.ok(nodesSource.includes("Three arms echo the BA Labs Y mark"));
 });
@@ -486,7 +489,7 @@ test("Atlas renderer stage owns Pixi layer composition and non-semantic backdrop
     height: 600,
     nodes: [{ level: 0, entity_type: "DEPARTMENT", entity_key: "BIO", rootId: "BIO", x: 100, y: 0 }]
   });
-  assert.ok(calls.some(([owner, action]) => owner.startsWith("graphics-") && action === "bezierCurveTo"));
+  assert.ok(!calls.some(([owner, action]) => owner.startsWith("graphics-") && action === "bezierCurveTo"), "backdrop draws only spatial guides");
   assert.equal(calls.filter(([owner, action]) => owner.startsWith("graphics-") && action === "circle").length, 3);
 });
 
@@ -515,7 +518,8 @@ test("Atlas department palette is a single shared rendering contract", () => {
   const stageSource = readFileSync(new URL("../src/features/atlas/atlas-renderer-stage.js", import.meta.url), "utf8");
   const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
   assert.ok(paletteSource.includes("export const PALETTE="));
-  assert.ok(stageSource.includes('import { PALETTE } from "./atlas-palette.js";'));
+  const connectionsSource = readFileSync(new URL("../src/features/atlas/atlas-connections.js", import.meta.url), "utf8");
+  assert.ok(connectionsSource.includes('import { PALETTE } from "./atlas-palette.js";'));
   assert.ok(nodesSource.includes('import { PALETTE } from "./atlas-palette.js";'));
 });
 
