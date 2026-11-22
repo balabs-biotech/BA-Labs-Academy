@@ -11,7 +11,9 @@ export function hashAtlasConnection(value) {
 }
 
 /** Pure world-space curve geometry; no PixiJS dependency. */
-export function createAtlasConnectionCurve(a, b, { seed, depth = 1, sharedPathway = false } = {}) {
+export function createAtlasConnectionCurve(a, b, {
+  seed, depth = 1, sharedPathway = false, bendScale = 1
+} = {}) {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
   const length = Math.hypot(dx, dy) || 1;
@@ -25,11 +27,12 @@ export function createAtlasConnectionCurve(a, b, { seed, depth = 1, sharedPathwa
   // Fine branches bend less than primary branches: curvature tapers with
   // hierarchy depth while the main eight trunks (depth 1) keep their full arc.
   const depthScale = 1 / Math.sqrt(Math.max(1, depth));
+  const safeBendScale = clamp(Number(bendScale) || 0, 0.2, 1);
   const bend = Math.min(sharedPathway ? 150 : 68, profile.bend) *
-    depthScale * side;
+    depthScale * safeBendScale * side;
   const drift = (((stableSeed >>> 12) & 255) / 255 - 0.5) *
     Math.min(sharedPathway ? 18 : 14, profile.bend / ATLAS_GOLDEN_RATIO) *
-    depthScale;
+    depthScale * safeBendScale;
 
   return {
     a,
