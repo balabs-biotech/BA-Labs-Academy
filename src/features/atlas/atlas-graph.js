@@ -1,4 +1,4 @@
-import { createAtlasDepartmentLayout, getAtlasRootPosition, getAtlasChildPosition } from "./atlas-geometry.js";
+import { createAtlasDepartmentLayout, getAtlasRootPosition, getAtlasChildPosition, getAtlasNestedBranchSpread } from "./atlas-geometry.js";
 
 const hash = (value) => {
   let result = 2166136261;
@@ -100,7 +100,7 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     return edge;
   };
 
-  const walk = (items, parent, rootId, depth, branchAngle) => {
+  const walk = (items, parent, rootId, depth, branchAngle, branchSpread) => {
     if (!items?.length) return;
     const isMycologyCore = parent.entity_type === "DEPARTMENT" && parent.entity_key === "MYC";
     const isDepartmentRoot = parent.entity_type === "DEPARTMENT";
@@ -125,7 +125,12 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
       if (item.kind === "section") sectionNodes.set(item.code, node);
       if (item.kind === "domain") domainNodes.set(item.code, node);
       if (item.children?.length) {
-        walk(item.children, node, rootId, depth + 1, angle);
+        const nestedSpread = Number.isFinite(branchSpread)
+          ? getAtlasNestedBranchSpread(branchSpread, items.length, isMycologyCore)
+          : isMycologyCore
+            ? getAtlasNestedBranchSpread(Math.PI * 2, items.length, true)
+            : undefined;
+        walk(item.children, node, rootId, depth + 1, angle, nestedSpread);
       }
     });
   };
@@ -204,7 +209,8 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
           route: "#/modules/" + section.code.toLowerCase() + "/" + String(moduleIndex + 1).padStart(2, "0")
         }))
       }));
-      walk([...domainChildren, ...sectionChildren], root, rootId, 1, item.code === "MYC" ? 0 : angle);
+      const rootSpread = item.code === "MYC" ? undefined : departmentLayout.spreads[item.code];
+      walk([...domainChildren, ...sectionChildren], root, rootId, 1, item.code === "MYC" ? 0 : angle, rootSpread);
     }
   });
 

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ATLAS_GEOMETRY, createAtlasDepartmentLayout, getAtlasRootPosition, getAtlasChildPosition } from "../src/features/atlas/atlas-geometry.js";
+import { ATLAS_GEOMETRY, createAtlasDepartmentLayout, getAtlasRootPosition, getAtlasChildPosition, getAtlasNestedBranchSpread } from "../src/features/atlas/atlas-geometry.js";
 
 test("Mycology is fixed at the Atlas origin", () => {
   assert.deepEqual(getAtlasRootPosition({ kind: "department", code: "MYC" }), {
@@ -105,4 +105,21 @@ test("intermediate and terminal fans use wider angular spacing", () => {
   assert.deepEqual(ATLAS_GEOMETRY.childDistances, { 1: 520, 2: 460 });
   assert.equal(ATLAS_GEOMETRY.departmentOrbitRadius, 1480);
   assert.equal(ATLAS_GEOMETRY.pathwayOrbitRadius, 2080);
+});
+
+
+test("nested branch fans inherit the angular sector of their parent", () => {
+  const spread = getAtlasNestedBranchSpread(3.2, 6);
+  assert.ok(spread > 0.35 && spread < 0.7, "a section receives only its local share of the department sector");
+  const parent = { x: 0, y: 0 };
+  const points = Array.from({ length: 8 }, (_, index) => getAtlasChildPosition({
+    parent, index, count: 8, depth: 2, branchAngle: 0, branchSpread: spread
+  }));
+  const angles = points.map((point) => Math.atan2(point.y, point.x));
+  assert.ok(angles.at(-1) - angles[0] <= spread + 1e-10);
+});
+
+test("Mycology full-ring children receive separate downstream wedges", () => {
+  const spread = getAtlasNestedBranchSpread(Math.PI * 2, 8, true);
+  assert.ok(Math.abs(spread - (Math.PI * 2 / 8) * 0.88) < 1e-10);
 });

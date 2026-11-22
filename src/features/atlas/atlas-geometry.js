@@ -47,6 +47,14 @@ export function createAtlasDepartmentLayout(departments) {
   return { angles, spreads, sectorWidths };
 }
 
+export function getAtlasNestedBranchSpread(parentSpread, siblingCount, fullRing = false) {
+  if (siblingCount <= 1) return Math.min(2.6, Math.max(0.8, parentSpread));
+  const siblingGap = fullRing
+    ? parentSpread / siblingCount
+    : parentSpread / (siblingCount - 1);
+  return clamp(siblingGap * 0.88, 0.35, 2.6);
+}
+
 export function getAtlasRootPosition({
   kind, code, departmentCodes = [], pathwayCodes = [], departmentLayout = null
 }) {
@@ -82,10 +90,10 @@ export function getAtlasChildPosition({
     1.15,
     ATLAS_GEOMETRY.maximumModuleSpread
   );
-  const spread = isMycologyCore
-    ? TAU
-    : Number.isFinite(branchSpread)
-      ? branchSpread
+  const spread = Number.isFinite(branchSpread)
+    ? branchSpread
+    : isMycologyCore
+      ? TAU
       : isDepartmentRoot
         ? ATLAS_GEOMETRY.departmentPetalSpread
         : adaptiveModuleSpread;
