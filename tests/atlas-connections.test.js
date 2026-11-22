@@ -36,6 +36,14 @@ test("connection curve cache invalidates when endpoint objects are replaced", ()
   assert.strictEqual(second.a, edge.a);
 });
 
+test("connection curve cache invalidates when endpoint identifiers change", () => {
+  const edge = makeEdge();
+  const first = getAtlasConnectionCurveForEdge(edge, 2, false);
+  edge.a.id = "renamed-node";
+  const second = getAtlasConnectionCurveForEdge(edge, 2, false);
+  assert.notStrictEqual(second, first);
+});
+
 test("connection curve cache invalidates when seed, depth or pathway profile changes", () => {
   const edge = makeEdge();
   const first = getAtlasConnectionCurveForEdge(edge, 2, false);

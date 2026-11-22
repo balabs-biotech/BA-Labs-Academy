@@ -22,24 +22,33 @@ const connectionCurveCache = new WeakMap();
 
 /**
  * Reuse world-space curve geometry while an edge's geometric inputs remain
- * unchanged. Endpoint object identity is included so replacing a node cannot
- * leave the curve holding stale endpoint references.
+ * unchanged. Compare cached fields directly to avoid allocating a signature
+ * array for every edge on every animation frame.
  */
 export function getAtlasConnectionCurveForEdge(edge, depth, sharedPathway) {
   const a = edge.a;
   const b = edge.b;
-  const signature = [
-    a, b, a.x, a.y, a.id, b.x, b.y, b.id,
-    edge.seed, depth, sharedPathway
-  ];
   const cached = connectionCurveCache.get(edge);
-  if (cached && signature.every((value, index) => Object.is(value, cached.signature[index]))) {
+  if (cached &&
+      cached.a === a && cached.b === b &&
+      Object.is(cached.aX, a.x) && Object.is(cached.aY, a.y) &&
+      Object.is(cached.aId, a.id) &&
+      Object.is(cached.bX, b.x) && Object.is(cached.bY, b.y) &&
+      Object.is(cached.bId, b.id) &&
+      Object.is(cached.seed, edge.seed) &&
+      Object.is(cached.depth, depth) &&
+      Object.is(cached.sharedPathway, sharedPathway)) {
     return cached.curve;
   }
   const curve = createAtlasConnectionCurve(a, b, {
     seed: edge.seed, depth, sharedPathway
   });
-  connectionCurveCache.set(edge, { signature, curve });
+  connectionCurveCache.set(edge, {
+    a, b,
+    aX: a.x, aY: a.y, aId: a.id,
+    bX: b.x, bY: b.y, bId: b.id,
+    seed: edge.seed, depth, sharedPathway, curve
+  });
   return curve;
 }
 
