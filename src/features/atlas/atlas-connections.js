@@ -54,7 +54,8 @@ export function renderAtlasConnections({
     const c2={x:a.x+dx*(1-golden.controlPointRatio)+nx*(bend/ATLAS_GOLDEN_RATIO-secondaryBend)-tx*drift/ATLAS_GOLDEN_RATIO,y:a.y+dy*(1-golden.controlPointRatio)+ny*(bend/ATLAS_GOLDEN_RATIO-secondaryBend)-ty*drift/ATLAS_GOLDEN_RATIO};
     const relationColors={PREREQUISITE:0x80aeb8,COMPLEMENTARY:0xa9a0d4,METHOD_TRANSFER:0xe8c99d,TECHNICAL_DEPENDENCY:0xc88773,APPLIED_IN:0x79a991,INTERDISCIPLINARY:0x7eaaa3};
     const color=PALETTE[e.a.rootId]||0x91a99b;
-    const widthBase=(sharedPathway?1.25:knowledge?1.35:e.basis==="academy-pathway-flow"?1.05:golden.width)*(e.cross?1/ATLAS_GOLDEN_RATIO:1);
+    const widthScale=sharedPathway?1.25/1.5:knowledge?1.35/1.5:e.basis==="academy-pathway-flow"?1.05/1.5:1;
+    const widthBase=golden.width*widthScale*(e.cross?1/ATLAS_GOLDEN_RATIO:1);
     const path=()=>filaments.moveTo(a.x,a.y).bezierCurveTo(c1.x,c1.y,c2.x,c2.y,b.x,b.y);
     if((!e.cross&&depth<=2&&len>34)||sharedPathway){
       path().stroke({color,alpha:alpha*(sharedPathway?.08:.105),width:widthBase*(sharedPathway?2.6:3.0),cap:"round"});
