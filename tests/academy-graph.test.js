@@ -58,14 +58,14 @@ test("Other departments and pathways occupy separate orbital bands", () => {
   const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
   const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
   const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
-  assert.ok(meanDepartmentRadius > 1210 && meanDepartmentRadius < 1310);
-  assert.ok(meanPathwayRadius > 1710 && meanPathwayRadius < 1810);
+  assert.ok(meanDepartmentRadius > 1430 && meanDepartmentRadius < 1530);
+  assert.ok(meanPathwayRadius > 2030 && meanPathwayRadius < 2130);
 });
 
 
 test("Terminal module nodes have expanded spacing and label visibility threshold", async () => {
   const { ATLAS_GEOMETRY } = await import("../src/features/atlas/atlas-geometry.js");
-  assert.deepEqual(ATLAS_GEOMETRY.childDistances, { 1: 310, 2: 265 });
+  assert.deepEqual(ATLAS_GEOMETRY.childDistances, { 1: 440, 2: 380 });
   assert.equal(ATLAS_GEOMETRY.departmentPetalSpread, 0.96);
   assert.equal(ATLAS_GEOMETRY.sectionSpread, 1.45);
 });
@@ -130,10 +130,11 @@ test("The overview geometry follows an eight-spoke wheel around the Mycology hub
   const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
   assert.equal(departments.length, 8);
   const radii = departments.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(radii.every((radius) => Math.abs(radius - 1260) < 1e-8));
+  assert.ok(radii.every((radius) => Math.abs(radius - 1480) < 1e-8));
   const angles = departments.map((node) => (Math.atan2(node.y, node.x) + Math.PI * 2) % (Math.PI * 2)).sort((a, b) => a - b);
   const gaps = angles.map((angle, index) => ((angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2)));
-  assert.ok(gaps.every((gap) => Math.abs(gap - Math.PI / 4) < 1e-8));
+  assert.ok(gaps.every((gap) => gap > 0.35 && gap < 1.2));
+  assert.ok(Math.max(...gaps) - Math.min(...gaps) > 0.08, "complex departments must receive wider angular sectors");
 });
 
 test("Department sections occupy narrow radial petals instead of overlapping fans", () => {

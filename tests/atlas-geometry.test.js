@@ -85,5 +85,5 @@ test("large terminal module groups receive a wider fan and greater radial separa
   }));
   const angles = points.map((point) => Math.atan2(point.y, point.x));
   assert.ok(angles[7] - angles[0] >= 1.6);
-  assert.ok(Math.hypot(points[0].x, points[0].y) === 380);
+  assert.ok(Math.abs(Math.hypot(points[0].x, points[0].y) - 380) < 1e-8);
 });
