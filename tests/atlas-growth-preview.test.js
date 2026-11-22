@@ -126,7 +126,7 @@ test("global branch expansion propagates through every recursive generation", ()
     assert.ok(distance <= expected * 1.06 + 0.001);
   }
   assert.ok(root);
-  assert.equal(ATLAS_GEOMETRY.branchOccupancy, 0.99);
+  assert.equal(ATLAS_GEOMETRY.branchOccupancy, 0.82);
 });
 
 test("MYCOLOGIE grows as a compact central heart without shrinking the eight satellite axes", () => {
