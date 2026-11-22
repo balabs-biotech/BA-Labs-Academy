@@ -65,6 +65,18 @@ export function createAtlasGrowthModel({
 }) {
   if (!Array.isArray(nodes)) throw new TypeError("Atlas growth requires a node array");
   if (!(occupancy > 0 && occupancy <= 1)) throw new RangeError("occupancy must be in (0, 1]");
+  // Reject malformed identity before indexing: Map construction alone would
+  // silently overwrite duplicate IDs and make parent resolution ambiguous.
+  const seenIds = new Set();
+  for (const node of nodes) {
+    if (!node || typeof node.id !== "string" || !node.id.trim()) {
+      throw new TypeError("Atlas growth nodes require a non-empty string id");
+    }
+    if (seenIds.has(node.id)) {
+      throw new Error("Atlas hierarchy contains duplicate node id: " + node.id);
+    }
+    seenIds.add(node.id);
+  }
 
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const childrenByParent = new Map();
