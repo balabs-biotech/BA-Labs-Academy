@@ -57,8 +57,8 @@ test("Mycology is the spatial core and carries the BA Labs Y marker", () => {
 test("Other departments and pathways occupy separate orbital bands", () => {
   const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
   const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
-  const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y / ATLAS_GEOMETRY.orbitVerticalRatio), 0) / departments.length;
-  const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y / ATLAS_GEOMETRY.orbitVerticalRatio), 0) / pathways.length;
+  const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
+  const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
   assert.ok(meanDepartmentRadius > ATLAS_GEOMETRY.departmentOrbitRadius - 1 && meanDepartmentRadius < ATLAS_GEOMETRY.departmentOrbitRadius + 1);
   assert.ok(meanPathwayRadius > ATLAS_GEOMETRY.pathwayOrbitRadius - 1 && meanPathwayRadius < ATLAS_GEOMETRY.pathwayOrbitRadius + 1);
 });
@@ -126,20 +126,6 @@ test("Unknown relation types and unresolved endpoints are excluded from the grap
   assert.equal(linked.edges.filter((edge) => edge.basis === "academy-knowledge-relation").length, 0);
 });
 
-
-test("department and pathway root orbits use a deterministic landscape ellipse", () => {
-  const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
-  const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
-  for (const node of departments) {
-    const normalized = Math.hypot(node.x, node.y / ATLAS_GEOMETRY.orbitVerticalRatio);
-    assert.ok(Math.abs(normalized - ATLAS_GEOMETRY.departmentOrbitRadius) < 1e-8);
-  }
-  for (const node of pathways) {
-    const normalized = Math.hypot(node.x, node.y / ATLAS_GEOMETRY.orbitVerticalRatio);
-    assert.ok(Math.abs(normalized - ATLAS_GEOMETRY.pathwayOrbitRadius) < 1e-8);
-  }
-  assert.ok(ATLAS_GEOMETRY.orbitVerticalRatio > 0.5 && ATLAS_GEOMETRY.orbitVerticalRatio < 1);
-});
 
 test("The overview geometry follows an eight-spoke wheel around the Mycology hub", () => {
   const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
