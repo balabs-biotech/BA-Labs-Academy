@@ -121,7 +121,7 @@ test("nested branch fans inherit the angular sector of their parent", () => {
 
 test("Mycology full-ring children receive separate downstream wedges", () => {
   const spread = getAtlasNestedBranchSpread(Math.PI * 2, 8, true);
-  assert.ok(Math.abs(spread - (Math.PI * 2 / 8) * 0.88) < 1e-10);
+  assert.ok(Math.abs(spread - (Math.PI * 2 / 8) / ATLAS_GOLDEN_RATIO) < 1e-10);
 });
 
 
