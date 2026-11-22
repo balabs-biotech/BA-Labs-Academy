@@ -33,3 +33,15 @@ test("growth preview reveals modules at the next depth while retaining root and 
     assert.equal(expanded.y, node.y);
   }
 });
+
+
+test("fractal preview remaps all eight visual trunks to its positioned root nodes", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const preview = createAtlasGrowthGraph(graph, { visibleDepth: 1 });
+  assert.equal(preview.morphologyBranches.length, 8);
+  for (const branch of preview.morphologyBranches) {
+    assert.strictEqual(branch.source, preview.byId.get(branch.sourceId));
+    assert.strictEqual(branch.target, preview.byId.get(branch.targetId));
+    assert.equal(branch.visualOnly, true);
+  }
+});
