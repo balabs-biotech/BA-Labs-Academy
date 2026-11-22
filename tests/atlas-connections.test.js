@@ -101,3 +101,18 @@ test("crossing diagnostics distinguish separated and intersecting cubic filament
   const lower = createAtlasConnectionCurve(origin, { id: "lower", x: 300, y: -100 }, { seed: 17, bendScale: 0.2 });
   assert.equal(atlasConnectionCurvesIntersect(upper, lower, { steps: 32, startProgress: 0.12 }), false);
 });
+
+test("crossing diagnostics detect an actual intersection between sampled filaments", () => {
+  const first = {
+    a: { x: 0, y: 0 }, c1: { x: 33, y: 33 },
+    c2: { x: 67, y: 67 }, b: { x: 100, y: 100 }
+  };
+  const second = {
+    a: { x: 0, y: 100 }, c1: { x: 33, y: 67 },
+    c2: { x: 67, y: 33 }, b: { x: 100, y: 0 }
+  };
+  assert.equal(atlasConnectionCurvesIntersect(first, second, {
+    steps: 32,
+    startProgress: 0.12
+  }), true);
+});
