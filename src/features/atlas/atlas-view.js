@@ -6,6 +6,7 @@ import { createAtlasLifecycle } from "./atlas-lifecycle.js";
 import { createAtlasAnimation } from "./atlas-animation.js";
 import { createAtlasPointerController } from "./atlas-interaction.js";
 import { renderAtlasAccessibleNodes } from "./atlas-accessibility.js";
+import { getAtlasLabelHitData } from "./atlas-labels.js";
 import { renderAtlasSelectionPanel } from "./atlas-selection.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -257,8 +258,7 @@ export function mountAcademyAtlas(container, graph) {
   };
 
   const hit = (x, y) => {
-    const visible = new Set(JSON.parse(canvas.dataset.visibleNodeIds || "[]"));
-    const boxes = JSON.parse(canvas.dataset.visibleNodeHitBoxes || "{}");
+    const { visibleNodeIds: visible, hitBoxes: boxes } = getAtlasLabelHitData(canvas);
     let labelHit = null;
     let labelArea = Infinity;
     for (const node of nodes) {

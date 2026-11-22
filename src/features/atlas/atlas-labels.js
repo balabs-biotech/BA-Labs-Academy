@@ -4,6 +4,13 @@
  */
 import { placeAtlasLabel } from "./atlas-label-placement.js";
 
+const hitDataByCanvas = new WeakMap();
+const EMPTY_HIT_DATA = Object.freeze({ visibleNodeIds: new Set(), hitBoxes: Object.freeze({}) });
+
+export function getAtlasLabelHitData(canvas) {
+ return hitDataByCanvas.get(canvas) || EMPTY_HIT_DATA;
+}
+
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,labelResources,nodes,selected,scale,offset,width,height,alphaFor,activeBranch,lineage,lang,live=new Set()}) {
@@ -55,6 +62,6 @@ export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,lab
  }
  if(labelResources) labelResources.endFrame();
  else for(const [id,label] of labelPool){if(!live.has(id))label.visible=false;}
- canvas.dataset.visibleNodeIds=JSON.stringify([...live]);
- canvas.dataset.visibleNodeHitBoxes=JSON.stringify(hitBoxes);
+ hitDataByCanvas.set(canvas,{visibleNodeIds:new Set(live),hitBoxes});
+ canvas.dataset.visibleNodeCount=String(live.size);
 }

@@ -65,7 +65,7 @@ try {
       height: element.height,
       rect: element.getBoundingClientRect().toJSON(),
       stage: element.parentElement.getBoundingClientRect().toJSON(),
-      visibleNodes: JSON.parse(element.dataset.visibleNodeIds || "[]").length
+      visibleNodes: Number(element.dataset.visibleNodeCount || 0)
     }));
     assert.equal(surface.renderer, "pixijs-webgl");
     assert.ok(surface.width > 0 && surface.height > 0, "PixiJS must create a real drawing surface");
