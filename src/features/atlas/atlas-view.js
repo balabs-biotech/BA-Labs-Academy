@@ -58,12 +58,6 @@ export function renderAcademyAtlas(graph) {
       : content;
   };
   return `
-    <section class="page-intro atlas-page-intro">
-      <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
-      <h1>Atlas des connaissances</h1>
-      <p>La mycologie forme le cœur vivant de l’Atlas. Huit ramifications disciplinaires prolongent le symbole BA Labs ; leurs branches secondaires se subdivisent selon la structure réelle des connaissances.</p>
-      ${growthControls}
-    </section>
     <section class="academy-atlas" id="academy-atlas">
       <div class="atlas-topline">
         <div class="atlas-topline-copy">
@@ -72,23 +66,6 @@ export function renderAcademyAtlas(graph) {
         </div>
         <span class="atlas-engine-state" id="atlas-engine-state">Initialisation du moteur…</span>
       </div>
-      <nav class="atlas-root-navigation" aria-label="Accès direct aux départements">
-        ${rootNavigation(departmentRoots, "departments", "DÉPARTEMENTS")}
-      </nav>
-      ${rootNavigation(pathwayRoots, "pathways", "PARCOURS PRATIQUES")}
-      <details class="atlas-utility-disclosure atlas-filter-disclosure">
-        <summary>FILTRES DES CONNEXIONS <span>7</span></summary>
-        <div class="atlas-relation-filters" role="group" aria-label="Filtres des connexions pédagogiques">
-        <span>FLUX PÉDAGOGIQUES</span>
-        <button type="button" data-atlas-relation="all" aria-pressed="true">Tous</button>
-        <button type="button" data-atlas-relation="PREREQUISITE" aria-pressed="false">Prérequis</button>
-        <button type="button" data-atlas-relation="COMPLEMENTARY" aria-pressed="false">Complémentarité</button>
-        <button type="button" data-atlas-relation="METHOD_TRANSFER" aria-pressed="false">Transfert</button>
-        <button type="button" data-atlas-relation="TECHNICAL_DEPENDENCY" aria-pressed="false">Dépendance</button>
-        <button type="button" data-atlas-relation="APPLIED_IN" aria-pressed="false">Application</button>
-          <button type="button" data-atlas-relation="INTERDISCIPLINARY" aria-pressed="false">Interdisciplinaire</button>
-        </div>
-      </details>
       <div class="atlas-stage" id="academy-atlas-stage">
         <canvas id="academy-atlas-canvas" aria-label="Réseau de connaissances interactif BA Labs Academy"></canvas>
         <div class="atlas-stage-heading">
@@ -107,16 +84,40 @@ export function renderAcademyAtlas(graph) {
         <nav class="atlas-accessible-nodes" id="academy-atlas-accessible" aria-label="Navigation textuelle des nœuds"></nav>
         <div class="atlas-loading" id="academy-atlas-loading"><span class="atlas-loading-pulse"></span><p>Déploiement du réseau de connaissances…</p></div>
       </div>
+      <nav class="atlas-root-navigation" aria-label="Accès direct aux départements">
+        ${rootNavigation(departmentRoots, "departments", "DÉPARTEMENTS")}
+      </nav>
+      ${rootNavigation(pathwayRoots, "pathways", "PARCOURS PRATIQUES")}
+      <details class="atlas-utility-disclosure atlas-filter-disclosure">
+        <summary>FILTRES DES CONNEXIONS <span>7</span></summary>
+        <div class="atlas-relation-filters" role="group" aria-label="Filtres des connexions pédagogiques">
+          <span>FLUX PÉDAGOGIQUES</span>
+          <button type="button" data-atlas-relation="all" aria-pressed="true">Tous</button>
+          <button type="button" data-atlas-relation="PREREQUISITE" aria-pressed="false">Prérequis</button>
+          <button type="button" data-atlas-relation="COMPLEMENTARY" aria-pressed="false">Complémentarité</button>
+          <button type="button" data-atlas-relation="METHOD_TRANSFER" aria-pressed="false">Transfert</button>
+          <button type="button" data-atlas-relation="TECHNICAL_DEPENDENCY" aria-pressed="false">Dépendance</button>
+          <button type="button" data-atlas-relation="APPLIED_IN" aria-pressed="false">Application</button>
+          <button type="button" data-atlas-relation="INTERDISCIPLINARY" aria-pressed="false">Interdisciplinaire</button>
+        </div>
+      </details>
       <div class="atlas-legend">
         <span class="legend-department">Département</span>
         ${domains ? '<span class="legend-domain">Domaine publié</span>' : ""}
-      <span class="legend-pathway">Parcours transversal</span>
+        <span class="legend-pathway">Parcours transversal</span>
         <span class="legend-section">Section</span>
         <span class="legend-module">Module</span>
         <span class="legend-link">Relation entre disciplines</span>
         <span class="legend-flow">Transfert de parcours · flux animé</span>
       </div>
+    </section>
+    <section class="page-intro atlas-page-intro">
+      <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
+      <h1>Atlas des connaissances</h1>
+      <p>La mycologie forme le cœur vivant de l’Atlas. Huit ramifications disciplinaires prolongent le symbole BA Labs ; leurs branches secondaires se subdivisent selon la structure réelle des connaissances.</p>
+      ${growthControls}
     </section>`;
+
 }
 
 export function mountAcademyAtlas(container, graph) {
