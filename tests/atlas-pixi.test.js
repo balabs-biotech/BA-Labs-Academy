@@ -654,3 +654,51 @@ test("Atlas connection renderer consumes the shared curve and palette contracts"
   assert.ok(!source.includes("const PALETTE ="));
   assert.ok(source.includes("getAtlasConnectionCurvePoint(curve, 0.5)"));
 });
+
+
+test("Atlas frame pipeline owns backend-neutral render order and shared frame context", async () => {
+  const { createAtlasFramePipeline } = await import("../src/features/atlas/atlas-frame-pipeline.js");
+  const order = [];
+  const layer = (name) => ({
+    clear() { order.push(name + ":clear"); },
+    position: { set() {} },
+    scale: { set() {} },
+    copyFrom() {}
+  });
+  const stage = {
+    filaments: layer("filaments"), junctions: layer("junctions"), labels: {}, style: {},
+    drawBackdrop() { order.push("backdrop"); }
+  };
+  const pipeline = createAtlasFramePipeline({
+    stage, canvas: {}, labelPool: new Map(), createLabel() {},
+    connections() { order.push("connections"); },
+    nodesLayer() { order.push("nodes"); },
+    labelsLayer() { order.push("labels"); },
+    renderContextFactory() {
+      order.push("context");
+      return { resolveSelection() { return { lineage: new Set(), activeBranch: new Set() }; } };
+    }
+  });
+  const frame = {
+    nodes: [], edges: [], selected: null, scale: 1, offset: { x: 0, y: 0 },
+    width: 800, height: 600, reduced: true, alphaFor: () => 1
+  };
+  pipeline.render(frame, () => order.push("backend-render"));
+  pipeline.render(frame, () => order.push("backend-render"));
+  assert.deepEqual(order, [
+    "context", "backdrop", "junctions:clear", "connections", "nodes", "labels", "backend-render",
+    "backdrop", "junctions:clear", "connections", "nodes", "labels", "backend-render"
+  ]);
+  pipeline.reset();
+  pipeline.render(frame, () => order.push("backend-render"));
+  assert.equal(order.filter((entry) => entry === "context").length, 2);
+});
+
+test("Pixi renderer delegates frame composition to the backend-neutral pipeline", () => {
+  const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  assert.ok(source.includes('import { createAtlasFramePipeline } from "./atlas-frame-pipeline.js";'));
+  assert.ok(source.includes("pipeline.render({ ...frame, alphaFor }, () => app.render())"));
+  assert.ok(!source.includes("renderAtlasConnections({"));
+  assert.ok(!source.includes("renderAtlasNodes({"));
+  assert.ok(!source.includes("renderAtlasLabels({"));
+});
