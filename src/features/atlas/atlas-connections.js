@@ -21,6 +21,23 @@ const RELATION_COLORS = Object.freeze({
 const connectionCurveCache = new WeakMap();
 
 /**
+ * Conservative viewport test using the cubic Bezier control hull. A cubic
+ * curve cannot leave the convex hull of its four control points, so rejecting
+ * a disjoint hull cannot hide a curve that crosses the visible world-space
+ * rectangle.
+ */
+export function atlasCurveIntersectsViewport(curve, viewport) {
+  if (!viewport) return true;
+  const points = [curve.a, curve.c1, curve.c2, curve.b];
+  const left = Math.min(...points.map((point) => point.x));
+  const right = Math.max(...points.map((point) => point.x));
+  const top = Math.min(...points.map((point) => point.y));
+  const bottom = Math.max(...points.map((point) => point.y));
+  return !(right < viewport.left || left > viewport.right ||
+    bottom < viewport.top || top > viewport.bottom);
+}
+
+/**
  * Reuse world-space curve geometry while an edge's geometric inputs remain
  * unchanged. Compare cached fields directly to avoid allocating a signature
  * array for every edge on every animation frame.
@@ -54,7 +71,7 @@ export function getAtlasConnectionCurveForEdge(edge, depth, sharedPathway) {
 
 export function renderAtlasConnections({
   filaments, junctions, edges, selected, scale, reduced, relationFilter,
-  time, alphaFor, activeBranch, morphologyBranches = []
+  time, alphaFor, activeBranch, morphologyBranches = [], viewport = null
 }) {
   // Morphology trunks are a separate visual layer, never academic graph edges.
   for (const branch of morphologyBranches) {
@@ -77,6 +94,7 @@ export function renderAtlasConnections({
     const curve = createAtlasConnectionCurve(start, end, {
       seed: branch.seed, depth: 1
     });
+    if (!atlasCurveIntersectsViewport(curve, viewport)) continue;
     const color = PALETTE[branch.rootId] || 0x91a99b;
     const drawTrunk = () => filaments.moveTo(curve.a.x, curve.a.y)
       .bezierCurveTo(curve.c1.x, curve.c1.y, curve.c2.x, curve.c2.y, curve.b.x, curve.b.y);
@@ -115,6 +133,7 @@ export function renderAtlasConnections({
     // Pure curve geometry is shared by strokes, junctions and animated particles.
     const sharedPathway = edge.basis === "academy-pathway-network";
     const curve = getAtlasConnectionCurveForEdge(edge, depth, sharedPathway);
+    if (!atlasCurveIntersectsViewport(curve, viewport)) continue;
     const { a, b, c1, c2, seed } = curve;
     const length = curve.length;
     const color = PALETTE[edge.a.rootId] || 0x91a99b;
