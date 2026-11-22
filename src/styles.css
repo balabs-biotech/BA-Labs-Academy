@@ -767,6 +767,14 @@
   color: var(--text, #f4f1e8);
 }
 
-/* Atlas spatial legibility: give the full fractal field more usable canvas. */
-.academy-atlas .atlas-stage{height:min(94vh,1180px);min-height:760px}
+/* Atlas spatial legibility: let the fractal field escape the narrow article column. */
+.academy-atlas .atlas-stage{
+  position:relative;
+  left:50%;
+  width:calc(100vw - 24px);
+  max-width:1680px;
+  transform:translateX(-50%);
+  height:min(94vh,1180px);
+  min-height:760px;
+}
 @media(max-width:700px){.academy-atlas .atlas-stage{height:88vh;min-height:680px}}
