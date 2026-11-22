@@ -47,13 +47,15 @@ function descendantsWeight(nodeId, childrenByParent, memo, visiting) {
   return Math.max(1, weight);
 }
 
-function allocateSectors(children, parentSector, weights, occupancy) {
+function allocateSectors(children, parentSector, weights, occupancy, fanExpansion = 1) {
   const totalWeight = children.reduce((sum, child) => sum + weights.get(child.id), 0);
   // Occupancy creates a visible gap between sibling fans, but is not
-  // compounded into the next generation's reserved sector.
+  // compounded into the next generation's reserved sector. Terminal fans
+  // receive a bounded angular expansion so their endpoints do not collapse
+  // into narrow combs at the edge of the overview.
   const allocationSpread = parentSector.fullRing
     ? parentSector.spread
-    : parentSector.spread * occupancy;
+    : parentSector.spread * occupancy * fanExpansion;
   const start = parentSector.fullRing ? 0 : -allocationSpread / 2;
   let cursor = start;
   return children.map((child) => {
@@ -151,7 +153,14 @@ export function createAtlasGrowthModel({
     if (!children.length) return;
     // Preserve the compact MYCOLOGIE heart; open the eight satellite fans.
     const localOccupancy = parent.rootId === "myc" ? 0.99 : occupancy;
-    const sectors = allocateSectors(children, parentSector, weights, localOccupancy);
+    const terminalFanExpansion = parent.rootId !== "myc" &&
+      (parent.level || 0) >= 1 &&
+      children.every((child) => !(childrenByParent.get(child.id) || []).length)
+      ? 1.38
+      : 1;
+    const sectors = allocateSectors(
+      children, parentSector, weights, localOccupancy, terminalFanExpansion
+    );
 
     children.forEach((child, index) => {
       const sector = sectors[index];
@@ -198,6 +207,7 @@ export function createAtlasGrowthModel({
           centerAngle: sector.angle,
           angularOffset: angularJitter,
           allocatedSpread: allocatedWidth,
+          fanExpansion: terminalFanExpansion,
           densityScale,
           angularCrowding,
           terminalExpansion,
