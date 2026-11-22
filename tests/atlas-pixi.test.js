@@ -452,10 +452,10 @@ test("Atlas renderer delegates label layout to its dedicated layer", () => {
 
 test("Atlas department palette is a single shared rendering contract", () => {
   const paletteSource = readFileSync(new URL("../src/features/atlas/atlas-palette.js", import.meta.url), "utf8");
-  const rendererSource = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  const stageSource = readFileSync(new URL("../src/features/atlas/atlas-renderer-stage.js", import.meta.url), "utf8");
   const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
   assert.ok(paletteSource.includes("export const PALETTE="));
-  assert.ok(rendererSource.includes('import { PALETTE } from "./atlas-palette.js";'));
+  assert.ok(stageSource.includes('import { PALETTE } from "./atlas-palette.js";'));
   assert.ok(nodesSource.includes('import { PALETTE } from "./atlas-palette.js";'));
 });
 

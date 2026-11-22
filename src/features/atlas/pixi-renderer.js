@@ -1,4 +1,4 @@
-import { Application, Text } from "pixi.js";
+import { Application, Container, Graphics, Text, TextStyle } from "pixi.js";
 import { createAtlasRenderStage } from "./atlas-renderer-stage.js";
 import { renderAtlasConnections } from "./atlas-connections.js";
 import { renderAtlasNodes } from "./atlas-nodes.js";
@@ -11,7 +11,7 @@ export async function createPixiRenderer(canvas){
  await app.init({canvas,backgroundAlpha:0,antialias:true,autoDensity:true,resolution:Math.min(window.devicePixelRatio||1,1.75),powerPreference:"high-performance",preference:"webgl",clearBeforeRender:true,autoStart:false});
  app.stage.eventMode="none";
  canvas.dataset.renderer="pixijs-webgl";
- const stage=createAtlasRenderStage(app);
+ const stage=createAtlasRenderStage(app, { Container, Graphics, TextStyle });
  const {field,filaments,junctions,labels,style}=stage;
  const labelPool=new Map();
  let lastWidth=0,lastHeight=0;

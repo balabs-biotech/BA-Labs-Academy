@@ -1,4 +1,3 @@
-import { Container, Graphics, TextStyle } from "pixi.js";
 import { PALETTE } from "./atlas-palette.js";
 
 /**
@@ -6,10 +5,9 @@ import { PALETTE } from "./atlas-palette.js";
  * The backdrop is deliberately separate from graph edges: rings and radial
  * guides establish spatial orientation without asserting knowledge relations.
  */
-export function createAtlasRenderStage(app, pixi = {}) {
-  const LayerGraphics = pixi.Graphics || Graphics;
-  const LayerContainer = pixi.Container || Container;
-  const LayerTextStyle = pixi.TextStyle || TextStyle;
+export function createAtlasRenderStage(app, pixi) {
+  const { Graphics: LayerGraphics, Container: LayerContainer, TextStyle: LayerTextStyle } = pixi || {};
+  if (!LayerGraphics || !LayerContainer || !LayerTextStyle) throw new TypeError("Pixi layer constructors are required");
   const field = new LayerGraphics();
   const filaments = new Graphics();
   const junctions = new Graphics();
