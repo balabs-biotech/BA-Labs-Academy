@@ -87,6 +87,28 @@ test("fractal preview remaps all eight visual trunks to its positioned root node
   }
 });
 
+test("terminal department anchors and first-generation endpoints use the expanded radial layout", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const model = createAtlasGrowthGraph(graph);
+  const core = model.byId.get("department:MYC");
+  const departments = [...model.departmentNodes.entries()]
+    .filter(([code]) => code !== "MYC")
+    .map(([, node]) => node);
+  assert.equal(departments.length, 8);
+  for (const department of departments) {
+    const radius = Math.hypot(department.x - core.x, department.y - core.y);
+    assert.ok(Math.abs(radius - 1850) < 1e-6);
+    const firstGeneration = model.nodes.filter((node) =>
+      node.parent === department.id && node.generation === 1
+    );
+    for (const endpoint of firstGeneration) {
+      const distance = Math.hypot(endpoint.x - department.x, endpoint.y - department.y);
+      assert.ok(distance >= 950 * 0.94 - 0.001);
+      assert.ok(distance <= 950 * 1.06 + 0.001);
+    }
+  }
+});
+
 test("MYCOLOGIE grows as a compact central heart without shrinking the eight satellite axes", () => {
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
   const model = createAtlasGrowthGraph(graph);
@@ -134,8 +156,8 @@ test("fractal growth adds bounded deterministic biological irregularity", () => 
   }
   for (const child of children) {
     const distance = Math.hypot(child.x - parent.x, child.y - parent.y);
-    assert.ok(distance >= 760 * 0.94 - 0.001);
-    assert.ok(distance <= 760 * 1.06 + 0.001);
+    assert.ok(distance >= 950 * 0.94 - 0.001);
+    assert.ok(distance <= 950 * 1.06 + 0.001);
   }
 });
 
