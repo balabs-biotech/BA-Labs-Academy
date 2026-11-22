@@ -145,6 +145,8 @@ try {
     );
     const deepCount = await page.locator("#academy-atlas-accessible button").count();
     assert.ok(deepCount > shallowCount, "Each depth step must reveal only the next hierarchy generation");
+    // Capture the actual recursive morphology separately from the orbital overview.
+    await page.screenshot({ path: `artifacts/atlas-fractal-${viewport.name}.png`, fullPage: false });
 
     await page.locator(".atlas-growth-preview-controls a").filter({ hasText: "Vue orbitale de référence" }).click();
     await page.waitForFunction(() => new URLSearchParams(location.search).get("atlas-growth") === "0");
