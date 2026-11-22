@@ -1,4 +1,4 @@
-import { createAtlasDepartmentLayout, getAtlasRootPosition, getAtlasChildPosition, getAtlasNestedBranchSpread } from "./atlas-geometry.js";
+import { createAtlasDepartmentLayout, createAtlasChildSectors, getAtlasRootPosition, getAtlasChildPosition, getAtlasNestedBranchSpread } from "./atlas-geometry.js";
 
 const hash = (value) => {
   let result = 2166136261;
@@ -108,10 +108,22 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     const effectiveBranchSpread = isDepartmentRoot && parent.entity_key !== "MYC"
       ? departmentLayout.spreads[parent.entity_key]
       : branchSpread;
+    const sectorLayout = isDepartmentRoot
+      ? createAtlasChildSectors(
+          items,
+          isMycologyCore ? Math.PI * 2 : effectiveBranchSpread,
+          branchAngle,
+          isMycologyCore
+        )
+      : null;
     items.forEach((item, index) => {
+      const childSector = sectorLayout?.[index];
       const { x, y, angle } = getAtlasChildPosition({
-        parent, index, count: items.length, depth, branchAngle,
-        isMycologyCore, isDepartmentRoot, branchSpread: effectiveBranchSpread
+        parent, index, count: items.length, depth,
+        branchAngle: childSector?.angle ?? branchAngle,
+        isMycologyCore: false,
+        isDepartmentRoot: isDepartmentRoot && !childSector,
+        branchSpread: childSector ? 0 : effectiveBranchSpread
       });
       const entityType = item.kind === "section" ? "SECTION" : item.kind === "domain" ? "DOMAIN" : "MODULE";
       const node = addNode(makeNode(item, parent, rootId, depth, x, y, angle, entityType));
@@ -125,11 +137,13 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
       if (item.kind === "section") sectionNodes.set(item.code, node);
       if (item.kind === "domain") domainNodes.set(item.code, node);
       if (item.children?.length) {
-        const nestedSpread = Number.isFinite(effectiveBranchSpread)
-          ? getAtlasNestedBranchSpread(effectiveBranchSpread, items.length, isMycologyCore)
-          : isMycologyCore
-            ? getAtlasNestedBranchSpread(Math.PI * 2, items.length, true)
-            : undefined;
+        const nestedSpread = childSector?.spread ?? (
+          Number.isFinite(effectiveBranchSpread)
+            ? getAtlasNestedBranchSpread(effectiveBranchSpread, items.length, isMycologyCore)
+            : isMycologyCore
+              ? getAtlasNestedBranchSpread(Math.PI * 2, items.length, true)
+              : undefined
+        );
         walk(item.children, node, rootId, depth + 1, angle, nestedSpread);
       }
     });
