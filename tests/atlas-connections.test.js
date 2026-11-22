@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { getAtlasConnectionCurveForEdge } from "../src/features/atlas/atlas-connections.js";
+import { atlasConnectionCurvesIntersect, createAtlasConnectionCurve, sampleAtlasConnectionCurve } from "../src/features/atlas/atlas-curve.js";
 
 function makeEdge() {
   return {
@@ -54,4 +55,64 @@ test("connection curve cache invalidates when seed, depth or pathway profile cha
   assert.notStrictEqual(seeded, first);
   assert.notStrictEqual(deeper, seeded);
   assert.notStrictEqual(pathway, deeper);
+});
+
+
+test("recursive branch curvature tapers with hierarchy depth", () => {
+  const a = { id: "parent", x: 0, y: 0 };
+  const b = { id: "child", x: 300, y: 0 };
+  const primary = createAtlasConnectionCurve(a, b, { seed: 17, depth: 1 });
+  const secondary = createAtlasConnectionCurve(a, b, { seed: 17, depth: 2 });
+  const tertiary = createAtlasConnectionCurve(a, b, { seed: 17, depth: 3 });
+  const primaryBend = Math.abs(primary.c1.y);
+  const secondaryBend = Math.abs(secondary.c1.y);
+  const tertiaryBend = Math.abs(tertiary.c1.y);
+  assert.ok(primaryBend > secondaryBend);
+  assert.ok(secondaryBend > tertiaryBend);
+  assert.ok(Math.abs(secondaryBend / primaryBend - 1 / Math.sqrt(2)) < 0.001);
+  assert.ok(Math.abs(tertiaryBend / primaryBend - 1 / Math.sqrt(3)) < 0.001);
+});
+
+
+test("narrow hierarchy sectors constrain lateral curve excursions", () => {
+  const a = { id: "parent", x: 0, y: 0 };
+  const b = { id: "child", x: 300, y: 0 };
+  const broad = createAtlasConnectionCurve(a, b, { seed: 17, bendScale: 1 });
+  const narrow = createAtlasConnectionCurve(a, b, { seed: 17, bendScale: 0.35 });
+  assert.ok(Math.abs(narrow.c1.y) < Math.abs(broad.c1.y));
+  assert.ok(Math.abs(narrow.c2.y) < Math.abs(broad.c2.y));
+  assert.ok(Math.abs(narrow.c1.y / broad.c1.y - 0.35) < 0.001);
+});
+
+test("fixed-step curve sampling is stable and excludes the shared launch region", () => {
+  const a = { id: "parent", x: 0, y: 0 };
+  const b = { id: "child", x: 300, y: 0 };
+  const curve = createAtlasConnectionCurve(a, b, { seed: 17 });
+  const samples = sampleAtlasConnectionCurve(curve, { steps: 12, startProgress: 0.2 });
+  assert.equal(samples.length, 13);
+  assert.ok(Math.abs(samples[0].progress - 0.2) < 1e-12);
+  assert.equal(samples.at(-1).progress, 1);
+  assert.deepEqual(samples, sampleAtlasConnectionCurve(curve, { steps: 12, startProgress: 0.2 }));
+});
+
+test("crossing diagnostics distinguish separated and intersecting cubic filaments", () => {
+  const origin = { id: "parent", x: 0, y: 0 };
+  const upper = createAtlasConnectionCurve(origin, { id: "upper", x: 300, y: 100 }, { seed: 17, bendScale: 0.2 });
+  const lower = createAtlasConnectionCurve(origin, { id: "lower", x: 300, y: -100 }, { seed: 17, bendScale: 0.2 });
+  assert.equal(atlasConnectionCurvesIntersect(upper, lower, { steps: 32, startProgress: 0.12 }), false);
+});
+
+test("crossing diagnostics detect an actual intersection between sampled filaments", () => {
+  const first = {
+    a: { x: 0, y: 0 }, c1: { x: 33, y: 33 },
+    c2: { x: 67, y: 67 }, b: { x: 100, y: 100 }
+  };
+  const second = {
+    a: { x: 0, y: 100 }, c1: { x: 33, y: 67 },
+    c2: { x: 67, y: 33 }, b: { x: 100, y: 0 }
+  };
+  assert.equal(atlasConnectionCurvesIntersect(first, second, {
+    steps: 32,
+    startProgress: 0.12
+  }), true);
 });
