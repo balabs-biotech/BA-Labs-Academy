@@ -406,6 +406,41 @@ test("Atlas connection renderer resolves edge endpoints after extraction", async
 });
 
 
+test("Atlas render context pre-indexes hierarchy and caches selected branch sets", async () => {
+  const { createAtlasRenderContext } = await import("../src/features/atlas/atlas-render-context.js");
+  const root = { id: "root", parent: null };
+  const section = { id: "section", parent: "root" };
+  const moduleA = { id: "module-a", parent: "section" };
+  const moduleB = { id: "module-b", parent: "section" };
+  const unrelated = { id: "unrelated", parent: null };
+  const context = createAtlasRenderContext([root, section, moduleA, moduleB, unrelated]);
+
+  assert.equal(context.byId.get("section"), section);
+  assert.deepEqual(context.childrenByParent.get("section"), [moduleA, moduleB]);
+
+  const first = context.resolveSelection(moduleA);
+  assert.deepEqual([...first.lineage], ["module-a", "section", "root"]);
+  assert.deepEqual([...first.activeBranch].sort(), ["module-a"]);
+  assert.equal(context.resolveSelection(moduleA), first, "same selection reuses the cached context");
+
+  const next = context.resolveSelection(section);
+  assert.notEqual(next, first);
+  assert.deepEqual([...next.lineage], ["section", "root"]);
+  assert.deepEqual([...next.activeBranch].sort(), ["module-a", "module-b", "section"]);
+  assert.deepEqual([...context.resolveSelection(null).lineage], []);
+  assert.deepEqual([...context.resolveSelection(null).activeBranch], []);
+});
+
+test("Atlas render context safely stops at malformed parent cycles", async () => {
+  const { createAtlasRenderContext } = await import("../src/features/atlas/atlas-render-context.js");
+  const a = { id: "a", parent: "b" };
+  const b = { id: "b", parent: "a" };
+  const context = createAtlasRenderContext([a, b]);
+  const result = context.resolveSelection(a);
+  assert.deepEqual([...result.lineage], ["a", "b"]);
+  assert.deepEqual([...result.activeBranch].sort(), ["a", "b"]);
+});
+
 test("Atlas renderer stage owns Pixi layer composition and non-semantic backdrop", async () => {
   const { createAtlasRenderStage } = await import("../src/features/atlas/atlas-renderer-stage.js");
   const calls = [];
