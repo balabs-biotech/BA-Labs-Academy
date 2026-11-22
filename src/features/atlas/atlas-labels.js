@@ -6,7 +6,8 @@ import { placeAtlasLabel } from "./atlas-label-placement.js";
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
-export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nodes,selected,scale,offset,width,height,alphaFor,activeBranch,lineage,lang,live=new Set()}) {
+export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,labelResources,nodes,selected,scale,offset,width,height,alphaFor,activeBranch,lineage,lang,live=new Set()}) {
+ if(labelResources) labelResources.beginFrame();
  const shortRoots={
  fr:{bio:"BIOTECH",myco:"MYCO",soil:"TECHNOSOIL",lab:"LABO",products:"PRODUITS",iot:"IOT",work:"R&D",evidence:"PREUVES"},
  en:{bio:"BIOTECH",myco:"MYCOLOGY",soil:"TECHNOSOIL",lab:"LAB",products:"PRODUCTS",iot:"IOT",work:"PROJECTS",evidence:"EVIDENCE"},
@@ -31,7 +32,7 @@ export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nod
  for(const {n,alpha} of candidates){
  if(n.level!==0&&drawn>=labelBudget)continue;
  const sx=width/2+offset.x+n.x*scale,sy=height/2+offset.y+n.y*scale;
- let label=labelPool.get(n.id);if(!label){label=createLabel(n, style);labelPool.set(n.id,label);labels.addChild(label);}
+ let label=labelResources ? labelResources.get(n.id,n,style) : labelPool.get(n.id);if(!label){label=createLabel(n, style);labelPool.set(n.id,label);labels.addChild(label);}
  const title=n.level===0&&scale<1.2?(n.shortTitle||(shortRoots[lang]||shortRoots.fr)[n.rootId]||n.title):n.title;
  let fontSize=n.level===0?clamp(11.5+Math.log2(Math.max(.5,scale))*1.25,10.5,15):clamp(11.1+Math.log2(Math.max(.7,scale))*1.05,10.2,14.2);if(selected&&activeBranch.has(n.id))fontSize+=.7;if(selected?.id===n.id)fontSize+=1;
  label.text=title;label.style.fontSize=fontSize;label.style.fontWeight=n.level===0?"650":"500";
@@ -50,9 +51,10 @@ export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nod
  const {x,y,box}=placement;
  label.position.set(x,y);label.alpha=Math.max(alpha,selected?0.76:0.88);label.visible=true;
  hitBoxes[n.id]=box;
- occupied.push(box);live.add(n.id);drawn++;
+ occupied.push(box);live.add(n.id);labelResources?.markVisible(n.id);drawn++;
  }
- for(const [id,label] of labelPool){if(!live.has(id))label.visible=false;}
+ if(labelResources) labelResources.endFrame();
+ else for(const [id,label] of labelPool){if(!live.has(id))label.visible=false;}
  canvas.dataset.visibleNodeIds=JSON.stringify([...live]);
  canvas.dataset.visibleNodeHitBoxes=JSON.stringify(hitBoxes);
 }

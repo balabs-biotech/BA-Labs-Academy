@@ -2,7 +2,7 @@ import { createAtlasFrameModel } from "./atlas-frame-model.js";
 
 /** PixiJS-specific frame adapter. It translates a neutral frame plan into Pixi display-list operations. */
 export function createAtlasPixiFrameRenderer({
-  stage, canvas, labelPool, createLabel, connections, nodesLayer, labelsLayer,
+  stage, canvas, labelPool, labelResources, createLabel, connections, nodesLayer, labelsLayer,
   frameModel = createAtlasFrameModel()
 }) {
   function render(frame, backendRender) {
@@ -30,7 +30,7 @@ export function createAtlasPixiFrameRenderer({
     stage.junctions.scale.set(transform.scale);
 
     labelsLayer({
-      canvas, labels: stage.labels, labelPool, style: stage.style, createLabel,
+      canvas, labels: stage.labels, labelPool, labelResources, style: stage.style, createLabel,
       nodes, selected, scale, offset: plan.offset, width: plan.width, height: plan.height,
       alphaFor, activeBranch, lineage, lang
     });
@@ -39,6 +39,9 @@ export function createAtlasPixiFrameRenderer({
 
   return {
     render,
-    reset() { frameModel.reset(); }
+    reset() {
+      frameModel.reset();
+      labelResources?.clear();
+    }
   };
 }

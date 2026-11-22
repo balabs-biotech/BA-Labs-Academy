@@ -4,6 +4,7 @@ import { renderAtlasConnections } from "./atlas-connections.js";
 import { renderAtlasNodes } from "./atlas-nodes.js";
 import { renderAtlasLabels } from "./atlas-labels.js";
 import { createAtlasPixiFrameRenderer } from "./atlas-pixi-frame-renderer.js";
+import { createAtlasLabelResources } from "./atlas-label-resources.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -24,7 +25,11 @@ export async function createPixiRenderer(canvas) {
   canvas.dataset.renderer = "pixijs-webgl";
 
   const stage = createAtlasRenderStage(app, { Container, Graphics, TextStyle });
-  const labelPool = new Map();
+  const createLabel = (node, labelStyle) => new Text({ text: node.title, style: labelStyle.clone() });
+  const labelResources = createAtlasLabelResources({
+    container: stage.labels,
+    createLabel
+  });
   let cameraScale = 1;
 
   const alphaFor = (level) => {
@@ -36,8 +41,8 @@ export async function createPixiRenderer(canvas) {
   const frameRenderer = createAtlasPixiFrameRenderer({
     stage,
     canvas,
-    labelPool,
-    createLabel: (node, labelStyle) => new Text({ text: node.title, style: labelStyle.clone() }),
+    labelResources,
+    createLabel,
     connections: renderAtlasConnections,
     nodesLayer: renderAtlasNodes,
     labelsLayer: renderAtlasLabels

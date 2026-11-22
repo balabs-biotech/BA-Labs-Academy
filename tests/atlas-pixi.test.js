@@ -514,6 +514,49 @@ test("Atlas label renderer owns a safe live-node set when not injected", async (
 });
 
 
+
+test("Atlas label resources reuse display objects and release them deterministically", async () => {
+  const { createAtlasLabelResources } = await import("../src/features/atlas/atlas-label-resources.js");
+  const added = [];
+  const removed = [];
+  const destroyed = [];
+  const container = {
+    addChild(label) { added.push(label); label.parent = container; },
+    removeChild(label) { removed.push(label); label.parent = null; }
+  };
+  let created = 0;
+  const resources = createAtlasLabelResources({
+    container,
+    createLabel(node) {
+      created += 1;
+      return { id: node.id, visible: false, destroy() { destroyed.push(node.id); } };
+    }
+  });
+  const node = { id: "module-a" };
+  resources.beginFrame();
+  const first = resources.get(node.id, node, {});
+  resources.markVisible(node.id);
+  resources.endFrame();
+  assert.equal(first.visible, true);
+  assert.equal(resources.size, 1);
+
+  resources.beginFrame();
+  const reused = resources.get(node.id, node, {});
+  resources.endFrame();
+  assert.equal(reused, first, "same node reuses its Pixi text object");
+  assert.equal(reused.visible, false, "objects not selected for this frame are hidden");
+  assert.equal(created, 1);
+  assert.equal(added.length, 1);
+
+  resources.clear();
+  resources.clear();
+  assert.equal(resources.disposed, true);
+  assert.equal(resources.size, 0);
+  assert.deepEqual(removed, [first]);
+  assert.deepEqual(destroyed, ["module-a"]);
+  assert.throws(() => resources.get("other", { id: "other" }, {}), /disposed/);
+});
+
 test("Atlas animation scheduler owns one frame loop and supports clean stop and restart", async () => {
   const { createAtlasAnimation } = await import("../src/features/atlas/atlas-animation.js");
   const callbacks = new Map();
