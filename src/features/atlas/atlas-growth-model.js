@@ -1,7 +1,7 @@
 import { ATLAS_GOLDEN_RATIO, ATLAS_GEOMETRY } from "./atlas-geometry.js";
 import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, atlasConnectionCurvesMayBeNear, createAtlasConnectionCurve } from "./atlas-curve.js";
 
-const DEFAULT_OCCUPANCY = 1 - 1 / (ATLAS_GOLDEN_RATIO ** 3);
+const DEFAULT_OCCUPANCY = ATLAS_GEOMETRY.branchOccupancy;
 // World-space clearance threshold used to flag visually crowded, non-crossing
 // filaments. It is diagnostic only; it never changes scientific relationships.
 const CROSS_GENERATION_CLEARANCE_THRESHOLD = 18;

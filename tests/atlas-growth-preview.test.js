@@ -4,6 +4,7 @@ import { catalogueMap } from "../src/catalogue-map.js";
 import { cataloguePathways } from "../src/catalogue-pathways.js";
 import { buildAcademyGraph } from "../src/features/atlas/atlas-graph.js";
 import { createAtlasGrowthGraph, createAtlasGrowthModel } from "../src/features/atlas/atlas-growth-model.js";
+import { ATLAS_GEOMETRY } from "../src/features/atlas/atlas-geometry.js";
 import { atlasConnectionCurvesClearance, atlasConnectionCurvesMayBeNear } from "../src/features/atlas/atlas-curve.js";
 
 
@@ -103,10 +104,29 @@ test("terminal department anchors and first-generation endpoints use the expande
     );
     for (const endpoint of firstGeneration) {
       const distance = Math.hypot(endpoint.x - department.x, endpoint.y - department.y);
-      assert.ok(distance >= 950 * 0.94 - 0.001);
-      assert.ok(distance <= 950 * 1.06 + 0.001);
+      assert.ok(distance >= 1250 * 0.94 - 0.001);
+      assert.ok(distance <= 1250 * 1.06 + 0.001);
     }
   }
+});
+
+test("global branch expansion propagates through every recursive generation", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const model = createAtlasGrowthGraph(graph);
+  const root = model.byId.get("department:MIC");
+  const generations = [1, 2, 3];
+  for (const generation of generations) {
+    const sample = model.nodes.find((node) => node.rootId === "mic" && node.generation === generation);
+    assert.ok(sample, `missing generation ${generation}`);
+    const parent = model.byId.get(sample.parent);
+    const distance = Math.hypot(sample.x - parent.x, sample.y - parent.y);
+    const expected = (1250 / ((1 + Math.sqrt(5)) / 2) ** (generation - 1)) *
+      sample.growthSector.densityScale;
+    assert.ok(distance >= expected * 0.94 - 0.001);
+    assert.ok(distance <= expected * 1.06 + 0.001);
+  }
+  assert.ok(root);
+  assert.equal(ATLAS_GEOMETRY.branchOccupancy, 0.9);
 });
 
 test("MYCOLOGIE grows as a compact central heart without shrinking the eight satellite axes", () => {
@@ -156,8 +176,8 @@ test("fractal growth adds bounded deterministic biological irregularity", () => 
   }
   for (const child of children) {
     const distance = Math.hypot(child.x - parent.x, child.y - parent.y);
-    assert.ok(distance >= 950 * 0.94 - 0.001);
-    assert.ok(distance <= 950 * 1.06 + 0.001);
+    assert.ok(distance >= 1250 * 0.94 - 0.001);
+    assert.ok(distance <= 1250 * 1.06 + 0.001);
   }
 });
 
