@@ -104,3 +104,25 @@ test("explicit full-ring root sectors are honored without changing root anchors"
   assert.equal(model.byId.get("section-b").generation, 1);
   assert.ok(Math.abs(model.byId.get("section-a").angle - model.byId.get("section-b").angle) >= Math.PI - 1e-10);
 });
+
+test("terminal siblings are packed closer without shortening their parent branches", () => {
+  const nodes = [
+    { id: "root", parent: null, level: 0, x: 0, y: 0, angle: 0,
+      growthSector: { angle: 0, spread: 1.2, fullRing: false } },
+    { id: "leaf-a", parent: "root", level: 1 },
+    { id: "leaf-b", parent: "root", level: 1 },
+    { id: "leaf-c", parent: "root", level: 1 },
+    { id: "leaf-d", parent: "root", level: 1 }
+  ];
+  const model = createAtlasGrowthModel({ nodes });
+  const terminals = model.nodes.filter((node) => node.parent === "root");
+  const angles = terminals.map((node) => node.angle);
+  const angularSpan = Math.max(...angles) - Math.min(...angles);
+  assert.ok(angularSpan < 0.8,
+    "terminal angular span must contract independently of parent-child radius");
+  for (const terminal of terminals) {
+    const distance = Math.hypot(terminal.x, terminal.y);
+    assert.ok(distance >= ATLAS_GROWTH_DEFAULTS.generationLengthBase * 0.94);
+    assert.ok(distance <= ATLAS_GROWTH_DEFAULTS.generationLengthBase * 1.06);
+  }
+});
