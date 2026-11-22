@@ -13,10 +13,10 @@ export function createAtlasRendererHost({ backendFactory, canvas }) {
   let backend = null;
   let initialization = null;
 
-  async function initialize() {
-    if (state === "ready") return api;
+  function initialize() {
+    if (state === "ready") return Promise.resolve(api);
     if (state === "initializing") return initialization;
-    if (state === "disposed") throw new Error("Atlas renderer host is disposed");
+    if (state === "disposed") return Promise.reject(new Error("Atlas renderer host is disposed"));
 
     state = "initializing";
     initialization = Promise.resolve()
