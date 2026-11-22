@@ -1,5 +1,5 @@
 /** Screen-space level of detail for the fractal hierarchy. */
-const LEVEL_VISIBILITY_THRESHOLDS = Object.freeze([0, 0.04, 0.065, 0.095, 0.13, 0.18, 0.25]);
+const LEVEL_VISIBILITY_THRESHOLDS = Object.freeze([0, 0.04, 0.065, 0.095, 0.13, 0.22, 0.3]);
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
