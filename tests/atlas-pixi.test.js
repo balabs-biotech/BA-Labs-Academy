@@ -477,7 +477,7 @@ test("Atlas renderer stage owns Pixi layer composition and non-semantic backdrop
 test("Module labels become eligible earlier and the zoom label budget expands", () => {
   const source = readFileSync(new URL("../src/features/atlas/atlas-labels.js", import.meta.url), "utf8");
   assert.ok(source.includes("n.level===1?.58:n.level===2?.84"));
-  assert.ok(source.includes("Math.min(96,Math.max(18"));
+  assert.ok(source.includes("Math.min(220,Math.max(32"));
   assert.ok(source.includes("11.1+Math.log2"));
 });
 
@@ -488,7 +488,7 @@ test("Atlas renderer delegates label layout to its dedicated layer", () => {
   assert.ok(source.includes("renderAtlasLabels({ canvas, labels, labelPool, style"));
   assert.ok(!source.includes("const shortRoots="));
   assert.ok(labelsSource.includes("export function renderAtlasLabels"));
-  assert.ok(labelsSource.includes("const collides=occupied.some"));
+  assert.ok(labelsSource.includes("placeAtlasLabel("));
   assert.ok(labelsSource.includes("canvas.dataset.visibleNodeHitBoxes"));
 });
 

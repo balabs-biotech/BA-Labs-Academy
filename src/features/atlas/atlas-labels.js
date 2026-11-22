@@ -2,7 +2,9 @@
  * Screen-space Atlas label layout, collision filtering and hit-box publication.
  * Label creation and Pixi containers are injected by the renderer.
  */
-import { placeAtlasLabel } from "./atlas-label-placement.js";\n\nconst clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+import { placeAtlasLabel } from "./atlas-label-placement.js";
+
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nodes,selected,scale,offset,width,height,alphaFor,activeBranch,lineage,lang,live=new Set()}) {
  const shortRoots={
