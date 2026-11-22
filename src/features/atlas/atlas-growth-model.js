@@ -18,13 +18,18 @@ function descendantsWeight(nodeId, childrenByParent, memo, visiting) {
 
 function allocateSectors(children, parentSector, weights, occupancy) {
   const totalWeight = children.reduce((sum, child) => sum + weights.get(child.id), 0);
-  const start = parentSector.fullRing ? 0 : -parentSector.spread / 2;
+  // Occupancy creates a visible gap between sibling fans, but is not
+  // compounded into the next generation's reserved sector.
+  const allocationSpread = parentSector.fullRing
+    ? parentSector.spread
+    : parentSector.spread * occupancy;
+  const start = parentSector.fullRing ? 0 : -allocationSpread / 2;
   let cursor = start;
   return children.map((child) => {
-    const width = parentSector.spread * weights.get(child.id) / totalWeight;
+    const width = allocationSpread * weights.get(child.id) / totalWeight;
     const sector = {
       angle: parentSector.angle + cursor + width / 2,
-      spread: width * occupancy,
+      spread: parentSector.fullRing ? width : width / occupancy,
       fullRing: false
     };
     cursor += width;

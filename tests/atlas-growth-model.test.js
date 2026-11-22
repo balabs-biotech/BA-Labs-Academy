@@ -81,7 +81,12 @@ test("department root growth preserves its preallocated geographic sector", () =
   const model = createAtlasGrowthModel({ nodes });
   const child = model.byId.get("section-a");
   assert.ok(Math.abs(child.angle - 1.2) <= 0.42 / 2);
-  assert.ok(Math.abs(child.growthSector.spread - ATLAS_GROWTH_DEFAULTS.occupancy * 0.28) < 1e-10);
+  assert.ok(Math.abs(child.growthSector.spread - 0.28) < 1e-10);
+  const moduleA1 = model.byId.get("module-a1");
+  const moduleA2 = model.byId.get("module-a2");
+  const terminalFanWidth = child.growthSector.spread * ATLAS_GROWTH_DEFAULTS.occupancy;
+  assert.ok(Math.abs(moduleA1.angle - child.angle) <= terminalFanWidth / 2);
+  assert.ok(Math.abs(moduleA2.angle - child.angle) <= terminalFanWidth / 2);
 });
 
 test("explicit full-ring root sectors are honored without changing root anchors", () => {
