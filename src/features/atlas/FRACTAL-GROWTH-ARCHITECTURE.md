@@ -70,8 +70,3 @@ Les diagnostics sont des informations de qualité géométrique. Ils ne modifien
 ## Global spatial expansion
 
 The default fractal layout uses a 1,250-world-unit first-generation branch length and a 0.9 angular occupancy. The 1,250-unit base is propagated recursively with the golden-ratio length progression, so every generation receives the larger spatial scale rather than expanding only the first visible endpoints. The higher occupancy uses more of each allocated angular sector, widening branch fans throughout the hierarchy. The Pixi stage provides a taller overview area; camera navigation remains responsible for inspecting dense local subtrees.
-
-
-## Landscape-aware root distribution
-
-The eight department anchors and ten pathway anchors use a deterministic horizontal ellipse rather than a circular orbit. The horizontal semi-axis retains the configured orbit radius; the vertical semi-axis is multiplied by `orbitVerticalRatio` (0.62). This preserves angular order and normalized orbital distance while matching the wide 2D stage, reducing camera fit's vertical bottleneck. Child hierarchy coordinates remain canonical relative to their positioned parent; no taxonomy or academic relation is changed.
