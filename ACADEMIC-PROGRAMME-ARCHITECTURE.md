@@ -2,48 +2,43 @@
 
 ## 1. Séparation des couches
 
-L’Academy distingue quatre objets qui ne doivent pas être confondus :
+L’Academy distingue les objets suivants :
 
-- **Département / domaine** : classification scientifique et disciplinaire.
-- **Programme** : cursus complet défini par une finalité, un public, un niveau et une durée indicative.
-- **Arborescence du programme** : organisation interne du cursus en niveaux structurels.
-- **Parcours pédagogique** : séquence d’apprentissage ordonnée qui mobilise des ressources existantes.
+- **Département** : discipline scientifique de référence.
+- **Domaine** : axe thématique ou transversal, rattaché à un ou plusieurs départements selon le modèle éditorial.
+- **Programme** : offre structurée autour d'une finalité, d'un public, de prérequis et de résultats attendus.
+- **Structure de programme** : organisation des blocs et modules qui composent l'offre.
+- **Parcours pédagogique** : progression ordonnée qui mobilise des modules, activités et ressources réutilisables.
+- **Compétence** : capacité démontrable, associée à des critères et à des preuves d'acquisition.
+- **Ressource / activité / évaluation** : objets pédagogiques distincts, liés au programme sans duplication de contenu.
 
-Les ressources de cours, évaluations et compétences restent des objets distincts. Le programme les organisera ultérieurement sans dupliquer leur contenu.
+Un programme assemble ces objets ; il ne devient pas leur propriétaire exclusif et ne doit pas dupliquer les contenus canoniques.
 
-## 2. Hiérarchie structurelle
+## 2. Structure pédagogique
+
+La structure est volontairement souple. Elle doit convenir à une formation courte, à un atelier intensif ou à un programme long sans imposer le calendrier d'une université classique.
 
 ```text
 ACADEMY
-└── Département(s)
-    └── Domaine(s)
-        └── Programme
-            ├── Cycle (facultatif)
-            │   └── Année (facultatif)
-            │       └── Semestre (facultatif)
-            │           └── Bloc pédagogique
-            │               └── Module
-            │                   └── Unité d’enseignement
-            │                       └── Chapitre
-            │                           └── Séquence
-            │                               └── Leçon
-            │                                   └── Activité pédagogique
-            └── Bloc pédagogique (racine alternative)
-                └── Module
-                    └── Unité d’enseignement
-                        └── Chapitre
-                            └── Séquence
-                                └── Leçon
-                                    └── Activité pédagogique
+└── Programme
+    ├── Cycle (facultatif)
+    │   └── Bloc pédagogique
+    │       └── Module
+    │           └── Unité (facultative)
+    │               └── Chapitre (facultatif)
+    │                   └── Séquence (facultative)
+    │                       └── Leçon (facultative)
+    │                           └── Activité
+    └── Bloc pédagogique (racine alternative)
+        └── Module
+            └── ...
 ```
 
-Les niveaux intermédiaires sont facultatifs. Un cursus court peut commencer par un bloc ; un cursus long peut être structuré en cycles, années et semestres. Des niveaux de granularité supplémentaires sont également pris en charge sous les unités : chapitre, séquence, leçon et activité pédagogique. Les racines restent des cycles ou des blocs.
+Les racines autorisées sont `CYCLE` et `BLOCK`. Les niveaux intermédiaires sont facultatifs : un atelier peut être constitué directement de blocs et de modules ; un programme approfondi peut ajouter des unités, chapitres, séquences et leçons.
 
-Types de nœuds pris en charge :
+Les types structurels actuellement pris en charge sont :
 
 - `CYCLE`
-- `YEAR`
-- `SEMESTER`
 - `BLOCK`
 - `MODULE`
 - `UNIT`
@@ -51,54 +46,64 @@ Types de nœuds pris en charge :
 - `SEQUENCE`
 - `LESSON`
 - `ACTIVITY`
-- `CHAPTER`
-- `SEQUENCE`
-- `LESSON`
-- `ACTIVITY`
 
-Les racines autorisées sont `CYCLE` et `BLOCK`. Chaque nœud possède un code unique dans son programme, un parent éventuel, un ordre parmi ses frères, un indicateur obligatoire/facultatif et une durée indicative facultative.
+**La profondeur structurelle ne représente pas le niveau de maîtrise.** Le niveau L1–L4 est un axe pédagogique indépendant, attaché aux compétences, aux objectifs ou aux exigences d'un module. Il ne doit pas être assimilé à une année, un semestre ou un rang dans l'arborescence.
 
-Les codes des nœuds servent de clés éditoriales stables. Une sauvegarde met à jour les nœuds existants à partir de leur code et conserve leurs identifiants UUID ; cela protège les futurs liens vers compétences, ressources, évaluations et parcours. Les réordonnancements de frères sont appliqués sans collision d’index. Les nœuds supprimés ne sont retirés qu’après réconciliation de l’arborescence.\n\nLa base impose :
+Chaque nœud possède un code éditorial stable dans son programme, un parent éventuel, un ordre parmi ses frères, un indicateur obligatoire/facultatif et une durée indicative facultative.
+
+Les codes servent de clés éditoriales stables. Une sauvegarde met à jour les nœuds existants à partir de leur code et conserve leurs identifiants UUID ; cela protège les futurs liens vers compétences, ressources, évaluations et parcours. Les réordonnancements de frères sont appliqués sans collision d'index. Les nœuds supprimés ne sont retirés qu'après réconciliation de l'arborescence.
+
+## 3. Invariants de structure
+
+La base impose ou doit garantir :
+
 - parent dans le même programme ;
-- progression vers un niveau inférieur dans la hiérarchie ;
+- progression vers un niveau structurel autorisé ;
 - absence de parent manquant ou de cycle ;
-- unicité des codes et de l’ordre parmi les frères ;
-- un rattachement disciplinaire principal par programme.
+- unicité des codes dans un programme ;
+- unicité de l'ordre parmi les frères ;
+- racines limitées aux types autorisés ;
+- rattachement disciplinaire principal explicite par programme.
 
-## 3. Rattachement disciplinaire
+Ces invariants concernent la structure du programme. Ils ne doivent pas contraindre les relations transversales entre modules, compétences et ressources.
 
-Un programme peut être rattaché à plusieurs départements et domaines. Un département est principal ; les autres apportent les contributions transversales.
+## 4. Rattachement disciplinaire
 
-Le type `TRANSVERSAL` permet de construire des programmes qui traversent plusieurs disciplines. La mycologie peut être l’axe principal d’un cursus ou être associée à des domaines des autres départements. Les domaines sélectionnés doivent appartenir aux départements rattachés au programme.
+Un programme peut mobiliser plusieurs départements et domaines. Un département est principal ; les autres apportent les contributions transversales.
 
-## 4. Relations avec les objets pédagogiques existants
+Le type `TRANSVERSAL` permet de construire des programmes qui traversent plusieurs disciplines. La mycologie peut être l'axe principal d'un programme ou être associée à des domaines d'autres départements. Les domaines sélectionnés doivent rester cohérents avec le périmètre disciplinaire déclaré.
+
+## 5. Relations avec les objets pédagogiques canoniques
 
 | Objet | Fonction |
 |---|---|
-| `academy_programs` | Identité et métadonnées du cursus |
-| `academy_program_nodes` | Arborescence du cursus |
+| `academy_programs` | Identité et métadonnées du programme |
+| `academy_program_nodes` | Structure du programme |
 | `academy_program_departments` | Départements associés et département principal |
 | `academy_program_domains` | Domaines associés |
-| `academy_learning_paths` | Parcours linéaires d’apprentissage |
-| `content_items` | Ressources et unités de contenu |
+| `academy_learning_paths` | Parcours ordonnés réutilisables |
+| `content_items` | Ressources et contenus canoniques |
 | `academy_competencies` | Référentiel des compétences et prérequis |
 | `academy_assessments` | Évaluations et contrôle des acquis |
 
-Les relations sont désormais prévues dans des tables dédiées : `academy_program_node_competencies` (acquis attendus et niveau), `academy_program_node_resources` (ressources réutilisables), `academy_program_node_assessments` (évaluations) et `academy_program_node_paths` (parcours réutilisables). Une offre de formation peut également être rattachée à un programme entier ou à un nœud précis. Ces relations restent vides tant que l'architecture des cursus n'est pas validée ; elles ne dupliquent jamais les contenus.
+Les relations entre nœuds et objets pédagogiques sont portées par des tables dédiées : `academy_program_node_competencies` (acquis attendus et niveau), `academy_program_node_resources` (ressources réutilisables), `academy_program_node_assessments` (évaluations) et `academy_program_node_paths` (parcours réutilisables).
 
-## 5. Workflow éditorial
+Une offre de formation peut être rattachée à un programme entier ou à un nœud précis. Ces relations ne créent pas de copie des contenus. Leur remplissage éditorial reste séparé de la construction de l'architecture.
+
+## 6. Workflow éditorial
 
 1. Création d’un programme au statut `DRAFT`.
-2. Définition de son périmètre disciplinaire.
-3. Construction et validation de l’arborescence.
-4. Relecture éditoriale.
-5. Publication par Owner ou Admin.
+2. Définition de son périmètre disciplinaire et de son public.
+3. Construction et validation de la structure.
+4. Association des compétences, ressources et évaluations réutilisables.
+5. Relecture éditoriale.
+6. Publication par Owner ou Admin.
 
-Les programmes publiés ne sont pas modifiables par l’éditeur de brouillon. Le champ `version_label` existe, mais la gestion de versions successives (fork d’un programme publié, lien entre versions, comparaison et archivage) reste à construire avant l’ouverture de la production de contenu.
+Les programmes publiés ne sont pas modifiables par l’éditeur de brouillon. Le champ `version_label` existe, mais la gestion complète des versions successives (fork d’un programme publié, lien entre versions, comparaison et archivage) reste à construire avant l'ouverture de la production de contenu.
 
-## 6. Hors périmètre à ce stade
+## 7. Hors périmètre de la phase architecture
 
-- Aucun cours, chapitre, leçon ou protocole n’est rédigé dans l’éditeur de programme.
-- Aucun programme, module ou participant fictif n’est préchargé.
-- Aucun parcours ou support n’est automatiquement créé à partir d’un nœud.
-- La hiérarchie structurelle est construite avant le remplissage pédagogique.
+- Aucun cours, chapitre, leçon ou protocole fictif n'est préchargé.
+- Aucun participant, cohorte ou résultat d'évaluation fictif n'est créé.
+- Aucun parcours ou support n'est automatiquement généré à partir d'un nœud.
+- Le remplissage pédagogique commence après validation de la structure, des relations et du workflow de publication.
