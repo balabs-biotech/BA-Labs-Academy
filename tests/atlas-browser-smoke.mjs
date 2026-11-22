@@ -118,7 +118,7 @@ try {
     assert.equal(await canvas.getAttribute("data-renderer"), "pixijs-webgl");
 
     // Exercise the optional fractal-growth mode without replacing the default Atlas.
-    await page.goto(`${siteBase}?atlas-growth=1&atlas-depth=2#/atlas`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${siteBase}?atlas-growth=1&atlas-depth=1#/atlas`, { waitUntil: "domcontentloaded" });
     await page.waitForSelector("#academy-atlas-canvas", { state: "visible", timeout: 30000 });
     await page.waitForFunction(
       () => document.querySelector("#atlas-engine-state")?.textContent.includes("Moteur actif"),
@@ -126,19 +126,19 @@ try {
       { timeout: 30000 }
     );
     assert.match(await page.locator(".atlas-growth-preview-controls").innerText(), /APERÇU EXPÉRIMENTAL/);
-    const deepCount = await page.locator("#academy-atlas-accessible button").count();
-    assert.ok(deepCount > 9 && deepCount < 330, "Growth preview must expose a partial hierarchy, not the full catalogue");
+    const shallowCount = await page.locator("#academy-atlas-accessible button").count();
+    assert.ok(shallowCount > 9 && shallowCount < 330, "Generation 1 must expose a partial hierarchy, not the full catalogue");
     assert.equal(await page.locator("#academy-atlas-canvas").getAttribute("data-renderer"), "pixijs-webgl");
 
-    await page.locator(".atlas-growth-preview-controls a").filter({ hasText: "Génération 1" }).click();
-    await page.waitForFunction(() => new URLSearchParams(location.search).get("atlas-depth") === "1");
+    await page.locator(".atlas-growth-preview-controls a").filter({ hasText: "Génération 2" }).click();
+    await page.waitForFunction(() => new URLSearchParams(location.search).get("atlas-depth") === "2");
     await page.waitForFunction(
       () => document.querySelector("#atlas-engine-state")?.textContent.includes("Moteur actif"),
       undefined,
       { timeout: 30000 }
     );
-    const shallowCount = await page.locator("#academy-atlas-accessible button").count();
-    assert.ok(shallowCount < deepCount, "Each depth step must reveal only the next hierarchy generation");
+    const deepCount = await page.locator("#academy-atlas-accessible button").count();
+    assert.ok(deepCount > shallowCount, "Each depth step must reveal only the next hierarchy generation");
 
     await page.locator(".atlas-growth-preview-controls a").filter({ hasText: "Vue actuelle" }).click();
     await page.waitForFunction(() => new URLSearchParams(location.search).get("atlas-growth") === "0");
