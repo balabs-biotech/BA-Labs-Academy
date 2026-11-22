@@ -1,4 +1,4 @@
-import { getAtlasRootPosition, getAtlasChildPosition } from "./atlas-geometry.js";
+import { createAtlasDepartmentLayout, getAtlasRootPosition, getAtlasChildPosition } from "./atlas-geometry.js";
 
 const hash = (value) => {
   let result = 2166136261;
@@ -74,6 +74,8 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     ...departments.map((department) => ({ ...department, kind: "department" })),
     ...pathways.map((pathway) => ({ ...pathway, kind: "pathway" }))
   ];
+  const satelliteDepartments = departments.filter((department) => department.code !== "MYC");
+  const departmentLayout = createAtlasDepartmentLayout(satelliteDepartments);
 
   const addNode = (node) => {
     nodes.push(node);
@@ -102,11 +104,14 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     if (!items?.length) return;
     const isMycologyCore = parent.entity_type === "DEPARTMENT" && parent.entity_key === "MYC";
     const isDepartmentRoot = parent.entity_type === "DEPARTMENT";
-    // Mycology occupies the central hub; each outer department owns a narrow radial petal.
+    // Mycology occupies the central hub; outer departments receive weighted, non-overlapping sectors.
+    const branchSpread = isDepartmentRoot && parent.entity_key !== "MYC"
+      ? departmentLayout.spreads[parent.entity_key]
+      : undefined;
     items.forEach((item, index) => {
       const { x, y, angle } = getAtlasChildPosition({
         parent, index, count: items.length, depth, branchAngle,
-        isMycologyCore, isDepartmentRoot
+        isMycologyCore, isDepartmentRoot, branchSpread
       });
       const entityType = item.kind === "section" ? "SECTION" : item.kind === "domain" ? "DOMAIN" : "MODULE";
       const node = addNode(makeNode(item, parent, rootId, depth, x, y, angle, entityType));
@@ -125,14 +130,14 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     });
   };
 
-  const satelliteDepartments = departments.filter((department) => department.code !== "MYC");
   const pathwayItems = rootItems.filter((item) => item.kind === "pathway");
   rootItems.forEach((item) => {
     const { x, y, angle } = getAtlasRootPosition({
       kind: item.kind,
       code: item.code,
       departmentCodes: satelliteDepartments.map((department) => department.code),
-      pathwayCodes: pathwayItems.map((pathway) => pathway.code)
+      pathwayCodes: pathwayItems.map((pathway) => pathway.code),
+      departmentLayout
     });
     const rootId = item.kind === "pathway" ? "pathways" : item.code.toLowerCase();
     const shortTitle = item.kind === "pathway"
