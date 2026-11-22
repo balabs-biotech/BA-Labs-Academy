@@ -658,48 +658,82 @@ test("Atlas connection renderer consumes the shared curve and palette contracts"
 });
 
 
-test("Atlas frame pipeline owns backend-neutral render order and shared frame context", async () => {
-  const { createAtlasFramePipeline } = await import("../src/features/atlas/atlas-frame-pipeline.js");
+test("Atlas frame model prepares backend-neutral selection and camera state", async () => {
+  const { createAtlasFrameModel } = await import("../src/features/atlas/atlas-frame-model.js");
+  let factoryCalls = 0;
+  const model = createAtlasFrameModel({
+    renderContextFactory(nodes) {
+      factoryCalls += 1;
+      return {
+        resolveSelection(selected) {
+          return {
+            lineage: new Set(selected ? [selected.id] : []),
+            activeBranch: new Set(nodes.map((node) => node.id))
+          };
+        }
+      };
+    }
+  });
+  const nodes = [{ id: "a" }, { id: "b" }];
+  const frame = {
+    nodes, edges: [], selected: nodes[0], scale: 1.5,
+    offset: { x: 12, y: -8 }, width: 800, height: 600, reduced: false
+  };
+  const plan = model.prepare(frame);
+  assert.deepEqual([...plan.lineage], ["a"]);
+  assert.deepEqual([...plan.activeBranch], ["a", "b"]);
+  assert.deepEqual(plan.transform, { x: 412, y: 292, scale: 1.5 });
+  assert.equal(model.prepare(frame).activeBranch, plan.activeBranch);
+  assert.equal(factoryCalls, 1, "graph context is cached while node identity is stable");
+  model.reset();
+  model.prepare(frame);
+  assert.equal(factoryCalls, 2, "reset invalidates the graph context");
+});
+
+test("Atlas Pixi frame adapter owns drawing order while consuming the neutral frame model", async () => {
+  const { createAtlasPixiFrameRenderer } = await import("../src/features/atlas/atlas-pixi-frame-renderer.js");
   const order = [];
   const layer = (name) => ({
     clear() { order.push(name + ":clear"); },
-    position: { set() {} },
-    scale: { set() {} },
-    copyFrom() {}
+    position: { set(x, y) { order.push(name + ":position:" + x + ":" + y); } },
+    scale: { set(value) { order.push(name + ":scale:" + value); } }
   });
   const stage = {
     filaments: layer("filaments"), junctions: layer("junctions"), labels: {}, style: {},
     drawBackdrop() { order.push("backdrop"); }
   };
-  const pipeline = createAtlasFramePipeline({
+  const renderer = createAtlasPixiFrameRenderer({
     stage, canvas: {}, labelPool: new Map(), createLabel() {},
     connections() { order.push("connections"); },
     nodesLayer() { order.push("nodes"); },
     labelsLayer() { order.push("labels"); },
-    renderContextFactory() {
-      order.push("context");
-      return { resolveSelection() { return { lineage: new Set(), activeBranch: new Set() }; } };
+    frameModel: {
+      prepare(frame) {
+        order.push("prepare");
+        return { ...frame, lineage: new Set(), activeBranch: new Set(), transform: { x: 412, y: 292, scale: 1.5 } };
+      },
+      reset() { order.push("model-reset"); }
     }
   });
   const frame = {
-    nodes: [], edges: [], selected: null, scale: 1, offset: { x: 0, y: 0 },
+    nodes: [], edges: [], selected: null, scale: 1.5, offset: { x: 12, y: -8 },
     width: 800, height: 600, reduced: true, alphaFor: () => 1
   };
-  pipeline.render(frame, () => order.push("backend-render"));
-  pipeline.render(frame, () => order.push("backend-render"));
+  renderer.render(frame, () => order.push("backend-render"));
   assert.deepEqual(order, [
-    "context", "backdrop", "junctions:clear", "connections", "nodes", "labels", "backend-render",
-    "backdrop", "junctions:clear", "connections", "nodes", "labels", "backend-render"
+    "prepare", "backdrop", "junctions:clear", "connections", "nodes",
+    "filaments:position:412:292", "filaments:scale:1.5",
+    "junctions:position:412:292", "junctions:scale:1.5",
+    "labels", "backend-render"
   ]);
-  pipeline.reset();
-  pipeline.render(frame, () => order.push("backend-render"));
-  assert.equal(order.filter((entry) => entry === "context").length, 2);
+  renderer.reset();
+  assert.equal(order.at(-1), "model-reset");
 });
 
-test("Pixi renderer delegates frame composition to the backend-neutral pipeline", () => {
+test("Pixi renderer delegates frame drawing to its dedicated adapter", () => {
   const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
-  assert.ok(source.includes('import { createAtlasFramePipeline } from "./atlas-frame-pipeline.js";'));
-  assert.ok(source.includes("pipeline.render({ ...frame, alphaFor }, () => app.render())"));
+  assert.ok(source.includes('import { createAtlasPixiFrameRenderer } from "./atlas-pixi-frame-renderer.js";'));
+  assert.ok(source.includes("frameRenderer.render({ ...frame, alphaFor }, () => app.render())"));
   assert.ok(!source.includes("renderAtlasConnections({"));
   assert.ok(!source.includes("renderAtlasNodes({"));
   assert.ok(!source.includes("renderAtlasLabels({"));

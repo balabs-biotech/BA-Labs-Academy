@@ -3,7 +3,7 @@ import { createAtlasRenderStage } from "./atlas-renderer-stage.js";
 import { renderAtlasConnections } from "./atlas-connections.js";
 import { renderAtlasNodes } from "./atlas-nodes.js";
 import { renderAtlasLabels } from "./atlas-labels.js";
-import { createAtlasFramePipeline } from "./atlas-frame-pipeline.js";
+import { createAtlasPixiFrameRenderer } from "./atlas-pixi-frame-renderer.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -33,7 +33,7 @@ export async function createPixiRenderer(canvas) {
     return level === 0 ? 1 : clamp((cameraScale - threshold * 0.72) / (threshold * 0.42), 0, 1);
   };
 
-  const pipeline = createAtlasFramePipeline({
+  const frameRenderer = createAtlasPixiFrameRenderer({
     stage,
     canvas,
     labelPool,
@@ -45,7 +45,7 @@ export async function createPixiRenderer(canvas) {
 
   function render(frame) {
     cameraScale = frame.scale;
-    pipeline.render({ ...frame, alphaFor }, () => app.render());
+    frameRenderer.render({ ...frame, alphaFor }, () => app.render());
   }
 
   function resize(width, height) {
@@ -53,7 +53,7 @@ export async function createPixiRenderer(canvas) {
   }
 
   function destroy() {
-    pipeline.reset();
+    frameRenderer.reset();
     app.destroy({ removeView: false, children: true });
   }
 
