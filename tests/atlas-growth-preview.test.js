@@ -221,3 +221,24 @@ test("sibling curve correction remains bounded and deterministic", () => {
       first.crossGenerationDiagnostics.minimumClearance >= 0)
   );
 });
+
+
+test("growth model rejects duplicate node identities before parent indexing", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const duplicate = { ...graph.nodes[0], name: "duplicate identity" };
+  assert.throws(
+    () => createAtlasGrowthModel({ nodes: [...graph.nodes, duplicate] }),
+    /duplicate node id/
+  );
+});
+
+test("growth model rejects missing or non-string node identities", () => {
+  assert.throws(
+    () => createAtlasGrowthModel({ nodes: [{ parent: null }] }),
+    /non-empty string id/
+  );
+  assert.throws(
+    () => createAtlasGrowthModel({ nodes: [{ id: 42, parent: null }] }),
+    /non-empty string id/
+  );
+});
