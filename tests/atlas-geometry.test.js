@@ -84,6 +84,7 @@ test("large terminal module groups receive a wider fan and greater radial separa
     parent, index, count: 8, depth: 2, branchAngle: 0
   }));
   const angles = points.map((point) => Math.atan2(point.y, point.x));
-  assert.ok(angles[7] - angles[0] >= 1.6);
+  assert.ok(angles[7] - angles[0] >= 2.2, "terminal modules have a wider lateral spread");
+  assert.ok(Math.abs(Math.hypot(points[7].x, points[7].y) - 380) < 1e-8, "terminal orbit radius remains unchanged");
   assert.ok(Math.abs(Math.hypot(points[0].x, points[0].y) - 380) < 1e-8);
 });

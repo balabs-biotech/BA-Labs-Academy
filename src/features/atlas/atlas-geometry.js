@@ -5,8 +5,8 @@ export const ATLAS_GEOMETRY = Object.freeze({
   childDistances: Object.freeze({ 1: 440, 2: 380 }),
   departmentPetalSpread: 0.96,
   sectionSpread: 1.45,
-  minimumModuleGap: 0.24,
-  maximumModuleSpread: 2.3
+  minimumModuleGap: 0.32,
+  maximumModuleSpread: 2.8
 });
 
 const TAU = Math.PI * 2;
