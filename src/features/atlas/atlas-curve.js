@@ -119,18 +119,49 @@ function distanceBetweenSegments(a, b, c, d) {
   );
 }
 
+function segmentBounds(a, b) {
+  return {
+    minX: Math.min(a.x, b.x),
+    maxX: Math.max(a.x, b.x),
+    minY: Math.min(a.y, b.y),
+    maxY: Math.max(a.y, b.y)
+  };
+}
+
+// Lower bound between two segment bounding boxes. It is used only to skip
+// pairs that cannot improve the best exact segment-to-segment distance.
+function boundsDistance(a, b) {
+  const dx = Math.max(0, a.minX - b.maxX, b.minX - a.maxX);
+  const dy = Math.max(0, a.minY - b.maxY, b.minY - a.maxY);
+  return Math.hypot(dx, dy);
+}
+
 /** Minimum distance between sampled filament segments, not just sample points. */
 export function atlasConnectionCurvesClearance(first, second, options = {}) {
   const a = sampleAtlasConnectionCurve(first, options);
   const b = sampleAtlasConnectionCurve(second, options);
-  // Do not substitute a bounding-box gap for the true curve clearance:
-  // the boxes provide only a lower bound, not the distance between filaments.
+  const firstSegments = a.slice(0, -1).map((point, index) => ({
+    start: point,
+    end: a[index + 1],
+    bounds: segmentBounds(point, a[index + 1])
+  }));
+  const secondSegments = b.slice(0, -1).map((point, index) => ({
+    start: point,
+    end: b[index + 1],
+    bounds: segmentBounds(point, b[index + 1])
+  }));
   let minimum = Number.POSITIVE_INFINITY;
 
-  for (let i = 0; i < a.length - 1; i += 1) {
-    for (let j = 0; j < b.length - 1; j += 1) {
+  for (const firstSegment of firstSegments) {
+    for (const secondSegment of secondSegments) {
+      // Bounding boxes are a safe broad phase only: exact distance is still
+      // calculated for every pair that could beat the current minimum.
+      if (boundsDistance(firstSegment.bounds, secondSegment.bounds) >= minimum) continue;
       minimum = Math.min(minimum, distanceBetweenSegments(
-        a[i], a[i + 1], b[j], b[j + 1]
+        firstSegment.start,
+        firstSegment.end,
+        secondSegment.start,
+        secondSegment.end
       ));
       if (minimum === 0) return 0;
     }
