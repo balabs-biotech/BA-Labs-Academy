@@ -1,10 +1,10 @@
 export const ATLAS_GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
 
 export const ATLAS_GEOMETRY = Object.freeze({
-  departmentOrbitRadius: 1480,
+  departmentOrbitRadius: 1850,
   pathwayOrbitRadius: 2080,
   mycologyCoreAngle: -Math.PI / 2,
-  childDistances: Object.freeze({ 1: 760, 2: 760 / ATLAS_GOLDEN_RATIO }),
+  childDistances: Object.freeze({ 1: 950, 2: 950 / ATLAS_GOLDEN_RATIO }),
   departmentPetalSpread: 1.95,
   sectionSpread: 3.4,
   minimumModuleGap: 0.98,
