@@ -212,9 +212,10 @@ export function mountAcademyAtlas(container, graph) {
     // Frame the eight disciplinary anchors together with their first fractal
     // generation. Fitting only department roots clips the actual morphology
     // trunks at overview scale; deeper taxonomy remains available by zoom.
-    const overviewAnchors = nodes.filter((node) =>
-      node.entity_type === "DEPARTMENT" || (node.level === 1 && node.entity_type !== "PATHWAY")
-    );
+    // Frame the complete visible constellation, including terminal endpoints.
+    // Fitting only department anchors and first-generation nodes clips the outer
+    // morphology and makes the recursive fans look compressed at overview scale.
+    const overviewAnchors = nodes.filter((node) => node.entity_type !== "PATHWAY" || node.level <= 1);
     const camera = fitAtlasCamera(overviewAnchors, width, height);
     if (!camera) return;
     targetScale = camera.scale;
