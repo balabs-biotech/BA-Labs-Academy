@@ -547,10 +547,11 @@ test("Atlas animation scheduler owns one frame loop and supports clean stop and 
   assert.deepEqual(canceled, [nextId]);
   assert.equal(callbacks.size, 0);
 
+  const stoppedFrameId = nextId;
   assert.equal(animation.start(), true, "a stopped scheduler can restart");
   const pendingId = nextId;
   animation.dispose();
-  assert.deepEqual(canceled, [pendingId === firstId ? firstId : firstId, pendingId]);
+  assert.deepEqual(canceled, [stoppedFrameId, pendingId]);
   assert.equal(animation.running, false);
   assert.equal(animation.disposed, true);
   assert.equal(callbacks.size, 0);
