@@ -4,7 +4,7 @@ import { PALETTE } from "./atlas-palette.js";
  * Keep hierarchy junctions legible in screen space while preserving their
  * world-space proportions as the camera zooms in.
  */
-const NODE_MINIMUM_SCREEN_RADII = Object.freeze([0, 3.4, 2.6, 2, 1.5]);
+const NODE_MINIMUM_SCREEN_RADII = Object.freeze([0, 3.4, 2.6, 2, 1.5, 1.2]);
 
 export function getAtlasNodeScreenRadius(level, worldRadius, scale) {
   const safeLevel = Math.max(0, Math.floor(Number(level) || 0));
