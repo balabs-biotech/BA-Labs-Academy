@@ -127,7 +127,7 @@ export function mountAcademyAtlas(container, graph) {
   const backButton = container.querySelector('[data-atlas-action="back"]');
   if (!canvas || !stage || !loading || !selection) return () => {};
 
-  const { nodes, edges, byId } = graph;
+  const { nodes, edges, morphologyBranches = [], byId } = graph;
   const reduced = reducedMotion();
   let renderer = null;
   const lifecycle = createAtlasLifecycle();
@@ -150,6 +150,7 @@ export function mountAcademyAtlas(container, graph) {
     renderer.render({
       nodes,
       edges,
+      morphologyBranches,
       selected: navigation.selected,
       scale,
       offset,
