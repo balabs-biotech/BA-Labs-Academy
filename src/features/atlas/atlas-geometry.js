@@ -3,7 +3,6 @@ export const ATLAS_GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
 export const ATLAS_GEOMETRY = Object.freeze({
   departmentOrbitRadius: 1850,
   pathwayOrbitRadius: 2080,
-  orbitVerticalRatio: 0.62,
   mycologyCoreAngle: -Math.PI / 2,
   childDistances: Object.freeze({ 1: 1250, 2: 1250 / ATLAS_GOLDEN_RATIO }),
   branchOccupancy: 0.9,
@@ -114,13 +113,7 @@ export function getAtlasRootPosition({
     ? ATLAS_GEOMETRY.departmentOrbitRadius
     : ATLAS_GEOMETRY.pathwayOrbitRadius;
 
-  // A horizontal biological field matches the wide Atlas stage: preserve the
-  // angular hierarchy while reserving less vertical space for the same roots.
-  return {
-    x: Math.cos(angle) * radius,
-    y: Math.sin(angle) * radius * ATLAS_GEOMETRY.orbitVerticalRatio,
-    angle
-  };
+  return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius, angle };
 }
 
 export function getAtlasChildPosition({
