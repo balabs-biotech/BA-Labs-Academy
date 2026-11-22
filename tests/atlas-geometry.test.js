@@ -135,7 +135,7 @@ test("intermediate branch levels are separated by expanded radial distances", ()
   });
   assert.equal(Math.hypot(section.x, section.y), ATLAS_GEOMETRY.childDistances[1]);
   assert.ok(Math.abs(Math.hypot(module.x - section.x, module.y - section.y) - ATLAS_GEOMETRY.childDistances[2]) < 1e-8);
-  assert.equal(ATLAS_GEOMETRY.childDistances[1], 560);
+  assert.equal(ATLAS_GEOMETRY.childDistances[1], 440);
   assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - ATLAS_GEOMETRY.childDistances[1] / ATLAS_GOLDEN_RATIO) < 1e-8);
 });
 
