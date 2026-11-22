@@ -235,8 +235,8 @@ export function createAtlasGrowthModel({
         crossGenerationMinimumClearance = 0;
         continue;
       }
-      // Clearance is measured only for pairs whose sampled bounding boxes
-      // overlap or approach within the diagnostic threshold.
+      // Segment-level bounding boxes inside the clearance routine prune
+      // distant segment pairs before exact distance calculations.
       const clearance = atlasConnectionCurvesClearance(
         a.curve, b.curve, comparisonOptions
       );
