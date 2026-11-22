@@ -190,4 +190,12 @@ test("sibling curve correction remains bounded and deterministic", () => {
   assert.ok(Number.isInteger(first.crossGenerationDiagnostics.comparedPairs));
   assert.ok(Number.isInteger(first.crossGenerationDiagnostics.crossingCount));
   assert.ok(first.crossGenerationDiagnostics.crossingCount >= 0);
+  assert.ok(Number.isInteger(first.crossGenerationDiagnostics.nearMissCount));
+  assert.ok(first.crossGenerationDiagnostics.nearMissCount >= 0);
+  assert.equal(first.crossGenerationDiagnostics.clearanceThreshold, 18);
+  assert.ok(
+    first.crossGenerationDiagnostics.minimumClearance === null ||
+    (Number.isFinite(first.crossGenerationDiagnostics.minimumClearance) &&
+      first.crossGenerationDiagnostics.minimumClearance >= 0)
+  );
 });
