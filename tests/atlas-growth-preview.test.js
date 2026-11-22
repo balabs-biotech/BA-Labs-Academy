@@ -4,6 +4,29 @@ import { catalogueMap } from "../src/catalogue-map.js";
 import { cataloguePathways } from "../src/catalogue-pathways.js";
 import { buildAcademyGraph } from "../src/features/atlas/atlas-graph.js";
 import { createAtlasGrowthGraph, createAtlasGrowthModel } from "../src/features/atlas/atlas-growth-model.js";
+import { atlasConnectionCurvesClearance } from "../src/features/atlas/atlas-curve.js";
+
+
+test("filament clearance measures segment distance rather than sample-point distance", () => {
+  const horizontal = {
+    a: { x: 0, y: 0 }, c1: { x: 3, y: 0 },
+    c2: { x: 7, y: 0 }, b: { x: 10, y: 0 }
+  };
+  const parallel = {
+    a: { x: 0, y: 5 }, c1: { x: 3, y: 5 },
+    c2: { x: 7, y: 5 }, b: { x: 10, y: 5 }
+  };
+  const crossing = {
+    a: { x: 5, y: -5 }, c1: { x: 5, y: -2 },
+    c2: { x: 5, y: 2 }, b: { x: 5, y: 5 }
+  };
+  assert.ok(Math.abs(atlasConnectionCurvesClearance(horizontal, parallel, {
+    steps: 4, startProgress: 0, endProgress: 1
+  }) - 5) < 1e-9);
+  assert.equal(atlasConnectionCurvesClearance(horizontal, crossing, {
+    steps: 4, startProgress: 0, endProgress: 1
+  }), 0);
+});
 
 test("growth preview remaps hierarchy and transversal edges to the same visible node objects", () => {
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
