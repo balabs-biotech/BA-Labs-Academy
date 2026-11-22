@@ -155,7 +155,7 @@ export function createAtlasGrowthModel({
     const localOccupancy = parent.rootId === "myc" ? 0.99 : occupancy;
     const terminalFanExpansion = children.every((child) =>
       child.rootId !== "myc" && !(childrenByParent.get(child.id) || []).length
-    ) ? 1.8 : 1;
+    ) ? 2.05 : 1;
     const sectors = allocateSectors(
       children, parentSector, weights, localOccupancy, terminalFanExpansion
     );
@@ -190,7 +190,7 @@ export function createAtlasGrowthModel({
       // The bounded expansion is stronger for crowded sibling groups and does
       // not move the eight disciplinary root anchors.
       const terminalExpansion = isTerminal && generation >= 2 && child.rootId !== "myc"
-        ? Math.min(2.85, 2.45 + Math.log2(Math.max(1, children.length)) * 0.12)
+        ? Math.min(2.25, 1.95 + Math.log2(Math.max(1, children.length)) * 0.10)
         : 1;
       const distance = branchLength(generation, parent.rootId, densityScale) *
         terminalExpansion * (0.94 + lengthUnit * 0.12);
@@ -233,6 +233,7 @@ export function createAtlasGrowthModel({
         endpointAdjustment += 1;
       }
       point.growthSector.endpointAdjustment = endpointAdjustment;
+      point.growthSector.angularOffset = point.angle - sector.angle;
       positioned.set(child.id, point);
       const source = positioned.get(parent.id) || parent;
       // Narrow child sectors use straighter filaments. This reduces lateral
