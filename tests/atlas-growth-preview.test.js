@@ -135,3 +135,25 @@ test("growth model exposes deterministic sibling filament fan diagnostics", () =
     }
   }
 });
+
+test("sibling curve correction remains bounded and deterministic", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const first = createAtlasGrowthGraph(graph);
+  const second = createAtlasGrowthGraph(graph);
+  const branchesById = new Map(first.branches.map((branch) => [branch.id, branch]));
+  const repeatedById = new Map(second.branches.map((branch) => [branch.id, branch]));
+  assert.equal(first.branches.length, second.branches.length);
+  for (const branch of first.branches) {
+    const repeated = repeatedById.get(branch.id);
+    assert.ok(repeated);
+    assert.equal(branch.bendScale, repeated.bendScale);
+    assert.equal(branch.curveAdjustmentAttempts, repeated.curveAdjustmentAttempts);
+    assert.ok(branch.bendScale >= 0.2 && branch.bendScale <= 1);
+    assert.ok(branch.curveAdjustmentAttempts >= 0 && branch.curveAdjustmentAttempts <= 8);
+    assert.ok(branchesById.has(branch.id));
+  }
+  for (const fan of first.fanDiagnostics) {
+    assert.ok(Number.isInteger(fan.adjustedBranchCount));
+    assert.ok(fan.adjustedBranchCount >= 0 && fan.adjustedBranchCount <= fan.siblingCount);
+  }
+});
