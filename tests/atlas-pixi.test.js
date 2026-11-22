@@ -780,6 +780,66 @@ test("Pixi renderer delegates frame drawing to its dedicated adapter", () => {
   assert.ok(!source.includes("renderAtlasLabels({"));
 });
 
+
+test("Canvas 2D experimental backend conforms to the renderer lifecycle and draws neutral frames", async () => {
+  const { createCanvas2DRenderer } = await import("../src/features/atlas/canvas2d-renderer.js");
+  const calls = [];
+  const context = {
+    setTransform(...args) { calls.push(["setTransform", ...args]); },
+    clearRect(...args) { calls.push(["clearRect", ...args]); },
+    save() { calls.push(["save"]); },
+    restore() { calls.push(["restore"]); },
+    translate(...args) { calls.push(["translate", ...args]); },
+    scale(...args) { calls.push(["scale", ...args]); },
+    beginPath() { calls.push(["beginPath"]); },
+    moveTo(...args) { calls.push(["moveTo", ...args]); },
+    bezierCurveTo(...args) { calls.push(["bezierCurveTo", ...args]); },
+    arc(...args) { calls.push(["arc", ...args]); },
+    fill() { calls.push(["fill"]); },
+    stroke() { calls.push(["stroke"]); },
+    fillText(...args) { calls.push(["fillText", ...args]); }
+  };
+  const canvas = { dataset: {}, style: {}, getContext() { return context; } };
+  const renderer = createCanvas2DRenderer(canvas, { pixelRatio: () => 1.5 });
+  assert.deepEqual(renderer.capabilities, {
+    backend: "canvas2d", renderer: "canvas-2d", interactive: false,
+    supportsResize: true, supportsReducedMotion: true, experimental: true
+  });
+  assert.equal(renderer.resize(800, 600), true);
+  assert.equal(canvas.width, 1200);
+  assert.equal(canvas.height, 900);
+  assert.equal(renderer.render({
+    nodes: [
+      { id: "root", entity_type: "DEPARTMENT", level: 0, rootId: "bio", x: 0, y: 0, r: 8, title: "Biologie" },
+      { id: "module", entity_type: "MODULE", level: 2, rootId: "bio", x: 100, y: 80, r: 4, title: "Module" }
+    ],
+    edges: [{
+      a: { id: "root", x: 0, y: 0, level: 0, rootId: "bio" },
+      b: { id: "module", x: 100, y: 80, level: 2, rootId: "bio" },
+      basis: "academy-hierarchy", verified: true, cross: false
+    }],
+    selected: null, scale: 1, offset: { x: 0, y: 0 }, width: 800, height: 600,
+    reduced: true, relationFilter: "all"
+  }), true);
+  assert.ok(calls.some(([name]) => name === "bezierCurveTo"));
+  assert.ok(calls.some(([name]) => name === "arc"));
+  assert.ok(calls.some(([name]) => name === "translate"));
+  assert.equal(canvas.dataset.renderer, "canvas-2d-experimental");
+  assert.equal(renderer.dispose(), true);
+  assert.equal(renderer.dispose(), false);
+  assert.equal(renderer.render({ nodes: [], edges: [], offset: { x: 0, y: 0 } }), false);
+  assert.equal(renderer.resize(400, 300), false);
+});
+
+test("Canvas 2D backend reports unavailable contexts without affecting PixiJS", async () => {
+  const { createCanvas2DRenderer } = await import("../src/features/atlas/canvas2d-renderer.js");
+  assert.throws(() => createCanvas2DRenderer({ getContext: () => null }), /unavailable/);
+  const pixiSource = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  const viewSource = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(viewSource.includes("backendFactory: createPixiRenderer"));
+  assert.ok(!pixiSource.includes("canvas2d-renderer"));
+});
+
 test("Atlas renderer host enforces the shared backend lifecycle contract", async () => {
   const { createAtlasRendererHost } = await import("../src/features/atlas/atlas-renderer-contract.js");
   const calls = [];
