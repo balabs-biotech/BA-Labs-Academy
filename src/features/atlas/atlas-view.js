@@ -1,13 +1,14 @@
 import { createPixiRenderer } from "./pixi-renderer.js";
 import { createAtlasRendererHost } from "./atlas-renderer-contract.js";
 import { createAtlasNavigation, getAtlasBreadcrumbPath } from "./atlas-navigation.js";
-import { atlasScreenPoint, fitAtlasCamera, zoomAtlasCamera, interpolateAtlasCamera } from "./atlas-camera.js";
+import { atlasScreenPoint, fitAtlasCamera, getAtlasFocusScale, zoomAtlasCamera, interpolateAtlasCamera } from "./atlas-camera.js";
 import { createAtlasLifecycle } from "./atlas-lifecycle.js";
 import { createAtlasAnimation } from "./atlas-animation.js";
 import { createAtlasPointerController } from "./atlas-interaction.js";
 import { renderAtlasAccessibleNodes } from "./atlas-accessibility.js";
 import { getAtlasLabelHitData } from "./atlas-labels.js";
 import { renderAtlasSelectionPanel } from "./atlas-selection.js";
+import { ATLAS_GEOMETRY, ATLAS_GOLDEN_RATIO } from "./atlas-geometry.js";
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -130,6 +131,12 @@ export function mountAcademyAtlas(container, graph) {
   if (!canvas || !stage || !loading || !selection) return () => {};
 
   const { nodes, edges, morphologyBranches = [], byId } = graph;
+  const childrenByParent = new Map();
+  for (const node of nodes) {
+    if (!node.parent) continue;
+    if (!childrenByParent.has(node.parent)) childrenByParent.set(node.parent, []);
+    childrenByParent.get(node.parent).push(node);
+  }
   const reduced = reducedMotion();
   let renderer = null;
   const lifecycle = createAtlasLifecycle();
@@ -246,7 +253,13 @@ export function mountAcademyAtlas(container, graph) {
   const focusNode = (node, zoomTo) => {
     if (!node) return;
     navigation.focus(node, { scale: targetScale, offset: { ...targetOffset } });
-    const zoomLevel = zoomTo ?? (node.level === 0 ? 0.96 : node.level === 1 ? 2.15 : 4.1);
+    const hasChildren = (childrenByParent.get(node.id)?.length || 0) > 0;
+    const branchDistance = (ATLAS_GEOMETRY.childDistances[1] || 760) /
+      (ATLAS_GOLDEN_RATIO ** Math.max(0, node.level || 0)) *
+      (node.rootId === "myc" ? 0.28 : 1);
+    const zoomLevel = zoomTo ?? (hasChildren
+      ? getAtlasFocusScale(branchDistance, width, height)
+      : 4.1);
     targetScale = clamp(zoomLevel, 0.075, 12);
     targetOffset = { x: -node.x * targetScale, y: -node.y * targetScale };
     updateSelection();
