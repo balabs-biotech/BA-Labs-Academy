@@ -1018,3 +1018,37 @@ test("Atlas connection layer renders the eight morphology trunks as organic curv
   assert.ok(calls.some(([kind]) => kind === "bezier"), "trunks must use organic cubic curves");
   assert.ok(calls.some(([kind, style]) => kind === "stroke" && style?.width > 2));
 });
+
+
+test("Pixi frame adapter forwards morphology trunks independently of academic edges", async () => {
+  const { createAtlasPixiFrameRenderer } = await import("../src/features/atlas/atlas-pixi-frame-renderer.js");
+  const morphologyBranches = [{ id: "morphology:MYC:MIC", visualOnly: true }];
+  let received;
+  const renderer = createAtlasPixiFrameRenderer({
+    stage: {
+      filaments: { position: { set() {} }, scale: { set() {} } },
+      junctions: { clear() {}, position: { set() {} }, scale: { set() {} } },
+      labels: {}, style: {}, drawBackdrop() {}
+    },
+    canvas: {}, createLabel() {},
+    connections(args) { received = args; },
+    nodesLayer() {}, labelsLayer() {},
+    frameModel: {
+      prepare(frame) { return { ...frame, lineage: new Set(), activeBranch: new Set(), transform: { x: 0, y: 0, scale: 1 } }; },
+      reset() {}
+    }
+  });
+  renderer.render({
+    nodes: [], edges: [], morphologyBranches, selected: null, scale: 1,
+    offset: { x: 0, y: 0 }, width: 400, height: 300, reduced: true,
+    alphaFor: () => 1
+  }, () => {});
+  assert.strictEqual(received.morphologyBranches, morphologyBranches);
+  assert.deepEqual(received.edges, []);
+});
+
+test("fractal growth is the default Atlas layout, with the former orbit view kept as opt-out", () => {
+  const source = readFileSync(new URL("../src/main.js", import.meta.url), "utf8");
+  assert.ok(source.includes('atlasQuery.get("atlas-growth") !== "0"'));
+  assert.ok(source.includes("createAtlasGrowthGraph(atlasBaseGraph"));
+});
