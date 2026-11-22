@@ -129,10 +129,16 @@ test("dense secondary fans receive bounded radial spacing without moving primary
   const secondary = model.nodes.filter((node) => node.generation === 2);
   assert.ok(secondary.length > 0);
   assert.ok(secondary.some((node) => node.growthSector.densityScale > 1));
+  assert.ok(secondary.some((node) => node.growthSector.angularCrowding > 0));
   for (const node of secondary) {
     const parent = byId.get(node.parent);
     const siblings = model.nodes.filter((candidate) => candidate.parent === parent.id);
-    const expectedScale = Math.min(1.28, 1 + Math.log2(Math.max(1, siblings.length)) * 0.075);
+    const populationScale = 1 + Math.log2(Math.max(1, siblings.length)) * 0.075;
+    const expectedCrowding = Math.max(0, Math.min(1,
+      (0.5 - node.growthSector.allocatedSpread) / 0.5
+    )) * 0.08;
+    const expectedScale = Math.min(1.28, populationScale + expectedCrowding);
+    assert.equal(node.growthSector.angularCrowding, expectedCrowding);
     assert.equal(node.growthSector.densityScale, expectedScale);
     assert.ok(node.growthSector.densityScale <= 1.28);
   }
