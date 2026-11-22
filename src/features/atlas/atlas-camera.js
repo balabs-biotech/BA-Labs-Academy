@@ -12,15 +12,17 @@ export function fitAtlasCamera(roots, width, height) {
   const xs = roots.map((node) => node.x);
   const ys = roots.map((node) => node.y);
   const mobile = width < 700;
-  const padX = mobile ? 26 : Math.min(150, Math.max(72, width * 0.11));
-  const padY = mobile ? 42 : Math.min(125, Math.max(70, height * 0.13));
+  // The overview is a navigation surface, not a thumbnail: keep a compact
+  // safety margin so the constellation uses the available stage area.
+  const padX = mobile ? 18 : Math.min(84, Math.max(40, width * 0.05));
+  const padY = mobile ? 30 : Math.min(60, Math.max(32, height * 0.06));
   const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
-  const spanX = maxX - minX + 230;
-  const spanY = maxY - minY + 220;
-  const scale = clamp(Math.min((width - padX * 2) / spanX, (height - padY * 2) / spanY), 0.075, 0.82);
+  const spanX = maxX - minX + 120;
+  const spanY = maxY - minY + 120;
+  const scale = clamp(Math.min((width - padX * 2) / spanX, (height - padY * 2) / spanY), 0.075, 0.95);
   return {
     scale,
     offset: { x: -((minX + maxX) / 2) * scale, y: -((minY + maxY) / 2) * scale }
