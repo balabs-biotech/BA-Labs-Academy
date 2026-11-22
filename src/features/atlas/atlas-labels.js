@@ -18,13 +18,13 @@ export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nod
  if(selected&&!activeBranch.has(n.id)&&!lineage.has(n.id))alpha*=.22;
  const sx=width/2+offset.x+n.x*scale,sy=height/2+offset.y+n.y*scale;
  if(sx < -80 || sx > width+80 || sy < 45 || sy > height+45)continue;
- const threshold=n.level===0?0:n.level===1?.68:n.level===2?.98:n.level===3?2.1:3.8;
+ const threshold=n.level===0?0:n.level===1?.58:n.level===2?.84:n.level===3?1.7:2.8;
  const show=n.level===0||(alpha>.5&&scale>threshold)||lineage.has(n.id);
  if(show)candidates.push({n,alpha,priority:selected?.id===n.id?0:lineage.has(n.id)?1:n.level===0?2:3,distance:selected?Math.hypot(n.x-selected.x,n.y-selected.y):Math.hypot(n.x,n.y)});
  }
  candidates.sort((a,b)=>a.priority-b.priority||a.distance-b.distance);
  const rootCount=candidates.filter(c=>c.n.level===0).length;
- const labelBudget=rootCount+Math.min(76,Math.max(14,Math.round(18+scale*9)));
+ const labelBudget=rootCount+Math.min(96,Math.max(18,Math.round(20+scale*11)));
  const occupied=[];const hitBoxes={};let drawn=0;
  for(const {n,alpha} of candidates){
  if(n.level!==0&&drawn>=labelBudget)continue;
