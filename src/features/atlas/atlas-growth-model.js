@@ -126,11 +126,33 @@ export function createAtlasGrowthModel({
       // Narrow child sectors use straighter filaments. This reduces lateral
       // excursions that can visually cross neighboring branches in dense fans.
       const bendScale = Math.max(0.2, Math.min(1, allocatedWidth / 1.8));
-      const curve = createAtlasConnectionCurve(source, point, {
+      const curveOptions = {
         seed: hashString(parent.id + "|" + child.id),
-        depth: generation,
-        bendScale
+        depth: generation
+      };
+      const previousSiblings = branches.filter((branch) => branch.sourceId === parent.id);
+      let resolvedBendScale = bendScale;
+      let curve = createAtlasConnectionCurve(source, point, {
+        ...curveOptions,
+        bendScale: resolvedBendScale
       });
+      let adjustmentAttempts = 0;
+      // Resolve only genuine sibling crossings. Curvature is reduced in fixed
+      // deterministic steps; node positions and allocated sectors never move.
+      while (adjustmentAttempts < 8 && previousSiblings.some((branch) =>
+        atlasConnectionCurvesIntersect(curve, branch.curve, {
+          steps: 20,
+          startProgress: 0.12
+        })
+      )) {
+        resolvedBendScale = Math.max(0.2, resolvedBendScale * 0.75);
+        adjustmentAttempts += 1;
+        curve = createAtlasConnectionCurve(source, point, {
+          ...curveOptions,
+          bendScale: resolvedBendScale
+        });
+        if (resolvedBendScale === 0.2) break;
+      }
       branches.push({
         id: parent.id + "->" + child.id,
         sourceId: parent.id,
@@ -138,7 +160,9 @@ export function createAtlasGrowthModel({
         generation,
         source,
         target: point,
-        curve
+        curve,
+        bendScale: resolvedBendScale,
+        curveAdjustmentAttempts: adjustmentAttempts
       });
       grow(point, sector);
     });
@@ -170,7 +194,9 @@ export function createAtlasGrowthModel({
   }
   const fanDiagnostics = [...branchesByParent.entries()].map(([parentId, siblings]) => {
     let crossingCount = 0;
+    let adjustedBranchCount = 0;
     let minimumClearance = Number.POSITIVE_INFINITY;
+    adjustedBranchCount = siblings.filter((branch) => branch.curveAdjustmentAttempts > 0).length;
     for (let first = 0; first < siblings.length; first += 1) {
       const firstSamples = sampleAtlasConnectionCurve(siblings[first].curve, {
         steps: 16,
@@ -196,6 +222,7 @@ export function createAtlasGrowthModel({
       parentId,
       siblingCount: siblings.length,
       crossingCount,
+      adjustedBranchCount,
       minimumClearance: Number.isFinite(minimumClearance) ? minimumClearance : null
     };
   });
