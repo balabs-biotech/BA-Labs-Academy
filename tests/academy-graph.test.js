@@ -65,9 +65,9 @@ test("Other departments and pathways occupy separate orbital bands", () => {
 
 test("Terminal module nodes have expanded spacing and label visibility threshold", async () => {
   const { ATLAS_GEOMETRY } = await import("../src/features/atlas/atlas-geometry.js");
-  assert.deepEqual(ATLAS_GEOMETRY.childDistances, { 1: 440, 2: 380 });
-  assert.equal(ATLAS_GEOMETRY.departmentPetalSpread, 1.75);
-  assert.equal(ATLAS_GEOMETRY.sectionSpread, 2.85);
+  assert.deepEqual(ATLAS_GEOMETRY.childDistances, { 1: 520, 2: 460 });
+  assert.equal(ATLAS_GEOMETRY.departmentPetalSpread, 1.95);
+  assert.equal(ATLAS_GEOMETRY.sectionSpread, 3.4);
 });
 
 test("Every module node has a stable route and canonical section identity", () => {

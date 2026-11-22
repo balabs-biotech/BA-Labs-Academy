@@ -85,9 +85,9 @@ test("large terminal module groups receive a wider fan and greater radial separa
     parent, index, count: 8, depth: 2, branchAngle: 0
   }));
   const angles = points.map((point) => Math.atan2(point.y, point.x));
-  assert.ok(angles[7] - angles[0] >= 5.0, "terminal modules have a substantially wider lateral spread");
-  assert.ok(Math.abs(Math.hypot(points[7].x, points[7].y) - 380) < 1e-8, "terminal orbit radius remains unchanged");
-  assert.ok(Math.abs(Math.hypot(points[0].x, points[0].y) - 380) < 1e-8);
+  assert.ok(angles[7] - angles[0] >= 5.7, "terminal modules have a substantially wider lateral spread");
+  assert.ok(Math.abs(Math.hypot(points[7].x, points[7].y) - 460) < 1e-8, "terminal orbit radius remains unchanged");
+  assert.ok(Math.abs(Math.hypot(points[0].x, points[0].y) - 460) < 1e-8);
 });
 
 test("intermediate and terminal fans use wider angular spacing", () => {
@@ -100,8 +100,9 @@ test("intermediate and terminal fans use wider angular spacing", () => {
   }));
   const spreadOf = (points) => Math.atan2(points.at(-1).y, points.at(-1).x) -
     Math.atan2(points[0].y, points[0].x);
-  assert.ok(spreadOf(intermediate) >= 2.85);
-  assert.ok(spreadOf(terminal) >= 3.9);
+  assert.ok(spreadOf(intermediate) >= 3.4);
+  assert.ok(spreadOf(terminal) >= 4.8);
+  assert.deepEqual(ATLAS_GEOMETRY.childDistances, { 1: 520, 2: 460 });
   assert.equal(ATLAS_GEOMETRY.departmentOrbitRadius, 1480);
   assert.equal(ATLAS_GEOMETRY.pathwayOrbitRadius, 2080);
 });

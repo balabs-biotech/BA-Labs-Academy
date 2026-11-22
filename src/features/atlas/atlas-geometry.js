@@ -2,11 +2,11 @@ export const ATLAS_GEOMETRY = Object.freeze({
   departmentOrbitRadius: 1480,
   pathwayOrbitRadius: 2080,
   mycologyCoreAngle: -Math.PI / 2,
-  childDistances: Object.freeze({ 1: 440, 2: 380 }),
-  departmentPetalSpread: 1.75,
-  sectionSpread: 2.85,
-  minimumModuleGap: 0.78,
-  maximumModuleSpread: 5.15
+  childDistances: Object.freeze({ 1: 520, 2: 460 }),
+  departmentPetalSpread: 1.95,
+  sectionSpread: 3.4,
+  minimumModuleGap: 0.98,
+  maximumModuleSpread: 5.9
 });
 
 const TAU = Math.PI * 2;
