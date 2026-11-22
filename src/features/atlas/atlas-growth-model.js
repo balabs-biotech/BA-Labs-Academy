@@ -123,9 +123,13 @@ export function createAtlasGrowthModel({
       };
       positioned.set(child.id, point);
       const source = positioned.get(parent.id) || parent;
+      // Narrow child sectors use straighter filaments. This reduces lateral
+      // excursions that can visually cross neighboring branches in dense fans.
+      const bendScale = Math.max(0.2, Math.min(1, allocatedWidth / 1.8));
       const curve = createAtlasConnectionCurve(source, point, {
         seed: hashString(parent.id + "|" + child.id),
-        depth: generation
+        depth: generation,
+        bendScale
       });
       branches.push({
         id: parent.id + "->" + child.id,
