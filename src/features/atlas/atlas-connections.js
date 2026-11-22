@@ -9,6 +9,12 @@ import { PALETTE } from "./atlas-palette.js";
  */
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+/** Keep fine hierarchy filaments legible after the world-space camera transform. */
+export function getAtlasScreenStrokeWidth(worldWidth, scale, minimumPixels = 0.8) {
+  const safeScale = Math.max(0.075, Number(scale) || 0.075);
+  return Math.max(Number(worldWidth) || 0, minimumPixels / safeScale);
+}
+
 const RELATION_COLORS = Object.freeze({
   PREREQUISITE: 0x80aeb8,
   COMPLEMENTARY: 0xa9a0d4,
@@ -100,10 +106,12 @@ export function renderAtlasConnections({
       .bezierCurveTo(curve.c1.x, curve.c1.y, curve.c2.x, curve.c2.y, curve.b.x, curve.b.y);
     const focusAlpha = selected ? (selected.id === source.id || selected.id === target.id ? 1 : 0.34) : 0.78;
     drawTrunk().stroke({
-      color, alpha: focusAlpha * 0.13, width: curve.profile.width * 4.2, cap: "round"
+      color, alpha: focusAlpha * 0.13,
+      width: getAtlasScreenStrokeWidth(curve.profile.width * 4.2, scale, 2.4), cap: "round"
     });
     drawTrunk().stroke({
-      color, alpha: focusAlpha * 0.62, width: curve.profile.width * 1.9, cap: "round"
+      color, alpha: focusAlpha * 0.72,
+      width: getAtlasScreenStrokeWidth(curve.profile.width * 1.9, scale, 1.05), cap: "round"
     });
   }
 
@@ -140,8 +148,11 @@ export function renderAtlasConnections({
     const widthScale = sharedPathway ? 1.25 / 1.5
       : knowledge ? 1.35 / 1.5
       : edge.basis === "academy-pathway-flow" ? 1.05 / 1.5 : 1;
-    const widthBase = curve.profile.width * widthScale *
-      (edge.cross ? 1 / ATLAS_GOLDEN_RATIO : 1);
+    const widthBase = getAtlasScreenStrokeWidth(
+      curve.profile.width * widthScale * (edge.cross ? 1 / ATLAS_GOLDEN_RATIO : 1),
+      scale,
+      depth <= 1 ? 0.95 : depth === 2 ? 0.78 : 0.58
+    );
     const drawCurve = () => filaments.moveTo(a.x, a.y)
       .bezierCurveTo(c1.x, c1.y, c2.x, c2.y, b.x, b.y);
 
