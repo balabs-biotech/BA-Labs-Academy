@@ -25,8 +25,6 @@ export function createAtlasConnectionCurve(a, b, { seed, depth = 1, sharedPathwa
   const bend = Math.min(sharedPathway ? 150 : 68, profile.bend) * side;
   const drift = (((stableSeed >>> 12) & 255) / 255 - 0.5) *
     Math.min(sharedPathway ? 18 : 14, bend / ATLAS_GOLDEN_RATIO);
-  const secondaryBend = (((stableSeed >>> 20) & 127) / 127 - 0.5) *
-    Math.min(sharedPathway ? 24 : 18, bend / (ATLAS_GOLDEN_RATIO ** 2));
 
   return {
     a,
@@ -40,10 +38,10 @@ export function createAtlasConnectionCurve(a, b, { seed, depth = 1, sharedPathwa
     },
     c2: {
       x: a.x + dx * (1 - profile.controlPointRatio) +
-        nx * (bend / ATLAS_GOLDEN_RATIO - secondaryBend) -
+        nx * (bend / ATLAS_GOLDEN_RATIO) -
         tx * drift / ATLAS_GOLDEN_RATIO,
       y: a.y + dy * (1 - profile.controlPointRatio) +
-        ny * (bend / ATLAS_GOLDEN_RATIO - secondaryBend) -
+        ny * (bend / ATLAS_GOLDEN_RATIO) -
         ty * drift / ATLAS_GOLDEN_RATIO
     }
   };
