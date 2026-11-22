@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { catalogueMap } from "../src/catalogue-map.js";
 import { cataloguePathways } from "../src/catalogue-pathways.js";
 import { buildAcademyGraph } from "../src/features/atlas/atlas-graph.js";
-import { createAtlasGrowthGraph } from "../src/features/atlas/atlas-growth-model.js";
+import { createAtlasGrowthGraph, createAtlasGrowthModel } from "../src/features/atlas/atlas-growth-model.js";
 
 test("growth preview remaps hierarchy and transversal edges to the same visible node objects", () => {
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
@@ -138,8 +138,8 @@ test("growth model exposes deterministic sibling filament fan diagnostics", () =
 
 test("sibling curve correction remains bounded and deterministic", () => {
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
-  const first = createAtlasGrowthGraph(graph);
-  const second = createAtlasGrowthGraph(graph);
+  const first = createAtlasGrowthModel({ nodes: graph.nodes });
+  const second = createAtlasGrowthModel({ nodes: graph.nodes });
   const branchesById = new Map(first.branches.map((branch) => [branch.id, branch]));
   const repeatedById = new Map(second.branches.map((branch) => [branch.id, branch]));
   assert.equal(first.branches.length, second.branches.length);
