@@ -48,10 +48,10 @@ test("Mycology sections distribute around a complete ring without duplicate endp
 
 test("department petals remain narrow and point outward", () => {
   const point = getAtlasChildPosition({
-    parent: { x: 1850, y: 0 }, index: 0, count: 5, depth: 1,
+    parent: { x: 1450, y: 0 }, index: 0, count: 5, depth: 1,
     branchAngle: 0, isDepartmentRoot: true
   });
-  assert.ok(point.x > 1850);
+  assert.ok(point.x > 1450);
   assert.ok(Math.abs(point.angle) <= ATLAS_GEOMETRY.departmentPetalSpread / 2);
 });
 
@@ -103,8 +103,8 @@ test("intermediate and terminal fans use wider angular spacing", () => {
   assert.ok(spreadOf(intermediate) >= 3.4);
   assert.ok(spreadOf(terminal) >= 4.8);
   assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - ATLAS_GEOMETRY.childDistances[1] / ATLAS_GOLDEN_RATIO) < 1e-8);
-  assert.equal(ATLAS_GEOMETRY.departmentOrbitRadius, 1850);
-  assert.equal(ATLAS_GEOMETRY.pathwayOrbitRadius, 2080);
+  assert.equal(ATLAS_GEOMETRY.departmentOrbitRadius, 1450);
+  assert.equal(ATLAS_GEOMETRY.pathwayOrbitRadius, 1650);
 });
 
 
@@ -135,7 +135,7 @@ test("intermediate branch levels are separated by expanded radial distances", ()
   });
   assert.equal(Math.hypot(section.x, section.y), ATLAS_GEOMETRY.childDistances[1]);
   assert.ok(Math.abs(Math.hypot(module.x - section.x, module.y - section.y) - ATLAS_GEOMETRY.childDistances[2]) < 1e-8);
-  assert.equal(ATLAS_GEOMETRY.childDistances[1], 1250);
+  assert.equal(ATLAS_GEOMETRY.childDistances[1], 820);
   assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - ATLAS_GEOMETRY.childDistances[1] / ATLAS_GOLDEN_RATIO) < 1e-8);
 });
 
