@@ -64,6 +64,28 @@ test("growth occupancy preserves a deliberate guard between child sectors", () =
   assert.throws(() => createAtlasGrowthModel({ nodes: fixture(), occupancy: 0 }), /occupancy/);
 });
 
+test("dense terminal fans receive a wider radial envelope without moving root anchors", () => {
+  const nodes = [
+    { id: "root", entity_type: "DEPARTMENT", entity_key: "BIO", parent: null, x: 0, y: 0, angle: 0,
+      level: 0, growthSector: { angle: 0, spread: 1.8, fullRing: false } },
+    { id: "section", parent: "root", level: 1, title: "Section" },
+    ...Array.from({ length: 8 }, (_, index) => ({
+      id: "terminal-" + index, parent: "section", level: 2, title: "Terminal " + index
+    }))
+  ];
+  const model = createAtlasGrowthModel({ nodes });
+  const root = model.byId.get("root");
+  const section = model.byId.get("section");
+  const terminals = model.nodes.filter((node) => node.id.startsWith("terminal-"));
+  assert.equal(root.x, 0);
+  assert.equal(root.y, 0);
+  assert.equal(terminals.length, 8);
+  const radialDistances = terminals.map((node) => Math.hypot(node.x - section.x, node.y - section.y));
+  assert.ok(radialDistances.every((distance) => distance > (560 / ((1 + Math.sqrt(5)) / 2)) * 1.3));
+  const sortedAngles = terminals.map((node) => node.angle).sort((a, b) => a - b);
+  assert.ok(sortedAngles[sortedAngles.length - 1] - sortedAngles[0] > 1.2);
+});
+
 test("invalid hierarchy cycles are rejected rather than recursed indefinitely", () => {
   const nodes = fixture();
   nodes[0] = { ...nodes[0], parent: "detail-a1" };
