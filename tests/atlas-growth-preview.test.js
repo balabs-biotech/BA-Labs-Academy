@@ -116,3 +116,22 @@ test("dense secondary fans receive bounded radial spacing without moving primary
   const primary = model.nodes.filter((node) => node.generation === 1);
   assert.ok(primary.every((node) => node.growthSector.densityScale === 1));
 });
+
+test("growth model exposes deterministic sibling filament fan diagnostics", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const first = createAtlasGrowthGraph(graph);
+  const second = createAtlasGrowthGraph(graph);
+  assert.ok(first.fanDiagnostics.length > 0);
+  assert.deepEqual(first.fanDiagnostics, second.fanDiagnostics);
+  for (const fan of first.fanDiagnostics) {
+    assert.ok(fan.siblingCount >= 1);
+    assert.ok(Number.isInteger(fan.crossingCount));
+    assert.ok(fan.crossingCount >= 0);
+    if (fan.siblingCount > 1) {
+      assert.ok(Number.isFinite(fan.minimumClearance));
+      assert.ok(fan.minimumClearance > 0);
+    } else {
+      assert.equal(fan.minimumClearance, null);
+    }
+  }
+});
