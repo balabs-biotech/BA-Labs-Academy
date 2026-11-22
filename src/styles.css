@@ -767,14 +767,24 @@
   color: var(--text, #f4f1e8);
 }
 
-/* Atlas spatial legibility: let the fractal field escape the narrow article column. */
+/* Atlas 2D first-screen composition: the map is the primary content, not a section below the fold. */
+.academy-atlas{margin:0 0 28px}
 .academy-atlas .atlas-stage{
   position:relative;
   left:50%;
   width:calc(100vw - 24px);
   max-width:1680px;
   transform:translateX(-50%);
-  height:min(94vh,1180px);
-  min-height:760px;
+  height:min(72vh,860px);
+  min-height:600px;
 }
-@media(max-width:700px){.academy-atlas .atlas-stage{height:88vh;min-height:680px}}
+.atlas-page-intro{padding-top:18px;padding-bottom:24px}
+@media(max-width:700px){
+  .academy-atlas .atlas-stage{height:68vh;min-height:500px}
+  .atlas-page-intro{padding-top:12px}
+  .atlas-stage-heading{max-width:calc(100% - 104px)}
+  .atlas-stage-heading p{font-size:9px}
+  .atlas-topline{align-items:flex-start;gap:8px;padding:10px 12px}
+  .atlas-topline-copy strong{font-size:10px;line-height:1.5}
+  .atlas-engine-state{max-width:110px;text-align:right;white-space:normal;font-size:8px}
+}
