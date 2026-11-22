@@ -1,7 +1,7 @@
 /**
  * Owns the Pixi display-list composition and the non-semantic Atlas backdrop.
- * The backdrop is deliberately separate from graph edges: rings and radial
- * guides establish spatial orientation without asserting knowledge relations.
+ * Only concentric spatial guides live here; the eight organic trunks are
+ * rendered by the dedicated morphology layer, not as backdrop decoration.
  */
 export function createAtlasRenderStage(app, pixi) {
   const { Graphics: LayerGraphics, Container: LayerContainer, TextStyle: LayerTextStyle } = pixi || {};
@@ -21,7 +21,7 @@ export function createAtlasRenderStage(app, pixi) {
     align: "center"
   });
 
-  function drawBackdrop({ nodes, width, height }) {
+  function drawBackdrop({ width, height }) {
     field.clear().rect(0, 0, width, height).fill({ color: 0x111b1d });
     field.circle(width * 0.5, height * 0.48, Math.max(width, height) * 0.78)
       .fill({ color: 0x172925, alpha: 0.22 });
