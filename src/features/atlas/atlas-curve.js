@@ -28,7 +28,8 @@ export function createAtlasConnectionCurve(a, b, { seed, depth = 1, sharedPathwa
   const bend = Math.min(sharedPathway ? 150 : 68, profile.bend) *
     depthScale * side;
   const drift = (((stableSeed >>> 12) & 255) / 255 - 0.5) *
-    Math.min(sharedPathway ? 18 : 14, Math.abs(bend) / ATLAS_GOLDEN_RATIO);
+    Math.min(sharedPathway ? 18 : 14, profile.bend / ATLAS_GOLDEN_RATIO) *
+    depthScale;
 
   return {
     a,
