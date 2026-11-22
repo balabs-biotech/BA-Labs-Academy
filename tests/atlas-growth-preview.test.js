@@ -120,7 +120,8 @@ test("global branch expansion propagates through every recursive generation", ()
     assert.ok(sample, `missing generation ${generation}`);
     const parent = model.byId.get(sample.parent);
     const distance = Math.hypot(sample.x - parent.x, sample.y - parent.y);
-    const expected = generation === 1 ? 1250 : 1250 / ((1 + Math.sqrt(5)) / 2) ** (generation - 1);
+    const expected = (1250 / ((1 + Math.sqrt(5)) / 2) ** (generation - 1)) *
+      sample.growthSector.densityScale;
     assert.ok(distance >= expected * 0.94 - 0.001);
     assert.ok(distance <= expected * 1.06 + 0.001);
   }
