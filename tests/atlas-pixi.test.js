@@ -628,3 +628,29 @@ test("Atlas label rendering uses collision-aware placement and a larger adaptive
  assert.ok(source.includes("Math.min(220,Math.max(32"));
  assert.ok(!source.includes("label.visible=false;continue"));
 });
+
+
+test("Atlas connection curves are pure deterministic geometry shared by strokes and particles", async () => {
+  const { createAtlasConnectionCurve, getAtlasConnectionCurvePoint, hashAtlasConnection } = await import("../src/features/atlas/atlas-curve.js");
+  const a = { id: "a", x: 0, y: 0 };
+  const b = { id: "b", x: 240, y: 120 };
+  const first = createAtlasConnectionCurve(a, b, { depth: 2 });
+  const second = createAtlasConnectionCurve(a, b, { depth: 2 });
+  assert.deepEqual(first, second);
+  assert.equal(first.seed, hashAtlasConnection("ab"));
+  assert.deepEqual(getAtlasConnectionCurvePoint(first, 0), { x: 0, y: 0 });
+  assert.deepEqual(getAtlasConnectionCurvePoint(first, 1), { x: 240, y: 120 });
+  const midpoint = getAtlasConnectionCurvePoint(first, 0.5);
+  assert.ok(Number.isFinite(midpoint.x) && Number.isFinite(midpoint.y));
+  assert.notDeepEqual(midpoint, { x: 120, y: 60 }, "organic curve should not collapse to a straight midpoint");
+  assert.deepEqual(getAtlasConnectionCurvePoint(first, -1), { x: 0, y: 0 });
+  assert.deepEqual(getAtlasConnectionCurvePoint(first, 2), { x: 240, y: 120 });
+});
+
+test("Atlas connection renderer consumes the shared curve and palette contracts", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-connections.js", import.meta.url), "utf8");
+  assert.ok(source.includes('from "./atlas-curve.js"'));
+  assert.ok(source.includes('from "./atlas-palette.js"'));
+  assert.ok(!source.includes("const PALETTE ="));
+  assert.ok(source.includes("getAtlasConnectionCurvePoint(curve,.5)"));
+});
