@@ -1,4 +1,5 @@
 import { ATLAS_GOLDEN_RATIO, ATLAS_GEOMETRY } from "./atlas-geometry.js";
+import { createAtlasOrganicLayout } from "./atlas-organic-layout.js";
 import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, atlasConnectionCurvesMayBeNear, createAtlasConnectionCurve } from "./atlas-curve.js";
 
 const DEFAULT_OCCUPANCY = ATLAS_GEOMETRY.branchOccupancy;
@@ -493,7 +494,16 @@ export function createAtlasGrowthGraph(graph, { visibleDepth = Number.POSITIVE_I
     throw new TypeError("Atlas growth preview requires a graph with nodes and edges");
   }
   const growthModel = createAtlasGrowthModel({ nodes: graph.nodes, visibleDepth });
-  const nodes = growthModel.visibleNodes;
+  // Geometry is shared with the public BA Labs explorer. Academy keeps its own
+  // taxonomy and pedagogical edges; only deterministic biological coordinates
+  // are supplied by the common organic network engine.
+  const organicLayout = createAtlasOrganicLayout(graph.nodes);
+  const organicById = organicLayout.byId;
+  const nodes = growthModel.visibleNodes.map((node) => {
+    const organic = organicById.get(node.id);
+    if (!organic) throw new Error("Missing shared organic position for Academy node: " + node.id);
+    return { ...node, x: organic.x, y: organic.y, angle: organic.angle };
+  });
   const visibleIds = new Set(nodes.map((node) => node.id));
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const edges = graph.edges
