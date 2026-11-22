@@ -67,6 +67,7 @@ test("department sectors expand according to real branch complexity", () => {
   assert.ok(layout.spreads.GEN > layout.spreads.BPR);
   assert.ok(layout.spreads.INF > layout.spreads.GEN);
   assert.ok(layout.sectorWidths.INF > layout.spreads.INF, "a guard band remains between neighboring sectors");
+  assert.ok(layout.spreads.INF / layout.sectorWidths.INF >= 0.94);
   const positions = departments.map((department) => getAtlasRootPosition({
     kind: "department",
     code: department.code,
@@ -84,7 +85,23 @@ test("large terminal module groups receive a wider fan and greater radial separa
     parent, index, count: 8, depth: 2, branchAngle: 0
   }));
   const angles = points.map((point) => Math.atan2(point.y, point.x));
-  assert.ok(angles[7] - angles[0] >= 2.2, "terminal modules have a wider lateral spread");
+  assert.ok(angles[7] - angles[0] >= 3.8, "terminal modules have a much wider lateral spread");
   assert.ok(Math.abs(Math.hypot(points[7].x, points[7].y) - 380) < 1e-8, "terminal orbit radius remains unchanged");
   assert.ok(Math.abs(Math.hypot(points[0].x, points[0].y) - 380) < 1e-8);
+});
+
+test("intermediate and terminal fans use wider angular spacing", () => {
+  const parent = { x: 0, y: 0 };
+  const intermediate = Array.from({ length: 5 }, (_, index) => getAtlasChildPosition({
+    parent, index, count: 5, depth: 1, branchAngle: 0
+  }));
+  const terminal = Array.from({ length: 6 }, (_, index) => getAtlasChildPosition({
+    parent, index, count: 6, depth: 2, branchAngle: 0
+  }));
+  const spreadOf = (points) => Math.atan2(points.at(-1).y, points.at(-1).x) -
+    Math.atan2(points[0].y, points[0].x);
+  assert.ok(spreadOf(intermediate) >= ATLAS_GEOMETRY.sectionSpread);
+  assert.ok(spreadOf(terminal) >= 2.9);
+  assert.equal(ATLAS_GEOMETRY.departmentOrbitRadius, 1480);
+  assert.equal(ATLAS_GEOMETRY.pathwayOrbitRadius, 2080);
 });
