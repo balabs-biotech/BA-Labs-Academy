@@ -439,6 +439,13 @@ test("Atlas renderer stage owns Pixi layer composition and non-semantic backdrop
   assert.equal(calls.filter(([owner, action]) => owner.startsWith("graphics-") && action === "circle").length, 3);
 });
 
+test("Module labels become eligible earlier and the zoom label budget expands", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-labels.js", import.meta.url), "utf8");
+  assert.ok(source.includes("n.level===1?.68:n.level===2?.98"));
+  assert.ok(source.includes("Math.min(76,Math.max(14"));
+  assert.ok(source.includes("11.1+Math.log2"));
+});
+
 test("Atlas renderer delegates label layout to its dedicated layer", () => {
   const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
   const labelsSource = readFileSync(new URL("../src/features/atlas/atlas-labels.js", import.meta.url), "utf8");

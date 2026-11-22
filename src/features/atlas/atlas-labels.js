@@ -18,20 +18,20 @@ export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nod
  if(selected&&!activeBranch.has(n.id)&&!lineage.has(n.id))alpha*=.22;
  const sx=width/2+offset.x+n.x*scale,sy=height/2+offset.y+n.y*scale;
  if(sx < -80 || sx > width+80 || sy < 45 || sy > height+45)continue;
- const threshold=n.level===0?0:n.level===1?.72:n.level===2?1.3:n.level===3?2.55:4.3;
+ const threshold=n.level===0?0:n.level===1?.68:n.level===2?.98:n.level===3?2.1:3.8;
  const show=n.level===0||(alpha>.5&&scale>threshold)||lineage.has(n.id);
  if(show)candidates.push({n,alpha,priority:selected?.id===n.id?0:lineage.has(n.id)?1:n.level===0?2:3,distance:selected?Math.hypot(n.x-selected.x,n.y-selected.y):Math.hypot(n.x,n.y)});
  }
  candidates.sort((a,b)=>a.priority-b.priority||a.distance-b.distance);
  const rootCount=candidates.filter(c=>c.n.level===0).length;
- const labelBudget=rootCount+Math.min(52,Math.max(12,Math.round(14+scale*6)));
+ const labelBudget=rootCount+Math.min(76,Math.max(14,Math.round(18+scale*9)));
  const occupied=[];const hitBoxes={};let drawn=0;
  for(const {n,alpha} of candidates){
  if(n.level!==0&&drawn>=labelBudget)continue;
  const sx=width/2+offset.x+n.x*scale,sy=height/2+offset.y+n.y*scale;
  let label=labelPool.get(n.id);if(!label){label=createLabel(n, style);labelPool.set(n.id,label);labels.addChild(label);}
  const title=n.level===0&&scale<1.2?(n.shortTitle||(shortRoots[lang]||shortRoots.fr)[n.rootId]||n.title):n.title;
- let fontSize=n.level===0?clamp(11.5+Math.log2(Math.max(.5,scale))*1.25,10.5,15):clamp(10.2+Math.log2(Math.max(.7,scale))*.92,9.5,13.5);if(selected&&activeBranch.has(n.id))fontSize+=.7;if(selected?.id===n.id)fontSize+=1;
+ let fontSize=n.level===0?clamp(11.5+Math.log2(Math.max(.5,scale))*1.25,10.5,15):clamp(11.1+Math.log2(Math.max(.7,scale))*1.05,10.2,14.2);if(selected&&activeBranch.has(n.id))fontSize+=.7;if(selected?.id===n.id)fontSize+=1;
  label.text=title;label.style.fontSize=fontSize;label.style.fontWeight=n.level===0?"650":"500";
  // Wrap long names to the available phone width before positioning the label.
  label.style.wordWrap=true;label.style.breakWords=true;label.style.align="center";

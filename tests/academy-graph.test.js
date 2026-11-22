@@ -63,6 +63,13 @@ test("Other departments and pathways occupy separate orbital bands", () => {
 });
 
 
+test("Terminal module nodes have expanded spacing and label visibility threshold", async () => {
+  const { ATLAS_GEOMETRY } = await import("../src/features/atlas/atlas-geometry.js");
+  assert.deepEqual(ATLAS_GEOMETRY.childDistances, { 1: 300, 2: 245 });
+  assert.equal(ATLAS_GEOMETRY.departmentPetalSpread, 0.96);
+  assert.equal(ATLAS_GEOMETRY.sectionSpread, 1.38);
+});
+
 test("Every module node has a stable route and canonical section identity", () => {
   const moduleNodes = graph.nodes.filter((node) => node.entity_type === "MODULE");
   assert.equal(moduleNodes.length, catalogueTotals.modules);
@@ -137,7 +144,7 @@ test("Department sections occupy narrow radial petals instead of overlapping fan
     for (const section of sections) {
       const angle = Math.atan2(section.y - root.y, section.x - root.x);
       const delta = Math.atan2(Math.sin(angle - rootAngle), Math.cos(angle - rootAngle));
-      assert.ok(Math.abs(delta) <= 0.42 + 1e-8, `${department.code} section escaped its radial petal`);
+      assert.ok(Math.abs(delta) <= 0.49 + 1e-8, `${department.code} section escaped its radial petal`);
     }
   }
 });
