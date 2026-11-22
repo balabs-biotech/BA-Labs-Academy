@@ -153,9 +153,12 @@ export function createAtlasGrowthModel({
     if (!children.length) return;
     // Preserve the compact MYCOLOGIE heart; open the eight satellite fans.
     const localOccupancy = parent.rootId === "myc" ? 0.99 : occupancy;
-    const terminalFanExpansion = children.every((child) =>
+    const isTerminalFan = children.every((child) =>
       child.rootId !== "myc" && !(childrenByParent.get(child.id) || []).length
-    ) ? 2.05 : 1;
+    );
+    // Give every recursive fan a deliberate angular guard band; terminal
+    // fans receive a stronger expansion so neighboring endpoints do not merge.
+    const terminalFanExpansion = isTerminalFan ? 2.55 : children.length > 1 ? 1.22 : 1;
     const sectors = allocateSectors(
       children, parentSector, weights, localOccupancy, terminalFanExpansion
     );
@@ -169,7 +172,7 @@ export function createAtlasGrowthModel({
       const lengthUnit = stableUnit(hashString(parent.id + "|" + child.id + "|length"));
       const allocatedWidth = sector.spread * localOccupancy;
       const angularJitter = children.length > 1
-        ? (angularUnit - 0.5) * allocatedWidth * 0.18
+        ? (angularUnit - 0.5) * allocatedWidth * 0.28
         : 0;
       const angle = sector.angle + angularJitter;
       // Radial spacing responds to both fan population and actual angular
@@ -224,8 +227,8 @@ export function createAtlasGrowthModel({
       );
       let endpointAdjustment = 0;
       const baseAngle = point.angle;
-      while (hasEndpointOverlap(point) && endpointAdjustment < 10) {
-        const step = Math.ceil(endpointAdjustment / 2) * 0.045;
+      while (hasEndpointOverlap(point) && endpointAdjustment < 18) {
+        const step = Math.ceil(endpointAdjustment / 2) * 0.06;
         const direction = endpointAdjustment % 2 === 0 ? 1 : -1;
         point.angle = baseAngle + step * direction;
         point.x = parent.x + Math.cos(point.angle) * distance;
