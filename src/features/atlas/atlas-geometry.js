@@ -86,7 +86,7 @@ export function getAtlasNestedBranchSpread(parentSpread, siblingCount, fullRing 
   const siblingGap = fullRing
     ? parentSpread / siblingCount
     : parentSpread / (siblingCount - 1);
-  return clamp(siblingGap * 0.88, 0.35, 2.6);
+  return clamp(siblingGap / ATLAS_GOLDEN_RATIO, 0.35, 2.6);
 }
 
 export function getAtlasRootPosition({
