@@ -15,9 +15,16 @@ export function createAtlasPixiFrameRenderer({
     stage.drawBackdrop({ nodes, width: plan.width, height: plan.height });
     stage.junctions.clear();
 
+    const viewportPadding = 72 / Math.max(scale, 0.075);
+    const viewport = {
+      left: (-transform.x / scale) - viewportPadding,
+      top: (-transform.y / scale) - viewportPadding,
+      right: ((plan.width - transform.x) / scale) + viewportPadding,
+      bottom: ((plan.height - transform.y) / scale) + viewportPadding
+    };
     connections({
       filaments: stage.filaments, junctions: stage.junctions, edges, morphologyBranches, selected,
-      scale, reduced, relationFilter, time, alphaFor, activeBranch
+      scale, reduced, relationFilter, time, alphaFor, activeBranch, viewport
     });
     nodesLayer({
       junctions: stage.junctions, nodes, selected, scale, alphaFor,
