@@ -48,10 +48,10 @@ test("Mycology sections distribute around a complete ring without duplicate endp
 
 test("department petals remain narrow and point outward", () => {
   const point = getAtlasChildPosition({
-    parent: { x: 1850, y: 0 }, index: 0, count: 5, depth: 1,
+    parent: { x: 1450, y: 0 }, index: 0, count: 5, depth: 1,
     branchAngle: 0, isDepartmentRoot: true
   });
-  assert.ok(point.x > 1850);
+  assert.ok(point.x > 1450);
   assert.ok(Math.abs(point.angle) <= ATLAS_GEOMETRY.departmentPetalSpread / 2);
 });
 
