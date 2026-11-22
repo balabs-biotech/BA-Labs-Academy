@@ -1,5 +1,5 @@
 import { ATLAS_GOLDEN_RATIO, ATLAS_GEOMETRY } from "./atlas-geometry.js";
-import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, createAtlasConnectionCurve } from "./atlas-curve.js";
+import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, atlasConnectionCurvesMayBeNear, createAtlasConnectionCurve } from "./atlas-curve.js";
 
 const DEFAULT_OCCUPANCY = 1 - 1 / (ATLAS_GOLDEN_RATIO ** 3);
 // World-space clearance threshold used to flag visually crowded, non-crossing
@@ -142,13 +142,34 @@ export function createAtlasGrowthModel({
       const collisionCandidates = branches.filter((branch) =>
         branch.sourceId !== parent.id && branch.targetId !== parent.id
       );
-      const hasCollision = (candidate) => collisionCandidates.some((branch) =>
-        atlasConnectionCurvesIntersect(candidate, branch.curve, {
-          steps: 16,
-          startProgress: 0.12,
-          endProgress: 0.9
-        })
-      );
+      const crossGenerationOptions = {
+        steps: 12,
+        startProgress: 0.12,
+        endProgress: 0.9
+      };
+      const hasCrossGenerationIntersection = (candidate) =>
+        collisionCandidates.some((branch) =>
+          atlasConnectionCurvesIntersect(candidate, branch.curve, {
+            steps: 16,
+            startProgress: 0.12,
+            endProgress: 0.9
+          })
+        );
+      // Clearance is more expensive than intersection testing. Only measure it
+      // for cross-generation pairs whose sampled curve bounds can be within
+      // the diagnostic threshold; the broad phase cannot discard a true near miss.
+      const hasCrossGenerationCrowding = (candidate) =>
+        collisionCandidates.some((branch) =>
+          branch.generation !== generation &&
+          atlasConnectionCurvesMayBeNear(
+            candidate, branch.curve,
+            CROSS_GENERATION_CLEARANCE_THRESHOLD,
+            crossGenerationOptions
+          ) &&
+          atlasConnectionCurvesClearance(
+            candidate, branch.curve, crossGenerationOptions
+          ) < CROSS_GENERATION_CLEARANCE_THRESHOLD
+        );
       const previousSiblings = branches.filter((branch) => branch.sourceId === parent.id);
       let resolvedBendScale = bendScale;
       let curve = createAtlasConnectionCurve(source, point, {
@@ -156,8 +177,10 @@ export function createAtlasGrowthModel({
         bendScale: resolvedBendScale
       });
       let adjustmentAttempts = 0;
-      // Resolve genuine intersections in deterministic stages. First preserve
-      // fan spacing; then avoid crossings with branches from other generations.
+      let crowdingAdjustmentAttempts = 0;
+      // Resolve intersections first, then reduce cross-generation near misses.
+      // Only curvature changes: node coordinates, sectors and primary anchors
+      // remain untouched by this bounded local correction.
       while (adjustmentAttempts < 8) {
         const siblingCollision = previousSiblings.some((branch) =>
           atlasConnectionCurvesIntersect(curve, branch.curve, {
@@ -165,7 +188,11 @@ export function createAtlasGrowthModel({
             startProgress: 0.12
           })
         );
-        if (!siblingCollision && !hasCollision(curve)) break;
+        const crossGenerationIntersection = hasCrossGenerationIntersection(curve);
+        const crossGenerationCrowding = !siblingCollision && !crossGenerationIntersection &&
+          hasCrossGenerationCrowding(curve);
+        if (!siblingCollision && !crossGenerationIntersection && !crossGenerationCrowding) break;
+        if (crossGenerationCrowding) crowdingAdjustmentAttempts += 1;
         resolvedBendScale = Math.max(0.2, resolvedBendScale * 0.75);
         adjustmentAttempts += 1;
         curve = createAtlasConnectionCurve(source, point, {
@@ -184,6 +211,7 @@ export function createAtlasGrowthModel({
         curve,
         bendScale: resolvedBendScale,
         curveAdjustmentAttempts: adjustmentAttempts,
+        crowdingAdjustmentAttempts,
         crossGenerationChecked: true
       });
       grow(point, sector);
