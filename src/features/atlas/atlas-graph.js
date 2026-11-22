@@ -179,6 +179,13 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
       angle,
       entityType
     ));
+    if (item.kind === "department") {
+      root.growthSector = {
+        angle,
+        spread: item.code === "MYC" ? Math.PI * 2 : departmentLayout.spreads[item.code],
+        fullRing: item.code === "MYC"
+      };
+    }
     if (item.kind === "department" && item.code === "MYC") {
       root.isAcademyCore = true;
       root.r = 42;

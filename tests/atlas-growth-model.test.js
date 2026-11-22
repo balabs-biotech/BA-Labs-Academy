@@ -69,3 +69,33 @@ test("invalid hierarchy cycles are rejected rather than recursed indefinitely", 
   nodes[0] = { ...nodes[0], parent: "detail-a1" };
   assert.throws(() => createAtlasGrowthModel({ nodes }), /cycle/);
 });
+
+
+test("department root growth preserves its preallocated geographic sector", () => {
+  const nodes = fixture();
+  nodes[0] = {
+    ...nodes[0],
+    angle: 1.2,
+    growthSector: { angle: 1.2, spread: 0.42, fullRing: false }
+  };
+  const model = createAtlasGrowthModel({ nodes });
+  const child = model.byId.get("section-a");
+  assert.ok(Math.abs(child.angle - 1.2) <= 0.42 / 2);
+  assert.ok(Math.abs(child.growthSector.spread - ATLAS_GROWTH_DEFAULTS.occupancy * 0.21) < 1e-10);
+});
+
+test("explicit full-ring root sectors are honored without changing root anchors", () => {
+  const nodes = fixture();
+  nodes[0] = {
+    ...nodes[0],
+    x: 120,
+    y: -80,
+    growthSector: { angle: 0.7, spread: Math.PI * 2, fullRing: true }
+  };
+  const model = createAtlasGrowthModel({ nodes });
+  assert.equal(model.byId.get("root").x, 120);
+  assert.equal(model.byId.get("root").y, -80);
+  assert.equal(model.byId.get("section-a").generation, 1);
+  assert.equal(model.byId.get("section-b").generation, 1);
+  assert.ok(Math.abs(model.byId.get("section-a").angle - model.byId.get("section-b").angle) >= Math.PI - 1e-10);
+});

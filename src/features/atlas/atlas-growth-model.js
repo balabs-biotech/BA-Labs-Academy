@@ -109,11 +109,15 @@ export function createAtlasGrowthModel({
   for (const root of roots) {
     positioned.set(root.id, { ...root, generation: 0 });
     const isMycologyCore = root.entity_type === "DEPARTMENT" && root.entity_key === "MYC";
-    const spread = isMycologyCore ? Math.PI * 2 : ATLAS_GEOMETRY.departmentPetalSpread;
+    const sector = root.growthSector;
+    const spread = Number.isFinite(sector?.spread)
+      ? sector.spread
+      : isMycologyCore ? Math.PI * 2 : ATLAS_GEOMETRY.departmentPetalSpread;
     grow(root, {
-      angle: Number.isFinite(root.angle) ? root.angle : -Math.PI / 2,
+      angle: Number.isFinite(sector?.angle) ? sector.angle
+        : Number.isFinite(root.angle) ? root.angle : -Math.PI / 2,
       spread,
-      fullRing: isMycologyCore
+      fullRing: sector?.fullRing ?? isMycologyCore
     });
   }
 
