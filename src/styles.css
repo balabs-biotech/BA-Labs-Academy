@@ -735,3 +735,31 @@
 .atlas-pathway-disclosure .atlas-root-label{display:none}
 .atlas-filter-disclosure .atlas-relation-filters{padding:4px 10px 8px}
 .atlas-utility-disclosure>summary:focus-visible{outline:2px solid #d6a18a;outline-offset:2px}
+
+
+/* Optional fractal-growth preview; isolated from the default Atlas experience. */
+.atlas-growth-preview-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 1rem;
+  margin-top: 1rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--line, rgba(148, 163, 184, 0.2));
+  border-radius: 0.7rem;
+  color: var(--muted, #9aa5b1);
+  font-size: 0.78rem;
+}
+.atlas-growth-preview-controls .eyebrow {
+  flex-basis: 100%;
+  margin: 0;
+}
+.atlas-growth-preview-controls a {
+  color: var(--accent, #c7a96b);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+.atlas-growth-preview-controls a:hover,
+.atlas-growth-preview-controls a:focus-visible {
+  color: var(--text, #f4f1e8);
+}
