@@ -104,7 +104,13 @@ export function createAtlasGrowthModel({
         y: parent.y + Math.sin(angle) * distance,
         angle,
         generation,
-        growthSector: { angle, spread: sector.spread }
+        growthSector: {
+          angle,
+          centerAngle: sector.angle,
+          angularOffset: angularJitter,
+          allocatedSpread: allocatedWidth,
+          spread: sector.spread
+        }
       };
       positioned.set(child.id, point);
       const source = positioned.get(parent.id) || parent;
