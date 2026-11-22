@@ -149,7 +149,9 @@ export function createAtlasGrowthModel({
   function grow(parent, parentSector) {
     const children = childrenByParent.get(parent.id) || [];
     if (!children.length) return;
-    const sectors = allocateSectors(children, parentSector, weights, occupancy);
+    // Preserve the compact MYCOLOGIE heart; open the eight satellite fans.
+    const localOccupancy = parent.rootId === "myc" ? 0.99 : occupancy;
+    const sectors = allocateSectors(children, parentSector, weights, localOccupancy);
 
     children.forEach((child, index) => {
       const sector = sectors[index];
@@ -158,7 +160,7 @@ export function createAtlasGrowthModel({
       // geometric fan. Jitter stays inside each child's allocated angular sector.
       const angularUnit = stableUnit(hashString(parent.id + "|" + child.id + "|angle"));
       const lengthUnit = stableUnit(hashString(parent.id + "|" + child.id + "|length"));
-      const allocatedWidth = sector.spread * occupancy;
+      const allocatedWidth = sector.spread * localOccupancy;
       const angularJitter = children.length > 1
         ? (angularUnit - 0.5) * allocatedWidth * 0.18
         : 0;
@@ -180,7 +182,7 @@ export function createAtlasGrowthModel({
       // Terminal endpoints need a wider outer envelope than their parent fan.
       // The bounded expansion is stronger for crowded sibling groups and does
       // not move the eight disciplinary root anchors.
-      const terminalExpansion = isTerminal && generation >= 2
+      const terminalExpansion = isTerminal && generation >= 2 && child.rootId !== "myc"
         ? Math.min(2.85, 2.45 + Math.log2(Math.max(1, children.length)) * 0.12)
         : 1;
       const distance = branchLength(generation, parent.rootId, densityScale) *
