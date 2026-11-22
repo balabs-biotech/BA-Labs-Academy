@@ -121,7 +121,7 @@ test("global branch expansion propagates through every recursive generation", ()
     const parent = model.byId.get(sample.parent);
     const distance = Math.hypot(sample.x - parent.x, sample.y - parent.y);
     const expected = (ATLAS_GEOMETRY.childDistances[1] / ((1 + Math.sqrt(5)) / 2) ** (generation - 1)) *
-      sample.growthSector.densityScale;
+      sample.growthSector.densityScale * sample.growthSector.terminalExpansion;
     assert.ok(distance >= expected * 0.94 - 0.001);
     assert.ok(distance <= expected * 1.06 + 0.001);
   }
@@ -193,14 +193,14 @@ test("dense secondary fans receive bounded radial spacing without moving primary
   for (const node of secondary) {
     const parent = byId.get(node.parent);
     const siblings = model.nodes.filter((candidate) => candidate.parent === parent.id);
-    const populationScale = 1 + Math.log2(Math.max(1, siblings.length)) * 0.075;
+    const populationScale = 1 + Math.log2(Math.max(1, siblings.length)) * 0.11;
     const expectedCrowding = Math.max(0, Math.min(1,
-      (0.5 - node.growthSector.allocatedSpread) / 0.5
-    )) * 0.08;
-    const expectedScale = Math.min(1.28, populationScale + expectedCrowding);
+      (0.72 - node.growthSector.allocatedSpread) / 0.72
+    )) * 0.14;
+    const expectedScale = Math.min(1.48, populationScale + expectedCrowding);
     assert.equal(node.growthSector.angularCrowding, expectedCrowding);
     assert.equal(node.growthSector.densityScale, expectedScale);
-    assert.ok(node.growthSector.densityScale <= 1.28);
+    assert.ok(node.growthSector.densityScale <= 1.48);
   }
   const primary = model.nodes.filter((node) => node.generation === 1);
   assert.ok(primary.every((node) => node.growthSector.densityScale === 1));
