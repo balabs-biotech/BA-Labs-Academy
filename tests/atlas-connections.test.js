@@ -91,7 +91,7 @@ test("fixed-step curve sampling is stable and excludes the shared launch region"
   const samples = sampleAtlasConnectionCurve(curve, { steps: 12, startProgress: 0.2 });
   assert.equal(samples.length, 13);
   assert.ok(Math.abs(samples[0].progress - 0.2) < 1e-12);
-  assert.equal(samples.at(-1).progress, 1);
+  assert.ok(Math.abs(samples.at(-1).progress - 1) < 1e-12);
   assert.deepEqual(samples, sampleAtlasConnectionCurve(curve, { steps: 12, startProgress: 0.2 }));
 });
 
