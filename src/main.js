@@ -947,12 +947,12 @@ function render() {
   ).values()];
   const atlasBaseGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, atlasDomains, cataloguePathways) : null;
   const atlasQuery = new URLSearchParams(location.search);
-  const atlasGrowthEnabled = atlasQuery.get("atlas-growth") === "1";
+  const atlasGrowthEnabled = atlasQuery.get("atlas-growth") !== "0";
   const atlasDepthValue = Number(atlasQuery.get("atlas-depth"));
   const atlasGraph = atlasBaseGraph && atlasGrowthEnabled
     ? createAtlasGrowthGraph(atlasBaseGraph, {
         visibleDepth: Number.isInteger(atlasDepthValue) && atlasDepthValue >= 0
-          ? atlasDepthValue : 2
+          ? atlasDepthValue : Number.POSITIVE_INFINITY
       })
     : atlasBaseGraph;
   const pathItemId = new URLSearchParams(query).get("pathItem") || "";

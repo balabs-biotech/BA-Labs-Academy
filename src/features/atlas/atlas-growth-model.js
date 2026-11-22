@@ -1,7 +1,10 @@
 import { ATLAS_GOLDEN_RATIO, ATLAS_GEOMETRY } from "./atlas-geometry.js";
-import { createAtlasConnectionCurve } from "./atlas-curve.js";
+import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, atlasConnectionCurvesMayBeNear, createAtlasConnectionCurve } from "./atlas-curve.js";
 
 const DEFAULT_OCCUPANCY = 1 - 1 / (ATLAS_GOLDEN_RATIO ** 3);
+// World-space clearance threshold used to flag visually crowded, non-crossing
+// filaments. It is diagnostic only; it never changes scientific relationships.
+const CROSS_GENERATION_CLEARANCE_THRESHOLD = 18;
 
 function descendantsWeight(nodeId, childrenByParent, memo, visiting) {
   if (memo.has(nodeId)) return memo.get(nodeId);
@@ -37,9 +40,13 @@ function allocateSectors(children, parentSector, weights, occupancy) {
   });
 }
 
-function branchLength(generation) {
+function branchLength(generation, rootId, densityScale) {
   const base = ATLAS_GEOMETRY.childDistances[1] || 760;
-  return Math.max(96, base / (ATLAS_GOLDEN_RATIO ** Math.max(0, generation - 1)));
+  const recursiveLength = base / (ATLAS_GOLDEN_RATIO ** Math.max(0, generation - 1));
+  // MYCOLOGIE is the central heart, not a ninth satellite arm. Keep its
+  // internal taxonomy compact so the eight disciplinary trunks stay legible.
+  const coreScale = rootId === "myc" ? 0.28 : 1;
+  return Math.max(72, recursiveLength * coreScale * densityScale);
 }
 
 /**
@@ -83,21 +90,117 @@ export function createAtlasGrowthModel({
     children.forEach((child, index) => {
       const sector = sectors[index];
       const generation = Number.isFinite(child.level) ? child.level : (parent.level || 0) + 1;
-      const distance = branchLength(generation);
+      // Small, stable deviations prevent the hierarchy from reading as a perfect
+      // geometric fan. Jitter stays inside each child's allocated angular sector.
+      const angularUnit = stableUnit(hashString(parent.id + "|" + child.id + "|angle"));
+      const lengthUnit = stableUnit(hashString(parent.id + "|" + child.id + "|length"));
+      const allocatedWidth = sector.spread * occupancy;
+      const angularJitter = children.length > 1
+        ? (angularUnit - 0.5) * allocatedWidth * 0.18
+        : 0;
+      const angle = sector.angle + angularJitter;
+      // Radial spacing responds to both fan population and actual angular
+      // crowding. Narrow sectors receive a small bounded extension; the eight
+      // generation-1 department anchors are deliberately unchanged.
+      const populationScale = generation >= 2
+        ? 1 + Math.log2(Math.max(1, children.length)) * 0.075
+        : 1;
+      const angularCrowding = generation >= 2
+        ? Math.max(0, Math.min(1, (0.5 - allocatedWidth) / 0.5)) * 0.08
+        : 0;
+      const densityScale = Math.min(1.28, populationScale + angularCrowding);
+      const distance = branchLength(generation, parent.rootId, densityScale) *
+        (0.94 + lengthUnit * 0.12);
       const point = {
         ...child,
-        x: parent.x + Math.cos(sector.angle) * distance,
-        y: parent.y + Math.sin(sector.angle) * distance,
-        angle: sector.angle,
+        x: parent.x + Math.cos(angle) * distance,
+        y: parent.y + Math.sin(angle) * distance,
+        angle,
         generation,
-        growthSector: { angle: sector.angle, spread: sector.spread }
+        growthSector: {
+          angle,
+          centerAngle: sector.angle,
+          angularOffset: angularJitter,
+          allocatedSpread: allocatedWidth,
+          densityScale,
+          angularCrowding,
+          spread: sector.spread
+        }
       };
       positioned.set(child.id, point);
       const source = positioned.get(parent.id) || parent;
-      const curve = createAtlasConnectionCurve(source, point, {
+      // Narrow child sectors use straighter filaments. This reduces lateral
+      // excursions that can visually cross neighboring branches in dense fans.
+      const bendScale = Math.max(0.2, Math.min(1, allocatedWidth / 1.8));
+      const curveOptions = {
         seed: hashString(parent.id + "|" + child.id),
         depth: generation
+      };
+      // Compare against both siblings and already-created branches from other
+      // hierarchy levels. The incoming parent filament and same-parent siblings
+      // are handled separately so shared junctions are not misclassified.
+      const collisionCandidates = branches.filter((branch) =>
+        branch.sourceId !== parent.id && branch.targetId !== parent.id
+      );
+      const crossGenerationOptions = {
+        steps: 12,
+        startProgress: 0.12,
+        endProgress: 0.9
+      };
+      const hasCrossGenerationIntersection = (candidate) =>
+        collisionCandidates.some((branch) =>
+          atlasConnectionCurvesIntersect(candidate, branch.curve, {
+            steps: 16,
+            startProgress: 0.12,
+            endProgress: 0.9
+          })
+        );
+      // Clearance is more expensive than intersection testing. Only measure it
+      // for cross-generation pairs whose sampled curve bounds can be within
+      // the diagnostic threshold; the broad phase cannot discard a true near miss.
+      const hasCrossGenerationCrowding = (candidate) =>
+        collisionCandidates.some((branch) =>
+          branch.generation !== generation &&
+          atlasConnectionCurvesMayBeNear(
+            candidate, branch.curve,
+            CROSS_GENERATION_CLEARANCE_THRESHOLD,
+            crossGenerationOptions
+          ) &&
+          atlasConnectionCurvesClearance(
+            candidate, branch.curve, crossGenerationOptions
+          ) < CROSS_GENERATION_CLEARANCE_THRESHOLD
+        );
+      const previousSiblings = branches.filter((branch) => branch.sourceId === parent.id);
+      let resolvedBendScale = bendScale;
+      let curve = createAtlasConnectionCurve(source, point, {
+        ...curveOptions,
+        bendScale: resolvedBendScale
       });
+      let adjustmentAttempts = 0;
+      let crowdingAdjustmentAttempts = 0;
+      // Resolve intersections first, then reduce cross-generation near misses.
+      // Only curvature changes: node coordinates, sectors and primary anchors
+      // remain untouched by this bounded local correction.
+      while (adjustmentAttempts < 8) {
+        const siblingCollision = previousSiblings.some((branch) =>
+          atlasConnectionCurvesIntersect(curve, branch.curve, {
+            steps: 20,
+            startProgress: 0.12
+          })
+        );
+        const crossGenerationIntersection = hasCrossGenerationIntersection(curve);
+        const crossGenerationCrowding = !siblingCollision && !crossGenerationIntersection &&
+          hasCrossGenerationCrowding(curve);
+        if (!siblingCollision && !crossGenerationIntersection && !crossGenerationCrowding) break;
+        if (crossGenerationCrowding) crowdingAdjustmentAttempts += 1;
+        resolvedBendScale = Math.max(0.2, resolvedBendScale * 0.75);
+        adjustmentAttempts += 1;
+        curve = createAtlasConnectionCurve(source, point, {
+          ...curveOptions,
+          bendScale: resolvedBendScale
+        });
+        if (resolvedBendScale === 0.2) break;
+      }
       branches.push({
         id: parent.id + "->" + child.id,
         sourceId: parent.id,
@@ -105,7 +208,11 @@ export function createAtlasGrowthModel({
         generation,
         source,
         target: point,
-        curve
+        curve,
+        bendScale: resolvedBendScale,
+        curveAdjustmentAttempts: adjustmentAttempts,
+        crowdingAdjustmentAttempts,
+        crossGenerationChecked: true
       });
       grow(point, sector);
     });
@@ -128,14 +235,94 @@ export function createAtlasGrowthModel({
 
   const allNodes = nodes.map((node) => positioned.get(node.id) || { ...node, generation: node.level || 0 });
   const allBranches = branches;
+  // Measure sibling filament geometry once during model construction. These
+  // diagnostics deliberately exclude the shared launch region near the parent.
+  const branchesByParent = new Map();
+  for (const branch of allBranches) {
+    if (!branchesByParent.has(branch.sourceId)) branchesByParent.set(branch.sourceId, []);
+    branchesByParent.get(branch.sourceId).push(branch);
+  }
+  let crossGenerationComparedPairs = 0;
+  let crossGenerationCrossingCount = 0;
+  let crossGenerationNearMissCount = 0;
+  let crossGenerationMinimumClearance = Number.POSITIVE_INFINITY;
+  for (let first = 0; first < allBranches.length; first += 1) {
+    for (let second = first + 1; second < allBranches.length; second += 1) {
+      const a = allBranches[first];
+      const b = allBranches[second];
+      if (a.generation === b.generation || a.sourceId === b.sourceId ||
+          a.targetId === b.sourceId || b.targetId === a.sourceId) continue;
+      crossGenerationComparedPairs += 1;
+      const comparisonOptions = {
+        steps: 12,
+        startProgress: 0.12,
+        endProgress: 0.9
+      };
+      if (atlasConnectionCurvesIntersect(a.curve, b.curve, comparisonOptions)) {
+        crossGenerationCrossingCount += 1;
+        crossGenerationMinimumClearance = 0;
+        continue;
+      }
+      // Segment-level bounding boxes inside the clearance routine prune
+      // distant segment pairs before exact distance calculations.
+      const clearance = atlasConnectionCurvesClearance(
+        a.curve, b.curve, comparisonOptions
+      );
+      crossGenerationMinimumClearance = Math.min(crossGenerationMinimumClearance, clearance);
+      if (clearance < CROSS_GENERATION_CLEARANCE_THRESHOLD) {
+        crossGenerationNearMissCount += 1;
+      }
+    }
+  }
+  const fanDiagnostics = [...branchesByParent.entries()].map(([parentId, siblings]) => {
+    let crossingCount = 0;
+    let adjustedBranchCount = 0;
+    let minimumClearance = Number.POSITIVE_INFINITY;
+    adjustedBranchCount = siblings.filter((branch) => branch.curveAdjustmentAttempts > 0).length;
+    for (let first = 0; first < siblings.length; first += 1) {
+      for (let second = first + 1; second < siblings.length; second += 1) {
+        if (atlasConnectionCurvesIntersect(siblings[first].curve, siblings[second].curve, {
+          steps: 16,
+          startProgress: 0.12
+        })) crossingCount += 1;
+        minimumClearance = Math.min(minimumClearance,
+          atlasConnectionCurvesClearance(siblings[first].curve, siblings[second].curve, {
+            steps: 16,
+            startProgress: 0.12
+          })
+        );
+      }
+    }
+    return {
+      parentId,
+      siblingCount: siblings.length,
+      crossingCount,
+      adjustedBranchCount,
+      minimumClearance: Number.isFinite(minimumClearance) ? minimumClearance : null
+    };
+  });
   return {
     nodes: allNodes,
     branches: allBranches,
+    fanDiagnostics,
+    crossGenerationDiagnostics: {
+      comparedPairs: crossGenerationComparedPairs,
+      crossingCount: crossGenerationCrossingCount,
+      nearMissCount: crossGenerationNearMissCount,
+      minimumClearance: Number.isFinite(crossGenerationMinimumClearance)
+        ? crossGenerationMinimumClearance
+        : null,
+      clearanceThreshold: CROSS_GENERATION_CLEARANCE_THRESHOLD
+    },
     visibleNodes: allNodes.filter((node) => node.generation <= visibleDepth),
     visibleBranches: allBranches.filter((branch) => branch.generation <= visibleDepth),
     byId: new Map(allNodes.map((node) => [node.id, node])),
     maxDepth: allNodes.reduce((max, node) => Math.max(max, node.generation || 0), 0)
   };
+}
+
+function stableUnit(hash) {
+  return (hash >>> 0) / 0xffffffff;
 }
 
 function hashString(value) {
@@ -183,10 +370,17 @@ export function createAtlasGrowthGraph(graph, { visibleDepth = Number.POSITIVE_I
     ...graph,
     nodes,
     edges,
+    morphologyBranches: (graph.morphologyBranches || []).map((branch) => ({
+      ...branch,
+      source: byId.get(branch.sourceId),
+      target: byId.get(branch.targetId)
+    })).filter((branch) => branch.source && branch.target),
     byId,
     departmentNodes: remap(graph.departmentNodes),
     domainNodes: remap(graph.domainNodes),
     sectionNodes: remap(graph.sectionNodes),
+    fanDiagnostics: growthModel.fanDiagnostics,
+    crossGenerationDiagnostics: growthModel.crossGenerationDiagnostics,
     growthPreview: {
       depth: visibleDepth,
       maxDepth: growthModel.maxDepth,

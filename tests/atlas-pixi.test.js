@@ -354,6 +354,22 @@ test("Atlas accessible node index is rendered by its own view adapter", async ()
 });
 
 
+test("Atlas accessible navigation is populated before the graphics backend initializes", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  const accessibleCall = source.indexOf("renderAccessible();");
+  const rendererInitialization = source.indexOf("rendererHost.initialize()");
+  assert.notEqual(accessibleCall, -1, "accessible navigation must be initialized");
+  assert.ok(accessibleCall < rendererInitialization,
+    "keyboard navigation must not depend on successful Pixi/WebGL initialization");
+});
+
+test("Atlas text navigation becomes visible when keyboard-focused", () => {
+  const styles = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(styles, /\.atlas-accessible-nodes:focus-within\s*\{/,
+    "visually hidden navigation must reveal itself when one of its controls receives focus");
+  assert.match(styles, /\.atlas-accessible-nodes:focus-within\s*\{[^}]*clip:\s*auto/s);
+});
+
 test("Atlas selection panel has a dedicated rendering module", async () => {
   const { renderAtlasSelectionPanel } = await import("../src/features/atlas/atlas-selection.js");
   assert.equal(typeof renderAtlasSelectionPanel, "function");
@@ -976,4 +992,63 @@ test("Atlas label hit-test index preserves graph order while rendering prioritiz
   const hitData = getAtlasLabelHitData(canvas);
   assert.deepEqual(hitData.visibleNodes.map((candidate) => candidate.n.id), ["far", "near"]);
   assert.equal(hitData.visibleNodes.length, 2);
+});
+
+
+test("Atlas connection layer renders the eight morphology trunks as organic curves", async () => {
+  const { renderAtlasConnections } = await import("../src/features/atlas/atlas-connections.js");
+  const calls = [];
+  const path = {
+    bezierCurveTo(...args) { calls.push(["bezier", ...args]); return path; },
+    stroke(...args) { calls.push(["stroke", ...args]); return path; }
+  };
+  const filaments = { moveTo(...args) { calls.push(["move", ...args]); return path; } };
+  const core = { id: "core", x: 0, y: 0, r: 42 };
+  const department = { id: "department:MIC", x: 1000, y: 0, r: 13, rootId: "mic" };
+  renderAtlasConnections({
+    filaments, junctions: { circle: () => path }, edges: [],
+    morphologyBranches: [{
+      id: "morphology:MYC:MIC", sourceId: core.id, targetId: department.id,
+      source: core, target: department, visualOnly: true, seed: 17
+    }],
+    selected: null, scale: 1, reduced: true, relationFilter: "all", time: 0,
+    alphaFor: () => 1, activeBranch: new Set()
+  });
+  assert.ok(calls.some(([kind]) => kind === "move"));
+  assert.ok(calls.some(([kind]) => kind === "bezier"), "trunks must use organic cubic curves");
+  assert.ok(calls.some(([kind, style]) => kind === "stroke" && style?.width > 2));
+});
+
+
+test("Pixi frame adapter forwards morphology trunks independently of academic edges", async () => {
+  const { createAtlasPixiFrameRenderer } = await import("../src/features/atlas/atlas-pixi-frame-renderer.js");
+  const morphologyBranches = [{ id: "morphology:MYC:MIC", visualOnly: true }];
+  let received;
+  const renderer = createAtlasPixiFrameRenderer({
+    stage: {
+      filaments: { position: { set() {} }, scale: { set() {} } },
+      junctions: { clear() {}, position: { set() {} }, scale: { set() {} } },
+      labels: {}, style: {}, drawBackdrop() {}
+    },
+    canvas: {}, createLabel() {},
+    connections(args) { received = args; },
+    nodesLayer() {}, labelsLayer() {},
+    frameModel: {
+      prepare(frame) { return { ...frame, lineage: new Set(), activeBranch: new Set(), transform: { x: 0, y: 0, scale: 1 } }; },
+      reset() {}
+    }
+  });
+  renderer.render({
+    nodes: [], edges: [], morphologyBranches, selected: null, scale: 1,
+    offset: { x: 0, y: 0 }, width: 400, height: 300, reduced: true,
+    alphaFor: () => 1
+  }, () => {});
+  assert.strictEqual(received.morphologyBranches, morphologyBranches);
+  assert.deepEqual(received.edges, []);
+});
+
+test("fractal growth is the default Atlas layout, with the former orbit view kept as opt-out", () => {
+  const source = readFileSync(new URL("../src/main.js", import.meta.url), "utf8");
+  assert.ok(source.includes('atlasQuery.get("atlas-growth") !== "0"'));
+  assert.ok(source.includes("createAtlasGrowthGraph(atlasBaseGraph"));
 });

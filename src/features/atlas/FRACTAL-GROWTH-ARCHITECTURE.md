@@ -8,13 +8,16 @@ Il ne s'agit pas d'imposer une fractale mathématique autosimilaire stricte. Le 
 
 ## Règles structurelles
 
-1. Le logo et les racines disciplinaires forment les ancrages spatiaux.
-2. Chaque relation parent-enfant hiérarchique produit une branche de croissance.
-3. Chaque génération ajoute uniquement les descendants de profondeur correspondante.
-4. Les relations transversales (parcours, complémentarités, prérequis, transferts) restent des connexions secondaires ; elles ne deviennent jamais des instructions de croissance.
-5. Les terminaisons sont les positions finales des nœuds feuilles. Elles ne sont pas ajoutées après le tracé des branches.
-6. Les secteurs sont répartis selon le poids réel des sous-arbres, avec une marge angulaire contrôlée.
-7. La génération est déterministe pour un même graphe : l'ouverture d'un niveau de profondeur ne déplace pas les générations déjà visibles.
+1. Le cœur MYC porte le symbole BA Labs et reste fixé à l'origine du repère.
+2. La croissance hiérarchique interne de MYCOLOGIE reste compacte autour du cœur ; elle ne doit pas créer visuellement une neuvième grande ramification.
+3. Huit troncs morphologiques relient ce cœur aux huit départements satellites. Ils sont des primitives visuelles dédiées, jamais des relations taxonomiques ou scientifiques.
+4. Chaque département prolonge son tronc par les branches de ses sections, domaines et modules, selon la hiérarchie canonique.
+5. Chaque relation parent-enfant hiérarchique produit une branche de croissance ; les courbes et leurs épaisseurs diminuent avec la génération.
+6. Les relations transversales (parcours, complémentarités, prérequis, transferts) restent des connexions secondaires ; elles ne deviennent jamais des instructions de croissance.
+7. Les terminaisons sont les positions finales des nœuds feuilles. Elles ne sont pas ajoutées après le tracé des branches.
+8. Les secteurs sont répartis selon le poids réel des sous-arbres, avec une marge angulaire contrôlée.
+9. La croissance fractale est le mode spatial par défaut ; l'ancienne vue orbitale reste disponible comme comparaison.
+10. La génération est déterministe pour un même graphe : l'ouverture d'un niveau de profondeur ne déplace pas les générations déjà visibles.
 
 ## Contrat logiciel
 
@@ -43,7 +46,7 @@ Le modèle calcule toute la géométrie avant le filtrage visuel. Ainsi, passer 
 
 ## Stratégie d'intégration
 
-Le modèle est d'abord validé indépendamment du rendu existant. L'intégration dans le graphe réel devra ensuite être progressive : comparaison des coordonnées, validation des secteurs et terminaisons, puis bascule du renderer vers les branches générées. Aucun deuxième moteur graphique n'est introduit.
+Le modèle géométrique récursif est appliqué par défaut au graphe réel. Les huit troncs morphologiques sont transmis séparément des arêtes académiques jusqu'au renderer PixiJS. L'ancienne vue orbitale reste accessible par opt-out pour comparer les compositions. Aucun deuxième moteur graphique n'est introduit.
 
 ## Invariants
 

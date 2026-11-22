@@ -31,15 +31,17 @@ export function renderAcademyAtlas(graph) {
   const pathwayRoots = graph.nodes.filter((node) => node.entity_type === "PATHWAY" && node.level === 0);
   const growthControls = graph.growthPreview
     ? `<div class="atlas-growth-preview-controls">
-        <span class="eyebrow">APERÇU EXPÉRIMENTAL · CROISSANCE ORGANIQUE</span>
-        <span>Profondeur ${graph.growthPreview.depth} / ${graph.growthPreview.maxDepth} · ${graph.growthPreview.visibleNodes} nœuds visibles</span>
+        <span class="eyebrow">STRUCTURE FRACTALE ACTIVE · ${graph.growthPreview.visibleNodes} NŒUDS VISIBLES</span>
+        <span>${Number.isFinite(graph.growthPreview.depth)
+          ? `Génération ${graph.growthPreview.depth} / ${graph.growthPreview.maxDepth}`
+          : "Toutes les ramifications sont déployées"}</span>
         ${Array.from({ length: graph.growthPreview.maxDepth + 1 }, (_, depth) =>
-          `<a class="text-link" href="?atlas-growth=1&atlas-depth=${depth}#/atlas" aria-current="${depth === graph.growthPreview.depth ? "page" : "false"}">Génération ${depth}</a>`
+          `<a class="text-link" href="?atlas-depth=${depth}#/atlas" aria-current="${depth === graph.growthPreview.depth ? "page" : "false"}">Génération ${depth}</a>`
         ).join("")}
-        <a class="text-link" href="?atlas-growth=0#/atlas">Vue actuelle</a>
+        <a class="text-link" href="?atlas-growth=0#/atlas">Vue orbitale de référence</a>
       </div>`
     : `<div class="atlas-growth-preview-controls">
-        <a class="text-link" href="?atlas-growth=1&atlas-depth=2#/atlas">Tester l'aperçu de croissance organique ↗</a>
+        <a class="text-link" href="?atlas-growth=1#/atlas">Activer la structure fractale</a>
       </div>`;
   const rootNavigation = (items, kind, label) => {
     const content = `
@@ -58,7 +60,7 @@ export function renderAcademyAtlas(graph) {
     <section class="page-intro atlas-page-intro">
       <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
       <h1>Atlas des connaissances</h1>
-      <p>La mycologie forme le noyau vivant de l’Atlas. Autour d’elle, les autres disciplines déploient leurs propres constellations ; les parcours relient les espaces entre eux.</p>
+      <p>La mycologie forme le cœur vivant de l’Atlas. Huit ramifications disciplinaires prolongent le symbole BA Labs ; leurs branches secondaires se subdivisent selon la structure réelle des connaissances.</p>
       ${growthControls}
     </section>
     <section class="academy-atlas" id="academy-atlas">
@@ -89,7 +91,7 @@ export function renderAcademyAtlas(graph) {
       <div class="atlas-stage" id="academy-atlas-stage">
         <canvas id="academy-atlas-canvas" aria-label="Réseau de connaissances interactif BA Labs Academy"></canvas>
         <div class="atlas-stage-heading">
-          <span class="eyebrow">NOYAU MYCOLOGIE · CONSTELLATIONS DISCIPLINAIRES</span>
+          <span class="eyebrow">CŒUR MYCOLOGIE · HUIT RAMIFICATIONS DISCIPLINAIRES</span>
           <p>Le Y BA Labs structure le noyau central · Explorer les disciplines par zoom</p>
         </div>
         <nav class="atlas-controls" aria-label="Contrôles de la carte">
@@ -127,7 +129,7 @@ export function mountAcademyAtlas(container, graph) {
   const backButton = container.querySelector('[data-atlas-action="back"]');
   if (!canvas || !stage || !loading || !selection) return () => {};
 
-  const { nodes, edges, byId } = graph;
+  const { nodes, edges, morphologyBranches = [], byId } = graph;
   const reduced = reducedMotion();
   let renderer = null;
   const lifecycle = createAtlasLifecycle();
@@ -150,6 +152,7 @@ export function mountAcademyAtlas(container, graph) {
     renderer.render({
       nodes,
       edges,
+      morphologyBranches,
       selected: navigation.selected,
       scale,
       offset,
@@ -405,11 +408,13 @@ export function mountAcademyAtlas(container, graph) {
     lifecycle.listen(window, "resize", resize, { passive: true });
   }
 
+  // Keep the semantic navigation available even when Pixi/WebGL cannot start.
+  renderAccessible();
+
   rendererHost.initialize().then(() => {
     if (lifecycle.disposed) return;
     renderer = rendererHost;
     resize();
-    renderAccessible();
     updateSelection();
     engineState.textContent = "Moteur actif · WebGL 2D";
     loading.hidden = true;
@@ -417,7 +422,7 @@ export function mountAcademyAtlas(container, graph) {
   }).catch((error) => {
     console.error("Academy PixiJS Atlas initialization failed", error);
     engineState.textContent = "Moteur indisponible";
-    loading.querySelector("p").textContent = "Le moteur graphique n’a pas pu démarrer. Vérifie la prise en charge WebGL du navigateur.";
+    loading.querySelector("p").textContent = "Le moteur graphique n’a pas pu démarrer. La navigation textuelle reste disponible ci-dessous.";
     loading.classList.add("is-error");
   });
 
