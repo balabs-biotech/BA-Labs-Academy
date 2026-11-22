@@ -1,4 +1,5 @@
 import { createAtlasDepartmentLayout, createAtlasChildSectors, getAtlasRootPosition, getAtlasChildPosition, getAtlasNestedBranchSpread } from "./atlas-geometry.js";
+import { createAtlasOrganicLayout } from "./atlas-organic-layout.js";
 
 const hash = (value) => {
   let result = 2166136261;
@@ -347,6 +348,18 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     });
     edge.directed = type.directed;
     edge.evidence = String(relation.evidence).trim();
+  }
+
+  // The Academy's canonical map uses the same organic spatial engine as the
+  // public BA Labs explorer. Only coordinates are shared; Academy graph data,
+  // hierarchy, pathway edges and evidence-backed relations remain independent.
+  const organicLayout = createAtlasOrganicLayout(nodes);
+  for (const node of nodes) {
+    const organic = organicLayout.byId.get(node.id);
+    if (!organic) throw new Error("Missing organic Academy position: " + node.id);
+    node.x = organic.x;
+    node.y = organic.y;
+    node.angle = organic.angle;
   }
 
   return {
