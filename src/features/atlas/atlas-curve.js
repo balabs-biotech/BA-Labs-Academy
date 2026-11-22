@@ -22,9 +22,13 @@ export function createAtlasConnectionCurve(a, b, { seed, depth = 1, sharedPathwa
   const tx = dx / length;
   const ty = dy / length;
   const profile = getAtlasGoldenConnectionProfile(length, depth);
-  const bend = Math.min(sharedPathway ? 150 : 68, profile.bend) * side;
+  // Fine branches bend less than primary branches: curvature tapers with
+  // hierarchy depth while the main eight trunks (depth 1) keep their full arc.
+  const depthScale = 1 / Math.sqrt(Math.max(1, depth));
+  const bend = Math.min(sharedPathway ? 150 : 68, profile.bend) *
+    depthScale * side;
   const drift = (((stableSeed >>> 12) & 255) / 255 - 0.5) *
-    Math.min(sharedPathway ? 18 : 14, bend / ATLAS_GOLDEN_RATIO);
+    Math.min(sharedPathway ? 18 : 14, Math.abs(bend) / ATLAS_GOLDEN_RATIO);
 
   return {
     a,
