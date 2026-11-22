@@ -1,5 +1,5 @@
 import { ATLAS_GOLDEN_RATIO, ATLAS_GEOMETRY } from "./atlas-geometry.js";
-import { createAtlasConnectionCurve } from "./atlas-curve.js";
+import { atlasConnectionCurvesIntersect, createAtlasConnectionCurve, sampleAtlasConnectionCurve } from "./atlas-curve.js";
 
 const DEFAULT_OCCUPANCY = 1 - 1 / (ATLAS_GOLDEN_RATIO ** 3);
 
@@ -161,9 +161,48 @@ export function createAtlasGrowthModel({
 
   const allNodes = nodes.map((node) => positioned.get(node.id) || { ...node, generation: node.level || 0 });
   const allBranches = branches;
+  // Measure sibling filament geometry once during model construction. These
+  // diagnostics deliberately exclude the shared launch region near the parent.
+  const branchesByParent = new Map();
+  for (const branch of allBranches) {
+    if (!branchesByParent.has(branch.sourceId)) branchesByParent.set(branch.sourceId, []);
+    branchesByParent.get(branch.sourceId).push(branch);
+  }
+  const fanDiagnostics = [...branchesByParent.entries()].map(([parentId, siblings]) => {
+    let crossingCount = 0;
+    let minimumClearance = Number.POSITIVE_INFINITY;
+    for (let first = 0; first < siblings.length; first += 1) {
+      const firstSamples = sampleAtlasConnectionCurve(siblings[first].curve, {
+        steps: 16,
+        startProgress: 0.12
+      });
+      for (let second = first + 1; second < siblings.length; second += 1) {
+        const secondSamples = sampleAtlasConnectionCurve(siblings[second].curve, {
+          steps: 16,
+          startProgress: 0.12
+        });
+        if (atlasConnectionCurvesIntersect(siblings[first].curve, siblings[second].curve, {
+          steps: 16,
+          startProgress: 0.12
+        })) crossingCount += 1;
+        for (const a of firstSamples) {
+          for (const b of secondSamples) {
+            minimumClearance = Math.min(minimumClearance, Math.hypot(a.x - b.x, a.y - b.y));
+          }
+        }
+      }
+    }
+    return {
+      parentId,
+      siblingCount: siblings.length,
+      crossingCount,
+      minimumClearance: Number.isFinite(minimumClearance) ? minimumClearance : null
+    };
+  });
   return {
     nodes: allNodes,
     branches: allBranches,
+    fanDiagnostics,
     visibleNodes: allNodes.filter((node) => node.generation <= visibleDepth),
     visibleBranches: allBranches.filter((branch) => branch.generation <= visibleDepth),
     byId: new Map(allNodes.map((node) => [node.id, node])),
