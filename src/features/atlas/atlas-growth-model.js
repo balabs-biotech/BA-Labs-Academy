@@ -1,18 +1,18 @@
 import { ATLAS_GOLDEN_RATIO, ATLAS_GEOMETRY } from "./atlas-geometry.js";
-import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, atlasConnectionCurvesMayBeNear, createAtlasConnectionCurve, sampleAtlasConnectionCurve } from "./atlas-curve.js";
+import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, atlasConnectionCurvesMayBeNear, createAtlasConnectionCurve } from "./atlas-curve.js";
 
 const DEFAULT_OCCUPANCY = 1 - 1 / (ATLAS_GOLDEN_RATIO ** 3);
 // World-space clearance threshold used to flag visually crowded, non-crossing
 // filaments. It is diagnostic only; it never changes scientific relationships.
 const CROSS_GENERATION_CLEARANCE_THRESHOLD = 18;
 // Spatial hash cell size is deliberately larger than the near-miss threshold.
-// Curve bounds are sampled once and cached when a branch is inserted.
+// Conservative Bezier control-hull bounds are cached when a branch is inserted.
 const COLLISION_GRID_CELL_SIZE = 256;
 
-function sampledCurveBounds(curve) {
-  const points = sampleAtlasConnectionCurve(curve, {
-    steps: 16, startProgress: 0.12, endProgress: 0.9
-  });
+function conservativeCurveBounds(curve) {
+  // A cubic Bezier is contained by the convex hull of its four control
+  // points. Unlike a sampled box, this cannot miss a narrow excursion.
+  const points = [curve.a, curve.c1, curve.c2, curve.b];
   return {
     minX: Math.min(...points.map((point) => point.x)),
     maxX: Math.max(...points.map((point) => point.x)),
@@ -123,8 +123,10 @@ export function createAtlasGrowthModel({
   const branches = [];
   const collisionGrid = new Map();
   const siblingBranches = new Map();
+  let collisionCandidateChecks = 0;
+  let collisionPossibleChecks = 0;
   function indexCollisionBranch(branch) {
-    branch.collisionBounds = sampledCurveBounds(branch.curve);
+    branch.collisionBounds = conservativeCurveBounds(branch.curve);
     for (const key of collisionGridKeys(branch.collisionBounds, 0)) {
       if (!collisionGrid.has(key)) collisionGrid.set(key, []);
       collisionGrid.get(key).push(branch);
@@ -133,7 +135,7 @@ export function createAtlasGrowthModel({
     siblingBranches.get(branch.sourceId).push(branch);
   }
   function findCollisionCandidates(curve, parentId) {
-    const bounds = sampledCurveBounds(curve);
+    const bounds = conservativeCurveBounds(curve);
     const candidates = new Set();
     for (const key of collisionGridKeys(bounds)) {
       for (const branch of collisionGrid.get(key) || []) {
@@ -240,6 +242,10 @@ export function createAtlasGrowthModel({
         bendScale: resolvedBendScale
       });
       collisionCandidates = findCollisionCandidates(curve, parent.id);
+      collisionCandidateChecks += collisionCandidates.length;
+      collisionPossibleChecks += Math.max(0,
+        branches.length - previousSiblings.length - (parent.parent ? 1 : 0)
+      );
       let adjustmentAttempts = 0;
       let crowdingAdjustmentAttempts = 0;
       // Resolve intersections first, then reduce cross-generation near misses.
@@ -381,6 +387,14 @@ export function createAtlasGrowthModel({
     nodes: allNodes,
     branches: allBranches,
     fanDiagnostics,
+    collisionCandidateDiagnostics: {
+      possibleChecks: collisionPossibleChecks,
+      candidateChecks: collisionCandidateChecks,
+      excludedChecks: collisionPossibleChecks - collisionCandidateChecks,
+      candidateRatio: collisionPossibleChecks
+        ? collisionCandidateChecks / collisionPossibleChecks
+        : 0
+    },
     crossGenerationDiagnostics: {
       comparedPairs: crossGenerationComparedPairs,
       broadPhaseRejectedPairs: crossGenerationBroadPhaseRejectedPairs,
@@ -458,6 +472,7 @@ export function createAtlasGrowthGraph(graph, { visibleDepth = Number.POSITIVE_I
     domainNodes: remap(graph.domainNodes),
     sectionNodes: remap(graph.sectionNodes),
     fanDiagnostics: growthModel.fanDiagnostics,
+    collisionCandidateDiagnostics: growthModel.collisionCandidateDiagnostics,
     crossGenerationDiagnostics: growthModel.crossGenerationDiagnostics,
     growthPreview: {
       depth: visibleDepth,
