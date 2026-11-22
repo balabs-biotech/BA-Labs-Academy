@@ -152,6 +152,33 @@ test("Atlas branch sectors use the golden ratio to preserve visible guard space"
   assert.ok(sectors[1].spread > sectors[2].spread);
 });
 
+
+test("branch curve control points advance source-to-target and do not create a reversed S bend", async () => {
+  const { createAtlasConnectionCurve, getAtlasConnectionCurvePoint } = await import("../src/features/atlas/atlas-curve.js");
+  const a = { id: "section", x: 0, y: 0 };
+  const b = { id: "module", x: 470, y: 120 };
+  for (let seed = 0; seed < 32; seed += 1) {
+    const curve = createAtlasConnectionCurve(a, b, { seed, depth: 2 });
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const length = Math.hypot(dx, dy);
+    const tx = dx / length, ty = dy / length;
+    const nx = -ty, ny = tx;
+    const c1Progress = ((curve.c1.x - a.x) * tx + (curve.c1.y - a.y) * ty) / length;
+    const c2Progress = ((curve.c2.x - a.x) * tx + (curve.c2.y - a.y) * ty) / length;
+    assert.ok(c1Progress < c2Progress, "first control point must precede the second");
+    const firstSide = (curve.c1.x - a.x) * nx + (curve.c1.y - a.y) * ny;
+    const secondSide = (curve.c2.x - a.x) * nx + (curve.c2.y - a.y) * ny;
+    assert.ok(firstSide * secondSide > 0, "both controls must remain on the same side of the branch");
+    let previous = 0;
+    for (let step = 1; step <= 20; step += 1) {
+      const point = getAtlasConnectionCurvePoint(curve, step / 20);
+      const progress = ((point.x - a.x) * tx + (point.y - a.y) * ty) / length;
+      assert.ok(progress > previous, "curve must not reverse along its branch");
+      previous = progress;
+    }
+  }
+});
+
 test("branch connections follow golden-ratio control points, curvature and stroke hierarchy", () => {
   const profile = getAtlasGoldenConnectionProfile(1000, 2);
   assert.ok(Math.abs(profile.controlPointRatio - 1 / ATLAS_GOLDEN_RATIO) < 1e-10);

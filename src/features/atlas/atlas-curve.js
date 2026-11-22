@@ -33,8 +33,8 @@ export function createAtlasConnectionCurve(a, b, { seed, depth = 1, sharedPathwa
     length,
     profile,
     c1: {
-      x: a.x + dx * profile.controlPointRatio + nx * bend + tx * drift,
-      y: a.y + dy * profile.controlPointRatio + ny * bend + ty * drift
+      x: a.x + dx * (1 - profile.controlPointRatio) + nx * bend + tx * drift,
+      y: a.y + dy * (1 - profile.controlPointRatio) + ny * bend + ty * drift
     },
     c2: {
       x: a.x + dx * (1 - profile.controlPointRatio) +
