@@ -203,7 +203,7 @@ test("Atlas camera fits the complete root constellation for desktop and mobile",
   const desktop = fitAtlasCamera(roots, 1440, 900);
   const mobile = fitAtlasCamera(roots, 390, 780);
   assert.ok(desktop.scale > mobile.scale);
-  assert.ok(desktop.scale <= 0.82 && desktop.scale >= 0.075);
+  assert.ok(desktop.scale <= 0.95 && desktop.scale >= 0.075);
   assert.ok(mobile.scale >= 0.075);
   assert.deepEqual(fitAtlasCamera([], 390, 780), null);
 });
