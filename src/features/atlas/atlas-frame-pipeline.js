@@ -34,7 +34,7 @@ export function createAtlasFramePipeline({
 
     stage.filaments.position.set(width / 2 + offset.x, height / 2 + offset.y);
     stage.filaments.scale.set(scale);
-    stage.junctions.position.copyFrom(stage.filaments.position);
+    stage.junctions.position.set(width / 2 + offset.x, height / 2 + offset.y);
     stage.junctions.scale.set(scale);
 
     labelsLayer({

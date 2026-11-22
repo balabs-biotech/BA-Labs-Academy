@@ -244,13 +244,13 @@ test("Atlas view delegates projection, fit, zoom and animation interpolation to 
 
 test("Atlas wheel renderer keeps the restrained radial motif", () => {
   const source = readFileSync(new URL("../src/features/atlas/atlas-renderer-stage.js", import.meta.url), "utf8");
-  const rendererSource = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  const pipelineSource = readFileSync(new URL("../src/features/atlas/atlas-frame-pipeline.js", import.meta.url), "utf8");
   const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
   assert.ok(source.includes("filaments.circle(0, 0, 820)"));
   assert.ok(source.includes("filaments.circle(0, 0, 1600)"));
   assert.ok(source.includes(".bezierCurveTo("));
   assert.ok(source.includes("const roots = nodes.filter"));
-  assert.ok(rendererSource.includes("stage.drawBackdrop({nodes,width,height})"));
+  assert.ok(pipelineSource.includes("stage.drawBackdrop({ nodes, width, height })"));
   assert.ok(!source.includes('field.moveTo(x,y).quadraticCurveTo'));
   assert.ok(nodesSource.includes("Three arms echo the BA Labs Y mark"));
 });
@@ -372,8 +372,9 @@ test("Atlas view preserves cursor-centered wheel zoom", () => {
 test("Atlas connection rendering is isolated from Pixi node rendering", async () => {
   const { renderAtlasConnections } = await import("../src/features/atlas/atlas-connections.js");
   assert.equal(typeof renderAtlasConnections, "function");
-  const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
-  assert.ok(source.includes("renderAtlasConnections({"));
+  const source = readFileSync(new URL("../src/features/atlas/atlas-frame-pipeline.js", import.meta.url), "utf8");
+  const adapter = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  assert.ok(adapter.includes("connections: renderAtlasConnections"));
   const connections = readFileSync(new URL("../src/features/atlas/atlas-connections.js", import.meta.url), "utf8");
   for (const basis of ["academy-hierarchy", "academy-pathway-flow", "academy-pathway-network", "academy-knowledge-relation"]) {
     assert.ok(connections.includes(basis), `Missing connection basis: ${basis}`);
@@ -383,9 +384,10 @@ test("Atlas connection rendering is isolated from Pixi node rendering", async ()
 
 test("Atlas node geometry is isolated from Pixi renderer orchestration", () => {
   const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  const pipelineSource = readFileSync(new URL("../src/features/atlas/atlas-frame-pipeline.js", import.meta.url), "utf8");
   const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
   assert.ok(source.includes('import { renderAtlasNodes } from "./atlas-nodes.js";'));
-  assert.ok(source.includes("renderAtlasNodes({ junctions, nodes, selected, scale, alphaFor, activeBranch, lineage })"));
+  assert.ok(source.includes("nodesLayer: renderAtlasNodes"));
   assert.ok(!source.includes("junctions.circle(n.x,n.y,r*1.9)"));
   assert.ok(nodesSource.includes("junctions.circle(n.x,n.y,r*1.9)"));
   assert.ok(nodesSource.includes("export function renderAtlasNodes"));
@@ -485,7 +487,7 @@ test("Atlas renderer delegates label layout to its dedicated layer", () => {
   const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
   const labelsSource = readFileSync(new URL("../src/features/atlas/atlas-labels.js", import.meta.url), "utf8");
   assert.ok(source.includes('import { renderAtlasLabels } from "./atlas-labels.js";'));
-  assert.ok(source.includes("renderAtlasLabels({ canvas, labels, labelPool, style"));
+  assert.ok(source.includes("labelsLayer: renderAtlasLabels"));
   assert.ok(!source.includes("const shortRoots="));
   assert.ok(labelsSource.includes("export function renderAtlasLabels"));
   assert.ok(labelsSource.includes("placeAtlasLabel("));
