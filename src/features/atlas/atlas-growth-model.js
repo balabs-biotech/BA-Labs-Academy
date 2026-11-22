@@ -1,5 +1,5 @@
 import { ATLAS_GOLDEN_RATIO, ATLAS_GEOMETRY } from "./atlas-geometry.js";
-import { atlasConnectionCurvesIntersect, createAtlasConnectionCurve, sampleAtlasConnectionCurve } from "./atlas-curve.js";
+import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, createAtlasConnectionCurve } from "./atlas-curve.js";
 
 const DEFAULT_OCCUPANCY = 1 - 1 / (ATLAS_GOLDEN_RATIO ** 3);
 
@@ -230,24 +230,17 @@ export function createAtlasGrowthModel({
     let minimumClearance = Number.POSITIVE_INFINITY;
     adjustedBranchCount = siblings.filter((branch) => branch.curveAdjustmentAttempts > 0).length;
     for (let first = 0; first < siblings.length; first += 1) {
-      const firstSamples = sampleAtlasConnectionCurve(siblings[first].curve, {
-        steps: 16,
-        startProgress: 0.12
-      });
       for (let second = first + 1; second < siblings.length; second += 1) {
-        const secondSamples = sampleAtlasConnectionCurve(siblings[second].curve, {
-          steps: 16,
-          startProgress: 0.12
-        });
         if (atlasConnectionCurvesIntersect(siblings[first].curve, siblings[second].curve, {
           steps: 16,
           startProgress: 0.12
         })) crossingCount += 1;
-        for (const a of firstSamples) {
-          for (const b of secondSamples) {
-            minimumClearance = Math.min(minimumClearance, Math.hypot(a.x - b.x, a.y - b.y));
-          }
-        }
+        minimumClearance = Math.min(minimumClearance,
+          atlasConnectionCurvesClearance(siblings[first].curve, siblings[second].curve, {
+            steps: 16,
+            startProgress: 0.12
+          })
+        );
       }
     }
     return {
@@ -331,6 +324,8 @@ export function createAtlasGrowthGraph(graph, { visibleDepth = Number.POSITIVE_I
     departmentNodes: remap(graph.departmentNodes),
     domainNodes: remap(graph.domainNodes),
     sectionNodes: remap(graph.sectionNodes),
+    fanDiagnostics: growthModel.fanDiagnostics,
+    crossGenerationDiagnostics: growthModel.crossGenerationDiagnostics,
     growthPreview: {
       depth: visibleDepth,
       maxDepth: growthModel.maxDepth,
