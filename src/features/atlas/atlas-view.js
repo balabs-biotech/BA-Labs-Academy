@@ -35,7 +35,7 @@ export function renderAcademyAtlas(graph) {
         <span>Profondeur ${graph.growthPreview.depth} / ${graph.growthPreview.maxDepth} · ${graph.growthPreview.visibleNodes} nœuds visibles</span>
         <a class="text-link" href="?atlas-growth=1&atlas-depth=1#/atlas">Génération 1</a>
         <a class="text-link" href="?atlas-growth=1&atlas-depth=2#/atlas">Génération 2</a>
-        <a class="text-link" href="?/atlas">Vue actuelle</a>
+        <a class="text-link" href="?atlas-growth=0#/atlas">Vue actuelle</a>
       </div>`
     : `<div class="atlas-growth-preview-controls">
         <a class="text-link" href="?atlas-growth=1&atlas-depth=2#/atlas">Tester l'aperçu de croissance organique ↗</a>
