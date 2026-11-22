@@ -183,6 +183,11 @@ export function createAtlasGrowthGraph(graph, { visibleDepth = Number.POSITIVE_I
     ...graph,
     nodes,
     edges,
+    morphologyBranches: (graph.morphologyBranches || []).map((branch) => ({
+      ...branch,
+      source: byId.get(branch.sourceId),
+      target: byId.get(branch.targetId)
+    })).filter((branch) => branch.source && branch.target),
     byId,
     departmentNodes: remap(graph.departmentNodes),
     domainNodes: remap(graph.domainNodes),
