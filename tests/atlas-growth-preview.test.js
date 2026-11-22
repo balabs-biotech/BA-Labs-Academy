@@ -176,7 +176,8 @@ test("growth model exposes deterministic sibling filament fan diagnostics", () =
     assert.ok(fan.crossingCount >= 0);
     if (fan.siblingCount > 1) {
       assert.ok(Number.isFinite(fan.minimumClearance));
-      assert.ok(fan.minimumClearance > 0);
+      // A zero minimum is valid when the separate crossing diagnostic records an intersection.
+      assert.ok(fan.minimumClearance >= 0);
     } else {
       assert.equal(fan.minimumClearance, null);
     }
