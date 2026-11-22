@@ -393,13 +393,13 @@ test("Atlas node geometry is isolated from Pixi renderer orchestration", () => {
 test("Atlas connection renderer resolves edge endpoints after extraction", async () => {
   const { renderAtlasConnections } = await import("../src/features/atlas/atlas-connections.js");
   const calls = [];
-  const path = { quadraticCurveTo: (...args) => { calls.push(["curve", ...args]); return path; }, stroke: (...args) => { calls.push(["stroke", ...args]); return path; } };
+  const path = { quadraticCurveTo: (...args) => { calls.push(["curve", ...args]); return path; }, bezierCurveTo: (...args) => { calls.push(["bezier", ...args]); return path; }, stroke: (...args) => { calls.push(["stroke", ...args]); return path; } };
   const filaments = { moveTo: (...args) => { calls.push(["move", ...args]); return path; }, circle: () => path };
   const a = { id: "a", x: 0, y: 0, level: 1, entity_type: "SECTION", rootId: "myc" };
   const b = { id: "b", x: 100, y: 0, level: 2, entity_type: "MODULE", rootId: "myc" };
   renderAtlasConnections({ filaments, junctions: { circle: () => path }, edges: [{ a, b, basis: "academy-hierarchy", cross: false, depth: 2 }], selected: null, scale: 1, reduced: true, relationFilter: "all", time: 0, alphaFor: () => 1, activeBranch: new Set() });
   assert.ok(calls.some(([kind]) => kind === "move"));
-  assert.ok(calls.some(([kind]) => kind === "curve"));
+  assert.ok(calls.some(([kind]) => kind === "bezier"), "connection paths use cubic Bézier curves");
 });
 
 
