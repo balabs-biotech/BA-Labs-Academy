@@ -1,4 +1,3 @@
-import { createAtlasDepartmentLayout, createAtlasChildSectors, getAtlasRootPosition, getAtlasChildPosition, getAtlasNestedBranchSpread } from "./atlas-geometry.js";
 import { createAtlasOrganicLayout } from "./atlas-organic-layout.js";
 
 const hash = (value) => {
@@ -9,7 +8,7 @@ const hash = (value) => {
   return result >>> 0;
 };
 
-// Radial Academy graph: disciplinary hierarchy, declared pathways and verified knowledge relations.
+// Academy graph: disciplinary hierarchy, declared pathways and verified knowledge relations.
 const DEPARTMENT_LABELS = {
   MIC: "Microbiologie",
   MYC: "MYCOLOGIE",
@@ -75,8 +74,6 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     ...departments.map((department) => ({ ...department, kind: "department" })),
     ...pathways.map((pathway) => ({ ...pathway, kind: "pathway" }))
   ];
-  const satelliteDepartments = departments.filter((department) => department.code !== "MYC");
-  const departmentLayout = createAtlasDepartmentLayout(satelliteDepartments);
 
   const addNode = (node) => {
     nodes.push(node);
@@ -101,33 +98,12 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     return edge;
   };
 
-  const walk = (items, parent, rootId, depth, branchAngle, branchSpread) => {
+  const walk = (items, parent, rootId, depth) => {
     if (!items?.length) return;
-    const isMycologyCore = parent.entity_type === "DEPARTMENT" && parent.entity_key === "MYC";
-    const isDepartmentRoot = parent.entity_type === "DEPARTMENT";
-    // Mycology occupies the central hub; outer departments receive weighted, non-overlapping sectors.
-    const effectiveBranchSpread = isDepartmentRoot && parent.entity_key !== "MYC"
-      ? departmentLayout.spreads[parent.entity_key]
-      : branchSpread;
-    const sectorLayout = isDepartmentRoot
-      ? createAtlasChildSectors(
-          items,
-          isMycologyCore ? Math.PI * 2 : effectiveBranchSpread,
-          branchAngle,
-          isMycologyCore
-        )
-      : null;
-    items.forEach((item, index) => {
-      const childSector = sectorLayout?.[index];
-      const { x, y, angle } = getAtlasChildPosition({
-        parent, index, count: items.length, depth,
-        branchAngle: childSector?.angle ?? branchAngle,
-        isMycologyCore: false,
-        isDepartmentRoot: isDepartmentRoot && !childSector,
-        branchSpread: childSector ? 0 : effectiveBranchSpread
-      });
+    items.forEach((item) => {
       const entityType = item.kind === "section" ? "SECTION" : item.kind === "domain" ? "DOMAIN" : "MODULE";
-      const node = addNode(makeNode(item, parent, rootId, depth, x, y, angle, entityType));
+      // Coordinates are assigned after graph construction by the shared organic engine.
+      const node = addNode(makeNode(item, parent, rootId, depth, 0, 0, 0, entityType));
       addEdge(parent, node, {
         relationType: item.kind === "domain" ? "BELONGS_TO" : "CONTAINS",
         cross: false,
@@ -137,28 +113,14 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
       });
       if (item.kind === "section") sectionNodes.set(item.code, node);
       if (item.kind === "domain") domainNodes.set(item.code, node);
-      if (item.children?.length) {
-        const nestedSpread = childSector?.spread ?? (
-          Number.isFinite(effectiveBranchSpread)
-            ? getAtlasNestedBranchSpread(effectiveBranchSpread, items.length, isMycologyCore)
-            : isMycologyCore
-              ? getAtlasNestedBranchSpread(Math.PI * 2, items.length, true)
-              : undefined
-        );
-        walk(item.children, node, rootId, depth + 1, angle, nestedSpread);
-      }
+      if (item.children?.length) walk(item.children, node, rootId, depth + 1);
     });
   };
 
-  const pathwayItems = rootItems.filter((item) => item.kind === "pathway");
   rootItems.forEach((item) => {
-    const { x, y, angle } = getAtlasRootPosition({
-      kind: item.kind,
-      code: item.code,
-      departmentCodes: satelliteDepartments.map((department) => department.code),
-      pathwayCodes: pathwayItems.map((pathway) => pathway.code),
-      departmentLayout
-    });
+    const x = 0;
+    const y = 0;
+    const angle = 0;
     const rootId = item.kind === "pathway" ? "pathways" : item.code.toLowerCase();
     const shortTitle = item.kind === "pathway"
       ? (PATHWAY_LABELS[item.code] || item.title)
@@ -183,7 +145,7 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     if (item.kind === "department") {
       root.growthSector = {
         angle,
-        spread: item.code === "MYC" ? Math.PI * 2 : departmentLayout.spreads[item.code],
+        spread: item.code === "MYC" ? Math.PI * 2 : (Math.PI * 2) / Math.max(1, departments.filter((department) => department.code !== "MYC").length),
         fullRing: item.code === "MYC"
       };
     }
@@ -231,8 +193,7 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
           route: "#/modules/" + section.code.toLowerCase() + "/" + String(moduleIndex + 1).padStart(2, "0")
         }))
       }));
-      const rootSpread = item.code === "MYC" ? undefined : departmentLayout.spreads[item.code];
-      walk([...domainChildren, ...sectionChildren], root, rootId, 1, item.code === "MYC" ? 0 : angle, rootSpread);
+      walk([...domainChildren, ...sectionChildren], root, rootId, 1);
     }
   });
 
