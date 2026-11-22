@@ -45,3 +45,21 @@ test("fractal preview remaps all eight visual trunks to its positioned root node
     assert.equal(branch.visualOnly, true);
   }
 });
+
+test("MYCOLOGIE grows as a compact central heart without shrinking the eight satellite axes", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const model = createAtlasGrowthGraph(graph);
+  const core = model.byId.get("department:MYC");
+  const mycologySections = model.nodes.filter((node) =>
+    node.parent === core.id && node.entity_type === "SECTION"
+  );
+  assert.ok(mycologySections.length > 0);
+  const coreRadius = Math.max(...mycologySections.map((node) =>
+    Math.hypot(node.x - core.x, node.y - core.y)
+  ));
+  const satelliteRadii = [...model.departmentNodes.entries()]
+    .filter(([code]) => code !== "MYC")
+    .map(([, node]) => Math.hypot(node.x - core.x, node.y - core.y));
+  assert.ok(coreRadius < Math.min(...satelliteRadii) * 0.25);
+  assert.equal(model.morphologyBranches.length, 8);
+});
