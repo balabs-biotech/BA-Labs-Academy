@@ -97,7 +97,7 @@ test("terminal department anchors and first-generation endpoints use the expande
     .map(([, node]) => node);
   assert.equal(departments.length, 8);
   for (const department of departments) {
-    const radius = Math.hypot(department.x - core.x, (department.y - core.y) / ATLAS_GEOMETRY.orbitVerticalRatio);
+    const radius = Math.hypot(department.x - core.x, department.y - core.y);
     assert.ok(Math.abs(radius - 1850) < 1e-6);
     const firstGeneration = model.nodes.filter((node) =>
       node.parent === department.id && node.generation === 1
@@ -142,7 +142,7 @@ test("MYCOLOGIE grows as a compact central heart without shrinking the eight sat
   ));
   const satelliteRadii = [...model.departmentNodes.entries()]
     .filter(([code]) => code !== "MYC")
-    .map(([, node]) => Math.hypot(node.x - core.x, (node.y - core.y) / ATLAS_GEOMETRY.orbitVerticalRatio));
+    .map(([, node]) => Math.hypot(node.x - core.x, node.y - core.y));
   assert.ok(coreRadius < Math.min(...satelliteRadii) * 0.5);
   assert.equal(model.morphologyBranches.length, 8);
 });
