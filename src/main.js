@@ -948,7 +948,10 @@ function render() {
   const atlasBaseGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, atlasDomains, cataloguePathways) : null;
   const atlasQuery = new URLSearchParams(location.search);
   const atlasGrowthEnabled = atlasQuery.get("atlas-growth") !== "0";
-  const atlasDepthValue = Number(atlasQuery.get("atlas-depth"));
+  const atlasDepthParameter = atlasQuery.get("atlas-depth");
+  const atlasDepthValue = atlasDepthParameter === null
+    ? Number.POSITIVE_INFINITY
+    : Number(atlasDepthParameter);
   const atlasGraph = atlasBaseGraph && atlasGrowthEnabled
     ? createAtlasGrowthGraph(atlasBaseGraph, {
         visibleDepth: Number.isInteger(atlasDepthValue) && atlasDepthValue >= 0
