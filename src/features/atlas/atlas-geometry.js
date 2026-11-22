@@ -1,11 +1,11 @@
 export const ATLAS_GOLDEN_RATIO = (1 + Math.sqrt(5)) / 2;
 
 export const ATLAS_GEOMETRY = Object.freeze({
-  departmentOrbitRadius: 1450,
-  pathwayOrbitRadius: 1650,
+  departmentOrbitRadius: 1100,
+  pathwayOrbitRadius: 1280,
   mycologyCoreAngle: -Math.PI / 2,
-  childDistances: Object.freeze({ 1: 820, 2: 820 / ATLAS_GOLDEN_RATIO }),
-  branchOccupancy: 0.96,
+  childDistances: Object.freeze({ 1: 560, 2: 560 / ATLAS_GOLDEN_RATIO }),
+  branchOccupancy: 0.99,
   departmentPetalSpread: 1.95,
   sectionSpread: 3.4,
   minimumModuleGap: 0.98,
@@ -44,7 +44,7 @@ export function createAtlasDepartmentLayout(departments) {
       (cursor + (entry.weight - firstWeight) / 2) * unit;
     sectorWidths[entry.code] = sectorWidth;
     // Leave a deliberate guard band between adjacent branch fans.
-    spreads[entry.code] = sectorWidth * 0.97;
+    spreads[entry.code] = sectorWidth * 0.985;
     cursor += entry.weight;
   }
 

@@ -67,7 +67,7 @@ test("department sectors expand according to real branch complexity", () => {
   assert.ok(layout.spreads.GEN > layout.spreads.BPR);
   assert.ok(layout.spreads.INF > layout.spreads.GEN);
   assert.ok(layout.sectorWidths.INF > layout.spreads.INF, "a guard band remains between neighboring sectors");
-  assert.ok(layout.spreads.INF / layout.sectorWidths.INF >= 0.97);
+  assert.ok(layout.spreads.INF / layout.sectorWidths.INF  >= 0.985);
   const positions = departments.map((department) => getAtlasRootPosition({
     kind: "department",
     code: department.code,
@@ -103,8 +103,8 @@ test("intermediate and terminal fans use wider angular spacing", () => {
   assert.ok(spreadOf(intermediate) >= 3.4);
   assert.ok(spreadOf(terminal) >= 4.8);
   assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - ATLAS_GEOMETRY.childDistances[1] / ATLAS_GOLDEN_RATIO) < 1e-8);
-  assert.equal(ATLAS_GEOMETRY.departmentOrbitRadius, 1450);
-  assert.equal(ATLAS_GEOMETRY.pathwayOrbitRadius, 1650);
+  assert.equal(ATLAS_GEOMETRY.departmentOrbitRadius, 1100);
+  assert.equal(ATLAS_GEOMETRY.pathwayOrbitRadius, 1280);
 });
 
 
@@ -135,7 +135,7 @@ test("intermediate branch levels are separated by expanded radial distances", ()
   });
   assert.equal(Math.hypot(section.x, section.y), ATLAS_GEOMETRY.childDistances[1]);
   assert.ok(Math.abs(Math.hypot(module.x - section.x, module.y - section.y) - ATLAS_GEOMETRY.childDistances[2]) < 1e-8);
-  assert.equal(ATLAS_GEOMETRY.childDistances[1], 820);
+  assert.equal(ATLAS_GEOMETRY.childDistances[1], 560);
   assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - ATLAS_GEOMETRY.childDistances[1] / ATLAS_GOLDEN_RATIO) < 1e-8);
 });
 
