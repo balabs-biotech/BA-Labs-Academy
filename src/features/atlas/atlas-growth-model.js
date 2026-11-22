@@ -198,6 +198,7 @@ export function createAtlasGrowthModel({
           allocatedSpread: allocatedWidth,
           densityScale,
           angularCrowding,
+          terminalExpansion,
           spread: sector.spread
         }
       };
