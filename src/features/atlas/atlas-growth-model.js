@@ -130,6 +130,19 @@ export function createAtlasGrowthModel({
         seed: hashString(parent.id + "|" + child.id),
         depth: generation
       };
+      // Compare against both siblings and already-created branches from other
+      // hierarchy levels. The incoming parent filament and same-parent siblings
+      // are handled separately so shared junctions are not misclassified.
+      const collisionCandidates = branches.filter((branch) =>
+        branch.sourceId !== parent.id && branch.targetId !== parent.id
+      );
+      const hasCollision = (candidate) => collisionCandidates.some((branch) =>
+        atlasConnectionCurvesIntersect(candidate, branch.curve, {
+          steps: 16,
+          startProgress: 0.12,
+          endProgress: 0.9
+        })
+      );
       const previousSiblings = branches.filter((branch) => branch.sourceId === parent.id);
       let resolvedBendScale = bendScale;
       let curve = createAtlasConnectionCurve(source, point, {
@@ -137,14 +150,16 @@ export function createAtlasGrowthModel({
         bendScale: resolvedBendScale
       });
       let adjustmentAttempts = 0;
-      // Resolve only genuine sibling crossings. Curvature is reduced in fixed
-      // deterministic steps; node positions and allocated sectors never move.
-      while (adjustmentAttempts < 8 && previousSiblings.some((branch) =>
-        atlasConnectionCurvesIntersect(curve, branch.curve, {
-          steps: 20,
-          startProgress: 0.12
-        })
-      )) {
+      // Resolve genuine intersections in deterministic stages. First preserve
+      // fan spacing; then avoid crossings with branches from other generations.
+      while (adjustmentAttempts < 8) {
+        const siblingCollision = previousSiblings.some((branch) =>
+          atlasConnectionCurvesIntersect(curve, branch.curve, {
+            steps: 20,
+            startProgress: 0.12
+          })
+        );
+        if (!siblingCollision && !hasCollision(curve)) break;
         resolvedBendScale = Math.max(0.2, resolvedBendScale * 0.75);
         adjustmentAttempts += 1;
         curve = createAtlasConnectionCurve(source, point, {
@@ -162,7 +177,8 @@ export function createAtlasGrowthModel({
         target: point,
         curve,
         bendScale: resolvedBendScale,
-        curveAdjustmentAttempts: adjustmentAttempts
+        curveAdjustmentAttempts: adjustmentAttempts,
+        crossGenerationChecked: true
       });
       grow(point, sector);
     });
