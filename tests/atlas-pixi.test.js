@@ -243,12 +243,14 @@ test("Atlas view delegates projection, fit, zoom and animation interpolation to 
 
 
 test("Atlas wheel renderer keeps the restrained radial motif", () => {
-  const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  const source = readFileSync(new URL("../src/features/atlas/atlas-renderer-stage.js", import.meta.url), "utf8");
+  const rendererSource = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
   const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
-  assert.ok(source.includes("filaments.circle(0,0,820)"));
-  assert.ok(source.includes("filaments.circle(0,0,1600)"));
-  assert.ok(source.includes(".bezierCurveTo(root.x*.32"));
-  assert.ok(source.includes("const departmentRoots = nodes.filter"));
+  assert.ok(source.includes("filaments.circle(0, 0, 820)"));
+  assert.ok(source.includes("filaments.circle(0, 0, 1600)"));
+  assert.ok(source.includes(".bezierCurveTo("));
+  assert.ok(source.includes("const roots = nodes.filter"));
+  assert.ok(rendererSource.includes("stage.drawBackdrop({nodes,width,height})"));
   assert.ok(!source.includes('field.moveTo(x,y).quadraticCurveTo'));
   assert.ok(nodesSource.includes("Three arms echo the BA Labs Y mark"));
 });
