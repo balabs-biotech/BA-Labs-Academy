@@ -71,6 +71,7 @@ try {
     assert.ok(surface.width > 0 && surface.height > 0, "PixiJS must create a real drawing surface");
     assert.ok(surface.rect.width >= surface.stage.width * 0.98, "Canvas must fill the Atlas stage width");
     assert.ok(surface.rect.height >= surface.stage.height * 0.98, "Canvas must fill the Atlas stage height");
+    assert.ok(surface.stage.width >= viewport.width - 40, "The fractal field must use nearly the full viewport width");
     assert.ok(surface.visibleNodes >= 9, "The nine department anchors must be visible in the overview");
 
     const stats = await page.locator(".atlas-topline-copy strong").innerText();
