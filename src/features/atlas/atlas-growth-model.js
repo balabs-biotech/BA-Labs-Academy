@@ -212,6 +212,27 @@ export function createAtlasGrowthModel({
           spread: sector.spread
         }
       };
+      // Resolve endpoint crowding in world space before constructing its
+      // filament. Keep the radial distance and hierarchy fixed; only rotate
+      // the child around its parent by small deterministic angular steps.
+      const endpointClearance = generation >= 2 ? 54 : 38;
+      const occupiedPoints = [...positioned.values()].filter((candidate) =>
+        candidate.id !== parent.id && candidate.generation >= 1
+      );
+      const hasEndpointOverlap = (candidate) => occupiedPoints.some((other) =>
+        Math.hypot(candidate.x - other.x, candidate.y - other.y) < endpointClearance
+      );
+      let endpointAdjustment = 0;
+      const baseAngle = point.angle;
+      while (hasEndpointOverlap(point) && endpointAdjustment < 10) {
+        const step = Math.ceil(endpointAdjustment / 2) * 0.045;
+        const direction = endpointAdjustment % 2 === 0 ? 1 : -1;
+        point.angle = baseAngle + step * direction;
+        point.x = parent.x + Math.cos(point.angle) * distance;
+        point.y = parent.y + Math.sin(point.angle) * distance;
+        endpointAdjustment += 1;
+      }
+      point.growthSector.endpointAdjustment = endpointAdjustment;
       positioned.set(child.id, point);
       const source = positioned.get(parent.id) || parent;
       // Narrow child sectors use straighter filaments. This reduces lateral
