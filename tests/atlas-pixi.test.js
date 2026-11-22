@@ -594,3 +594,37 @@ test("Atlas view delegates frame scheduling to the independent animation module"
   assert.ok(!source.includes("requestAnimationFrame(animate)"));
   assert.ok(!source.includes("cancelAnimationFrame(frame)"));
 });
+
+ 
+test("Atlas label placement searches alternate positions instead of suppressing colliding labels", async () => {
+ const { placeAtlasLabel } = await import("../src/features/atlas/atlas-label-placement.js");
+ const occupied=[{left:90,right:190,top:90,bottom:130}];
+ const placement=placeAtlasLabel({
+  x:140,y:110,width:80,height:24,anchorX:0.5,anchorY:0.5,angle:0,
+  bounds:{left:0,right:400,top:0,bottom:300},occupied
+ });
+ assert.ok(placement);
+ assert.equal(placement.overlap,0);
+ assert.ok(placement.x!==140||placement.y!==110);
+ assert.ok(placement.box.left>=0&&placement.box.right<=400);
+});
+
+test("Atlas label placement returns the least-overlapping bounded position when space is dense", async () => {
+ const { placeAtlasLabel } = await import("../src/features/atlas/atlas-label-placement.js");
+ const occupied=Array.from({length:8},(_,index)=>({left:0,right:300,top:index*30,bottom:index*30+30}));
+ const placement=placeAtlasLabel({
+  x:150,y:120,width:100,height:28,anchorX:0.5,anchorY:0.5,angle:Math.PI/3,
+  bounds:{left:0,right:300,top:0,bottom:240},occupied
+ });
+ assert.ok(placement);
+ assert.ok(placement.x>=50&&placement.x<=250);
+ assert.ok(placement.y>=14&&placement.y<=226);
+ assert.ok(Number.isFinite(placement.overlap));
+});
+
+test("Atlas label rendering uses collision-aware placement and a larger adaptive label budget", () => {
+ const source=readFileSync(new URL("../src/features/atlas/atlas-labels.js",import.meta.url),"utf8");
+ assert.ok(source.includes("placeAtlasLabel("));
+ assert.ok(source.includes("Math.min(220,Math.max(32"));
+ assert.ok(!source.includes("label.visible=false;continue"));
+});

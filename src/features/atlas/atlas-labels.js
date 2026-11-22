@@ -2,7 +2,7 @@
  * Screen-space Atlas label layout, collision filtering and hit-box publication.
  * Label creation and Pixi containers are injected by the renderer.
  */
-const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+import { placeAtlasLabel } from "./atlas-label-placement.js";\n\nconst clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nodes,selected,scale,offset,width,height,alphaFor,activeBranch,lineage,lang,live=new Set()}) {
  const shortRoots={
@@ -24,7 +24,7 @@ export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nod
  }
  candidates.sort((a,b)=>a.priority-b.priority||a.distance-b.distance);
  const rootCount=candidates.filter(c=>c.n.level===0).length;
- const labelBudget=rootCount+Math.min(96,Math.max(18,Math.round(20+scale*11)));
+ const labelBudget=rootCount+Math.min(220,Math.max(32,Math.round(32+scale*24)));
  const occupied=[];const hitBoxes={};let drawn=0;
  for(const {n,alpha} of candidates){
  if(n.level!==0&&drawn>=labelBudget)continue;
@@ -41,13 +41,13 @@ export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,nod
  const radius=n.level===0?Math.max(15,n.r*scale+10):Math.max(7,n.r*scale+5);
  label.anchor.set(anchorX,anchorY);
  const rawX=sx+dx*radius,rawY=sy+dy*radius;
- const x=clamp(rawX,8+anchorX*label.width,width-8-(1-anchorX)*label.width);
- const y=clamp(rawY,56+anchorY*label.height,height-14-(1-anchorY)*label.height);
+ const placement=placeAtlasLabel({
+  x:rawX,y:rawY,width:label.width,height:label.height,anchorX,anchorY,angle,
+  bounds:{left:8,right:width-8,top:56,bottom:height-14},occupied,padding:6
+ });
+ const {x,y,box}=placement;
  label.position.set(x,y);label.alpha=Math.max(alpha,selected?0.76:0.88);label.visible=true;
- const box={left:x-anchorX*label.width,right:x+(1-anchorX)*label.width,top:y-anchorY*label.height,bottom:y+(1-anchorY)*label.height};
  hitBoxes[n.id]=box;
- const collides=occupied.some(o=>box.left<o.right+7&&box.right>o.left-7&&box.top<o.bottom+5&&box.bottom>o.top-5);
- if(collides&&selected?.id!==n.id&&n.level!==0){label.visible=false;continue;}
  occupied.push(box);live.add(n.id);drawn++;
  }
  for(const [id,label] of labelPool){if(!live.has(id))label.visible=false;}
