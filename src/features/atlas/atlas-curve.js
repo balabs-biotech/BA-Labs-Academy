@@ -93,6 +93,60 @@ function segmentsIntersect(a, b, c, d) {
     ((cdA > 0 && cdB < 0) || (cdA < 0 && cdB > 0));
 }
 
+function distancePointToSegment(point, start, end) {
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const lengthSquared = dx * dx + dy * dy;
+  if (lengthSquared === 0) return Math.hypot(point.x - start.x, point.y - start.y);
+  const projection = clamp(
+    ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared,
+    0,
+    1
+  );
+  return Math.hypot(
+    point.x - (start.x + projection * dx),
+    point.y - (start.y + projection * dy)
+  );
+}
+
+function distanceBetweenSegments(a, b, c, d) {
+  if (segmentsIntersect(a, b, c, d)) return 0;
+  return Math.min(
+    distancePointToSegment(a, c, d),
+    distancePointToSegment(b, c, d),
+    distancePointToSegment(c, a, b),
+    distancePointToSegment(d, a, b)
+  );
+}
+
+/** Minimum distance between sampled filament segments, not just sample points. */
+export function atlasConnectionCurvesClearance(first, second, options = {}) {
+  const a = sampleAtlasConnectionCurve(first, options);
+  const b = sampleAtlasConnectionCurve(second, options);
+  const bounds = (points) => ({
+    minX: Math.min(...points.map((point) => point.x)),
+    maxX: Math.max(...points.map((point) => point.x)),
+    minY: Math.min(...points.map((point) => point.y)),
+    maxY: Math.max(...points.map((point) => point.y))
+  });
+  const firstBounds = bounds(a);
+  const secondBounds = bounds(b);
+  const gapX = Math.max(0, firstBounds.minX - secondBounds.maxX, secondBounds.minX - firstBounds.maxX);
+  const gapY = Math.max(0, firstBounds.minY - secondBounds.maxY, secondBounds.minY - firstBounds.maxY);
+  let minimum = Math.hypot(gapX, gapY);
+  if (minimum > 0) return minimum;
+
+  for (let i = 0; i < a.length - 1; i += 1) {
+    for (let j = 0; j < b.length - 1; j += 1) {
+      minimum = Math.min(minimum, distanceBetweenSegments(
+        a[i], a[i + 1], b[j], b[j + 1]
+      ));
+      if (minimum === 0) return 0;
+    }
+  }
+  return minimum;
+}
+
 /** Ignores the shared launch area where sibling filaments necessarily meet. */
 export function atlasConnectionCurvesIntersect(first, second, options = {}) {
   const a = sampleAtlasConnectionCurve(first, options);
