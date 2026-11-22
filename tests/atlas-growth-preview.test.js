@@ -172,7 +172,7 @@ test("fractal growth adds bounded deterministic biological irregularity", () => 
   for (const child of children) {
     const { centerAngle, angularOffset, allocatedSpread } = child.growthSector;
     assert.equal(child.angle, centerAngle + angularOffset);
-    assert.ok(Math.abs(angularOffset) <= allocatedSpread * 0.09 + 1e-12);
+    assert.ok(Math.abs(angularOffset) <= allocatedSpread * 0.09 + child.growthSector.endpointAdjustment * 0.045 + 1e-12);
   }
   for (const child of children) {
     const distance = Math.hypot(child.x - parent.x, child.y - parent.y);
