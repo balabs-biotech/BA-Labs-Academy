@@ -37,9 +37,13 @@ function allocateSectors(children, parentSector, weights, occupancy) {
   });
 }
 
-function branchLength(generation) {
+function branchLength(generation, rootId) {
   const base = ATLAS_GEOMETRY.childDistances[1] || 760;
-  return Math.max(96, base / (ATLAS_GOLDEN_RATIO ** Math.max(0, generation - 1)));
+  const recursiveLength = base / (ATLAS_GOLDEN_RATIO ** Math.max(0, generation - 1));
+  // MYCOLOGIE is the central heart, not a ninth satellite arm. Keep its
+  // internal taxonomy compact so the eight disciplinary trunks stay legible.
+  const coreScale = rootId === "myc" ? 0.42 : 1;
+  return Math.max(72, recursiveLength * coreScale);
 }
 
 /**
@@ -83,7 +87,7 @@ export function createAtlasGrowthModel({
     children.forEach((child, index) => {
       const sector = sectors[index];
       const generation = Number.isFinite(child.level) ? child.level : (parent.level || 0) + 1;
-      const distance = branchLength(generation);
+      const distance = branchLength(generation, parent.rootId || parent.rootId === "" ? parent.rootId : child.rootId);
       const point = {
         ...child,
         x: parent.x + Math.cos(sector.angle) * distance,
