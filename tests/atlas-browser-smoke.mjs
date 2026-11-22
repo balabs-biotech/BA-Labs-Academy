@@ -1,11 +1,13 @@
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
+import { mkdir } from "node:fs/promises";
 
 const base = process.env.ACADEMY_URL || "http://127.0.0.1:4173/#/atlas";
 const siteBase = base.split("#")[0].replace(/\/?$/, "/");
 const routeUrl = (route) => `${siteBase}#/${route}`;
 const browser = await chromium.launch({ headless: true });
 const results = [];
+await mkdir("artifacts", { recursive: true });
 try {
   for (const viewport of [
     { name: "desktop", width: 1440, height: 900 },
@@ -73,6 +75,7 @@ try {
     assert.ok(surface.rect.height >= surface.stage.height * 0.98, "Canvas must fill the Atlas stage height");
     assert.ok(surface.stage.width >= viewport.width - 40, "The fractal field must use nearly the full viewport width");
     assert.ok(surface.visibleNodes >= 9, "The nine department anchors must be visible in the overview");
+    await page.screenshot({ path: `artifacts/atlas-${viewport.name}.png`, fullPage: false });
 
     const stats = await page.locator(".atlas-topline-copy strong").innerText();
     assert.match(stats, /9 départements/);
