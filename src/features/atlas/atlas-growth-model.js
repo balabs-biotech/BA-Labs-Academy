@@ -1,10 +1,38 @@
 import { ATLAS_GOLDEN_RATIO, ATLAS_GEOMETRY } from "./atlas-geometry.js";
-import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, atlasConnectionCurvesMayBeNear, createAtlasConnectionCurve } from "./atlas-curve.js";
+import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, atlasConnectionCurvesMayBeNear, createAtlasConnectionCurve, sampleAtlasConnectionCurve } from "./atlas-curve.js";
 
 const DEFAULT_OCCUPANCY = 1 - 1 / (ATLAS_GOLDEN_RATIO ** 3);
 // World-space clearance threshold used to flag visually crowded, non-crossing
 // filaments. It is diagnostic only; it never changes scientific relationships.
 const CROSS_GENERATION_CLEARANCE_THRESHOLD = 18;
+// Spatial hash cell size is deliberately larger than the near-miss threshold.
+// Curve bounds are sampled once and cached when a branch is inserted.
+const COLLISION_GRID_CELL_SIZE = 256;
+
+function sampledCurveBounds(curve) {
+  const points = sampleAtlasConnectionCurve(curve, {
+    steps: 16, startProgress: 0.12, endProgress: 0.9
+  });
+  return {
+    minX: Math.min(...points.map((point) => point.x)),
+    maxX: Math.max(...points.map((point) => point.x)),
+    minY: Math.min(...points.map((point) => point.y)),
+    maxY: Math.max(...points.map((point) => point.y))
+  };
+}
+
+function collisionGridKeys(bounds, padding = CROSS_GENERATION_CLEARANCE_THRESHOLD) {
+  const minX = Math.floor((bounds.minX - padding) / COLLISION_GRID_CELL_SIZE);
+  const maxX = Math.floor((bounds.maxX + padding) / COLLISION_GRID_CELL_SIZE);
+  const minY = Math.floor((bounds.minY - padding) / COLLISION_GRID_CELL_SIZE);
+  const maxY = Math.floor((bounds.maxY + padding) / COLLISION_GRID_CELL_SIZE);
+  const keys = [];
+  for (let x = minX; x <= maxX; x += 1) {
+    for (let y = minY; y <= maxY; y += 1) keys.push(x + ":" + y);
+  }
+  return keys;
+}
+
 
 function descendantsWeight(nodeId, childrenByParent, memo, visiting) {
   if (memo.has(nodeId)) return memo.get(nodeId);
@@ -93,6 +121,28 @@ export function createAtlasGrowthModel({
   const roots = nodes.filter((node) => !node.parent);
   const positioned = new Map();
   const branches = [];
+  const collisionGrid = new Map();
+  const siblingBranches = new Map();
+  function indexCollisionBranch(branch) {
+    branch.collisionBounds = sampledCurveBounds(branch.curve);
+    for (const key of collisionGridKeys(branch.collisionBounds, 0)) {
+      if (!collisionGrid.has(key)) collisionGrid.set(key, []);
+      collisionGrid.get(key).push(branch);
+    }
+    if (!siblingBranches.has(branch.sourceId)) siblingBranches.set(branch.sourceId, []);
+    siblingBranches.get(branch.sourceId).push(branch);
+  }
+  function findCollisionCandidates(curve, parentId) {
+    const bounds = sampledCurveBounds(curve);
+    const candidates = new Set();
+    for (const key of collisionGridKeys(bounds)) {
+      for (const branch of collisionGrid.get(key) || []) {
+        if (branch.sourceId === parentId || branch.targetId === parentId) continue;
+        candidates.add(branch);
+      }
+    }
+    return [...candidates];
+  }
 
   function grow(parent, parentSector) {
     const children = childrenByParent.get(parent.id) || [];
@@ -151,9 +201,10 @@ export function createAtlasGrowthModel({
       // Compare against both siblings and already-created branches from other
       // hierarchy levels. The incoming parent filament and same-parent siblings
       // are handled separately so shared junctions are not misclassified.
-      const collisionCandidates = branches.filter((branch) =>
-        branch.sourceId !== parent.id && branch.targetId !== parent.id
-      );
+      // Query only spatially nearby prior filaments. The grid indexes
+      // conservative sampled bounds; the query expands by the full clearance
+      // threshold, so it cannot omit a crossing or a qualifying near miss.
+      let collisionCandidates = [];
       const crossGenerationOptions = {
         steps: 12,
         startProgress: 0.12,
@@ -182,12 +233,13 @@ export function createAtlasGrowthModel({
             candidate, branch.curve, crossGenerationOptions
           ) < CROSS_GENERATION_CLEARANCE_THRESHOLD
         );
-      const previousSiblings = branches.filter((branch) => branch.sourceId === parent.id);
+      const previousSiblings = siblingBranches.get(parent.id) || [];
       let resolvedBendScale = bendScale;
       let curve = createAtlasConnectionCurve(source, point, {
         ...curveOptions,
         bendScale: resolvedBendScale
       });
+      collisionCandidates = findCollisionCandidates(curve, parent.id);
       let adjustmentAttempts = 0;
       let crowdingAdjustmentAttempts = 0;
       // Resolve intersections first, then reduce cross-generation near misses.
@@ -213,7 +265,7 @@ export function createAtlasGrowthModel({
         });
         if (resolvedBendScale === 0.2) break;
       }
-      branches.push({
+      const completedBranch = {
         id: parent.id + "->" + child.id,
         sourceId: parent.id,
         targetId: child.id,
@@ -225,7 +277,9 @@ export function createAtlasGrowthModel({
         curveAdjustmentAttempts: adjustmentAttempts,
         crowdingAdjustmentAttempts,
         crossGenerationChecked: true
-      });
+      };
+      branches.push(completedBranch);
+      indexCollisionBranch(completedBranch);
       grow(point, sector);
     });
   }
