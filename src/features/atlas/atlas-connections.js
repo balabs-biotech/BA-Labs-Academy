@@ -9,6 +9,15 @@ import { PALETTE } from "./atlas-palette.js";
  */
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+const RELATION_COLORS = Object.freeze({
+  PREREQUISITE: 0x80aeb8,
+  COMPLEMENTARY: 0xa9a0d4,
+  METHOD_TRANSFER: 0xe8c99d,
+  TECHNICAL_DEPENDENCY: 0xc88773,
+  APPLIED_IN: 0x79a991,
+  INTERDISCIPLINARY: 0x7eaaa3
+});
+
 const connectionCurveCache = new WeakMap();
 
 /**
@@ -66,14 +75,6 @@ export function renderAtlasConnections({
     const curve = getAtlasConnectionCurveForEdge(edge, depth, sharedPathway);
     const { a, b, c1, c2, seed } = curve;
     const length = curve.length;
-    const relationColors = {
-      PREREQUISITE: 0x80aeb8,
-      COMPLEMENTARY: 0xa9a0d4,
-      METHOD_TRANSFER: 0xe8c99d,
-      TECHNICAL_DEPENDENCY: 0xc88773,
-      APPLIED_IN: 0x79a991,
-      INTERDISCIPLINARY: 0x7eaaa3
-    };
     const color = PALETTE[edge.a.rootId] || 0x91a99b;
     const widthScale = sharedPathway ? 1.25 / 1.5
       : knowledge ? 1.35 / 1.5
@@ -94,7 +95,7 @@ export function renderAtlasConnections({
 
     drawCurve().stroke({
       color: sharedPathway ? 0xb8a9df
-        : knowledge ? (relationColors[edge.relation_type] || 0x7eaaa3)
+        : knowledge ? (RELATION_COLORS[edge.relation_type] || 0x7eaaa3)
         : edge.basis === "academy-pathway-flow" ? 0xe8c99d
         : edge.verified
           ? (edge.basis === "notion-link" ? 0xb96b4d
@@ -132,7 +133,7 @@ export function renderAtlasConnections({
         const phase = time * 0.000085 + (seed % 100) * 0.013 + particle / particleCount;
         const { x, y } = getAtlasConnectionCurvePoint(curve, (phase * 0.34) % 1);
         const particleColor = knowledge
-          ? (relationColors[edge.relation_type] || 0x7eaaa3) : 0xe8c99d;
+          ? (RELATION_COLORS[edge.relation_type] || 0x7eaaa3) : 0xe8c99d;
         const radius = Math.max(1.15, 1.65 * scale ** 0.12);
         filaments.circle(x, y, radius * 2.1).fill({ color: particleColor, alpha: 0.16 });
         filaments.circle(x, y, radius).fill({ color: particleColor, alpha: 0.94 });
