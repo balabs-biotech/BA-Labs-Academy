@@ -2,6 +2,7 @@ import { createPixiRenderer } from "./pixi-renderer.js";
 import { createAtlasNavigation, getAtlasBreadcrumbPath } from "./atlas-navigation.js";
 import { atlasScreenPoint, fitAtlasCamera, zoomAtlasCamera, interpolateAtlasCamera } from "./atlas-camera.js";
 import { createAtlasLifecycle } from "./atlas-lifecycle.js";
+import { createAtlasAnimation } from "./atlas-animation.js";
 import { createAtlasPointerController } from "./atlas-interaction.js";
 import { renderAtlasAccessibleNodes } from "./atlas-accessibility.js";
 import { renderAtlasSelectionPanel } from "./atlas-selection.js";
@@ -116,7 +117,6 @@ export function mountAcademyAtlas(container, graph) {
   let renderer = null;
   const lifecycle = createAtlasLifecycle();
   lifecycle.add(() => renderer?.destroy());
-  let frame = 0;
   let width = 0;
   let height = 0;
   let hasInitialFit = false;
@@ -145,6 +145,23 @@ export function mountAcademyAtlas(container, graph) {
       time: performance.now()
     });
   };
+
+  const animation = createAtlasAnimation({
+    enabled: !reduced,
+    requestFrame: (callback) => requestAnimationFrame(callback),
+    cancelFrame: (frameId) => cancelAnimationFrame(frameId),
+    onFrame: () => {
+      const camera = interpolateAtlasCamera(
+        { scale, offset },
+        { scale: targetScale, offset: targetOffset },
+        0.12
+      );
+      scale = camera.scale;
+      offset = camera.offset;
+      draw();
+    }
+  });
+  lifecycle.add(() => animation.dispose());
 
   const fitOverview = () => {
     const camera = fitAtlasCamera(nodes.filter((node) => node.level === 0 && node.entity_type === "DEPARTMENT"), width, height);
@@ -345,21 +362,6 @@ export function mountAcademyAtlas(container, graph) {
     lifecycle.listen(window, "resize", resize, { passive: true });
   }
 
-  const animate = () => {
-    if (lifecycle.disposed) return;
-    if (!reduced) {
-      const camera = interpolateAtlasCamera(
-        { scale, offset },
-        { scale: targetScale, offset: targetOffset },
-        0.12
-      );
-      scale = camera.scale;
-      offset = camera.offset;
-      draw();
-      frame = requestAnimationFrame(animate);
-    }
-  };
-
   createPixiRenderer(canvas).then((instance) => {
     if (lifecycle.disposed) {
       instance.destroy();
@@ -371,7 +373,7 @@ export function mountAcademyAtlas(container, graph) {
     updateSelection();
     engineState.textContent = "Moteur actif · WebGL 2D";
     loading.hidden = true;
-    if (!reduced) frame = requestAnimationFrame(animate);
+    animation.start();
   }).catch((error) => {
     console.error("Academy PixiJS Atlas initialization failed", error);
     engineState.textContent = "Moteur indisponible";
@@ -379,6 +381,5 @@ export function mountAcademyAtlas(container, graph) {
     loading.classList.add("is-error");
   });
 
-  lifecycle.add(() => { if (frame) cancelAnimationFrame(frame); });
   return () => lifecycle.dispose();
 }

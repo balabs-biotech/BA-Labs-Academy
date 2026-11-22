@@ -512,3 +512,84 @@ test("Atlas label renderer owns a safe live-node set when not injected", async (
   assert.equal(canvas.dataset.visibleNodeIds, "[]");
   assert.equal(canvas.dataset.visibleNodeHitBoxes, "{}");
 });
+
+
+test("Atlas animation scheduler owns one frame loop and supports clean stop and restart", async () => {
+  const { createAtlasAnimation } = await import("../src/features/atlas/atlas-animation.js");
+  const callbacks = new Map();
+  const canceled = [];
+  let nextId = 0;
+  let frames = 0;
+  const animation = createAtlasAnimation({
+    requestFrame(callback) {
+      const id = ++nextId;
+      callbacks.set(id, callback);
+      return id;
+    },
+    cancelFrame(id) {
+      canceled.push(id);
+      callbacks.delete(id);
+    },
+    onFrame() { frames += 1; }
+  });
+
+  assert.equal(animation.start(), true);
+  assert.equal(animation.start(), false, "starting twice must not create parallel loops");
+  const firstId = nextId;
+  const firstFrame = callbacks.get(firstId);
+  callbacks.delete(firstId);
+  firstFrame();
+  assert.equal(frames, 1);
+  assert.equal(callbacks.size, 1, "each frame schedules exactly one successor");
+
+  assert.equal(animation.stop(), true);
+  assert.equal(animation.stop(), false);
+  assert.deepEqual(canceled, [nextId]);
+  assert.equal(callbacks.size, 0);
+
+  assert.equal(animation.start(), true, "a stopped scheduler can restart");
+  const pendingId = nextId;
+  animation.dispose();
+  assert.deepEqual(canceled, [pendingId === firstId ? firstId : firstId, pendingId]);
+  assert.equal(animation.running, false);
+  assert.equal(animation.disposed, true);
+  assert.equal(callbacks.size, 0);
+  assert.equal(animation.start(), false);
+});
+
+test("Atlas animation respects reduced-motion mode and releases pending frames on disposal", async () => {
+  const { createAtlasAnimation } = await import("../src/features/atlas/atlas-animation.js");
+  let requested = 0;
+  let canceled = 0;
+  let frames = 0;
+  const disabled = createAtlasAnimation({
+    enabled: false,
+    requestFrame() { requested += 1; return requested; },
+    cancelFrame() { canceled += 1; },
+    onFrame() { frames += 1; }
+  });
+  assert.equal(disabled.start(), false);
+  assert.equal(requested, 0);
+  disabled.dispose();
+
+  let callback;
+  const active = createAtlasAnimation({
+    requestFrame(next) { callback = next; return 7; },
+    cancelFrame(id) { assert.equal(id, 7); canceled += 1; },
+    onFrame() { frames += 1; }
+  });
+  active.start();
+  active.dispose();
+  callback();
+  assert.equal(frames, 0, "a canceled callback must not render after disposal");
+  assert.equal(canceled, 1);
+});
+
+test("Atlas view delegates frame scheduling to the independent animation module", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(source.includes('import { createAtlasAnimation } from "./atlas-animation.js";'));
+  assert.ok(source.includes("animation.start()"));
+  assert.ok(source.includes("animation.dispose()"));
+  assert.ok(!source.includes("requestAnimationFrame(animate)"));
+  assert.ok(!source.includes("cancelAnimationFrame(frame)"));
+});
