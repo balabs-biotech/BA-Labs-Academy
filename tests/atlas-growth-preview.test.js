@@ -97,3 +97,22 @@ test("fractal growth adds bounded deterministic biological irregularity", () => 
     assert.ok(distance <= 760 * 1.06 + 0.001);
   }
 });
+
+
+test("dense secondary fans receive bounded radial spacing without moving primary anchors", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const model = createAtlasGrowthGraph(graph);
+  const byId = model.byId;
+  const secondary = model.nodes.filter((node) => node.generation === 2);
+  assert.ok(secondary.length > 0);
+  assert.ok(secondary.some((node) => node.growthSector.densityScale > 1));
+  for (const node of secondary) {
+    const parent = byId.get(node.parent);
+    const siblings = model.nodes.filter((candidate) => candidate.parent === parent.id);
+    const expectedScale = Math.min(1.28, 1 + Math.log2(Math.max(1, siblings.length)) * 0.075);
+    assert.equal(node.growthSector.densityScale, expectedScale);
+    assert.ok(node.growthSector.densityScale <= 1.28);
+  }
+  const primary = model.nodes.filter((node) => node.generation === 1);
+  assert.ok(primary.every((node) => node.growthSector.densityScale === 1));
+});
