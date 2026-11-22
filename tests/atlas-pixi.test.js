@@ -244,13 +244,13 @@ test("Atlas view delegates projection, fit, zoom and animation interpolation to 
 
 test("Atlas wheel renderer keeps the restrained radial motif", () => {
   const source = readFileSync(new URL("../src/features/atlas/atlas-renderer-stage.js", import.meta.url), "utf8");
-  const pipelineSource = readFileSync(new URL("../src/features/atlas/atlas-frame-pipeline.js", import.meta.url), "utf8");
+  const frameRendererSource = readFileSync(new URL("../src/features/atlas/atlas-pixi-frame-renderer.js", import.meta.url), "utf8");
   const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
   assert.ok(source.includes("filaments.circle(0, 0, 820)"));
   assert.ok(source.includes("filaments.circle(0, 0, 1600)"));
   assert.ok(source.includes(".bezierCurveTo("));
   assert.ok(source.includes("const roots = nodes.filter"));
-  assert.ok(pipelineSource.includes("stage.drawBackdrop({ nodes, width, height })"));
+  assert.ok(frameRendererSource.includes("stage.drawBackdrop({ nodes, width: plan.width, height: plan.height })"));
   assert.ok(!source.includes('field.moveTo(x,y).quadraticCurveTo'));
   assert.ok(nodesSource.includes("Three arms echo the BA Labs Y mark"));
 });
@@ -372,7 +372,6 @@ test("Atlas view preserves cursor-centered wheel zoom", () => {
 test("Atlas connection rendering is isolated from Pixi node rendering", async () => {
   const { renderAtlasConnections } = await import("../src/features/atlas/atlas-connections.js");
   assert.equal(typeof renderAtlasConnections, "function");
-  const source = readFileSync(new URL("../src/features/atlas/atlas-frame-pipeline.js", import.meta.url), "utf8");
   const adapter = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
   assert.ok(adapter.includes("connections: renderAtlasConnections"));
   const connections = readFileSync(new URL("../src/features/atlas/atlas-connections.js", import.meta.url), "utf8");
@@ -384,7 +383,6 @@ test("Atlas connection rendering is isolated from Pixi node rendering", async ()
 
 test("Atlas node geometry is isolated from Pixi renderer orchestration", () => {
   const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
-  const pipelineSource = readFileSync(new URL("../src/features/atlas/atlas-frame-pipeline.js", import.meta.url), "utf8");
   const nodesSource = readFileSync(new URL("../src/features/atlas/atlas-nodes.js", import.meta.url), "utf8");
   assert.ok(source.includes('import { renderAtlasNodes } from "./atlas-nodes.js";'));
   assert.ok(source.includes("nodesLayer: renderAtlasNodes"));
@@ -683,7 +681,7 @@ test("Atlas frame model prepares backend-neutral selection and camera state", as
   assert.deepEqual([...plan.lineage], ["a"]);
   assert.deepEqual([...plan.activeBranch], ["a", "b"]);
   assert.deepEqual(plan.transform, { x: 412, y: 292, scale: 1.5 });
-  assert.equal(model.prepare(frame).activeBranch, plan.activeBranch);
+  assert.deepEqual([...model.prepare(frame).activeBranch], [...plan.activeBranch]);
   assert.equal(factoryCalls, 1, "graph context is cached while node identity is stable");
   model.reset();
   model.prepare(frame);
