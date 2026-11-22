@@ -74,6 +74,8 @@ try {
     assert.ok(surface.rect.width >= surface.stage.width * 0.98, "Canvas must fill the Atlas stage width");
     assert.ok(surface.rect.height >= surface.stage.height * 0.98, "Canvas must fill the Atlas stage height");
     assert.ok(surface.stage.width >= viewport.width - 40, "The fractal field must use nearly the full viewport width");
+    assert.ok(surface.stage.y < viewport.height * 0.3, "The Atlas map must begin in the first screen, not below the introduction");
+    assert.ok(surface.stage.y + surface.stage.height <= viewport.height + 24, "The initial map viewport must fit within the first screen");
     assert.ok(surface.visibleNodes >= 9, "The nine department anchors must be visible in the overview");
     await page.screenshot({ path: `artifacts/atlas-${viewport.name}.png`, fullPage: false });
 
