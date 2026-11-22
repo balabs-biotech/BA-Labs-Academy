@@ -6,7 +6,7 @@ const DEFAULT_OCCUPANCY = 1 - 1 / (ATLAS_GOLDEN_RATIO ** 3);
 // filaments. It is diagnostic only; it never changes scientific relationships.
 const CROSS_GENERATION_CLEARANCE_THRESHOLD = 18;
 // Spatial hash cell size is deliberately larger than the near-miss threshold.
-// Curve bounds are sampled once and cached when a branch is inserted.
+// Conservative Bezier control-hull bounds are cached when a branch is inserted.
 const COLLISION_GRID_CELL_SIZE = 256;
 
 function conservativeCurveBounds(curve) {
