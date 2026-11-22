@@ -27,6 +27,12 @@ export function fitAtlasCamera(roots, width, height) {
   };
 }
 
+export function getAtlasFocusScale(branchDistance, width, height, fillRatio = 0.34) {
+  if (!Number.isFinite(branchDistance) || branchDistance <= 0) return 12;
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return 0.075;
+  return clamp(Math.min(width, height) * fillRatio / branchDistance, 0.075, 12);
+}
+
 export function zoomAtlasCamera(camera, factor, x = camera.width / 2, y = camera.height / 2) {
   const scale = clamp(camera.scale * factor, 0.075, 12);
   const ratio = scale / camera.scale;
