@@ -105,13 +105,13 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
     const isMycologyCore = parent.entity_type === "DEPARTMENT" && parent.entity_key === "MYC";
     const isDepartmentRoot = parent.entity_type === "DEPARTMENT";
     // Mycology occupies the central hub; outer departments receive weighted, non-overlapping sectors.
-    const branchSpread = isDepartmentRoot && parent.entity_key !== "MYC"
+    const effectiveBranchSpread = isDepartmentRoot && parent.entity_key !== "MYC"
       ? departmentLayout.spreads[parent.entity_key]
-      : undefined;
+      : branchSpread;
     items.forEach((item, index) => {
       const { x, y, angle } = getAtlasChildPosition({
         parent, index, count: items.length, depth, branchAngle,
-        isMycologyCore, isDepartmentRoot, branchSpread
+        isMycologyCore, isDepartmentRoot, branchSpread: effectiveBranchSpread
       });
       const entityType = item.kind === "section" ? "SECTION" : item.kind === "domain" ? "DOMAIN" : "MODULE";
       const node = addNode(makeNode(item, parent, rootId, depth, x, y, angle, entityType));
@@ -125,8 +125,8 @@ export function buildAcademyGraph(departments, domains, pathways, knowledgeRelat
       if (item.kind === "section") sectionNodes.set(item.code, node);
       if (item.kind === "domain") domainNodes.set(item.code, node);
       if (item.children?.length) {
-        const nestedSpread = Number.isFinite(branchSpread)
-          ? getAtlasNestedBranchSpread(branchSpread, items.length, isMycologyCore)
+        const nestedSpread = Number.isFinite(effectiveBranchSpread)
+          ? getAtlasNestedBranchSpread(effectiveBranchSpread, items.length, isMycologyCore)
           : isMycologyCore
             ? getAtlasNestedBranchSpread(Math.PI * 2, items.length, true)
             : undefined;
