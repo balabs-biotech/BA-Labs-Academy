@@ -206,6 +206,31 @@ test("dense secondary fans receive bounded radial spacing without moving primary
   assert.ok(primary.every((node) => node.growthSector.densityScale === 1));
 });
 
+test("terminal branch fans expand their angular spread beyond the parent sector", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const model = createAtlasGrowthGraph(graph);
+  const byParent = new Map();
+  for (const node of model.nodes) {
+    if (!node.parent || node.generation < 2 || node.rootId === "myc") continue;
+    if (!byParent.has(node.parent)) byParent.set(node.parent, []);
+    byParent.get(node.parent).push(node);
+  }
+  const terminalFans = [...byParent.entries()].filter(([parentId, children]) =>
+    children.length >= 3 && children.every((child) =>
+      !model.nodes.some((candidate) => candidate.parent === child.id)
+    )
+  );
+  assert.ok(terminalFans.length > 0, "expected at least one terminal fan");
+  const expandedFans = terminalFans.filter(([parentId, children]) => {
+    const parent = model.byId.get(parentId);
+    const angles = children.map((child) => child.angle).sort((a, b) => a - b);
+    const span = angles[angles.length - 1] - angles[0];
+    return span >= parent.growthSector.allocatedSpread * 1.15;
+  });
+  assert.equal(expandedFans.length, terminalFans.length,
+    "every terminal fan should occupy a visibly wider angular envelope");
+});
+
 test("spatial collision candidate indexing is deterministic and prunes distant branches", () => {
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
   const first = createAtlasGrowthModel({ nodes: graph.nodes });
