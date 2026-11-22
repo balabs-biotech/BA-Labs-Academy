@@ -8,7 +8,6 @@ export const ATLAS_GEOMETRY = Object.freeze({
   departmentPetalSpread: 1.95,
   sectionSpread: 3.4,
   minimumModuleGap: 0.98,
-  minimumTerminalModuleGap: 210,
   maximumModuleSpread: 5.9
 });
 
@@ -76,7 +75,7 @@ export function getAtlasGoldenConnectionProfile(length, depth = 1) {
   const safeLength = Math.max(0, Number(length) || 0);
   const safeDepth = Math.max(1, Number(depth) || 1);
   return {
-    controlPointRatio: 1 / (ATLAS_GOLDEN_RATIO ** 2),
+    controlPointRatio: 1 / ATLAS_GOLDEN_RATIO,
     bend: safeLength / (ATLAS_GOLDEN_RATIO ** 2),
     width: 1.5 / (ATLAS_GOLDEN_RATIO ** (safeDepth - 1))
   };
@@ -125,22 +124,15 @@ export function getAtlasChildPosition({
     1.15,
     ATLAS_GEOMETRY.maximumModuleSpread
   );
-  const inheritedSpread = Number.isFinite(branchSpread)
+  const spread = Number.isFinite(branchSpread)
     ? branchSpread
     : isMycologyCore
       ? TAU
       : isDepartmentRoot
         ? ATLAS_GEOMETRY.departmentPetalSpread
         : adaptiveModuleSpread;
-  const terminalDistance = ATLAS_GEOMETRY.childDistances[depth] ?? Math.max(58, 92 - depth * 4);
-  const minimumTerminalStep = 2 * Math.asin(clamp(
-    ATLAS_GEOMETRY.minimumTerminalModuleGap / (2 * terminalDistance), 0, 0.99
-  ));
-  const requiredTerminalSpread = count > 1 ? minimumTerminalStep * (count - 1) : 0;
-  const spread = depth >= 2
-    ? Math.min(ATLAS_GEOMETRY.maximumModuleSpread, Math.max(inheritedSpread, requiredTerminalSpread))
-    : inheritedSpread;
-  const distance = terminalDistance;
+  const distance = ATLAS_GEOMETRY.childDistances[depth] ??
+    Math.max(58, 92 - depth * 4);
   const fraction = count <= 1 ? 0 : index / (count - 1) - 0.5;
   const angle = isMycologyCore
     ? branchAngle + (index / Math.max(1, count)) * spread
