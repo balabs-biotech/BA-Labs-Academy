@@ -363,6 +363,13 @@ test("Atlas accessible navigation is populated before the graphics backend initi
     "keyboard navigation must not depend on successful Pixi/WebGL initialization");
 });
 
+test("Atlas text navigation becomes visible when keyboard-focused", () => {
+  const styles = readFileSync(new URL("../src/styles.css", import.meta.url), "utf8");
+  assert.match(styles, /\.atlas-accessible-nodes:focus-within\s*\{/,
+    "visually hidden navigation must reveal itself when one of its controls receives focus");
+  assert.match(styles, /\.atlas-accessible-nodes:focus-within\s*\{[^}]*clip:\s*auto/s);
+});
+
 test("Atlas selection panel has a dedicated rendering module", async () => {
   const { renderAtlasSelectionPanel } = await import("../src/features/atlas/atlas-selection.js");
   assert.equal(typeof renderAtlasSelectionPanel, "function");
