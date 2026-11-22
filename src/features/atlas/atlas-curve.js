@@ -97,6 +97,18 @@ function segmentsIntersect(a, b, c, d) {
 export function atlasConnectionCurvesIntersect(first, second, options = {}) {
   const a = sampleAtlasConnectionCurve(first, options);
   const b = sampleAtlasConnectionCurve(second, options);
+  const bounds = (points) => ({
+    minX: Math.min(...points.map((point) => point.x)),
+    maxX: Math.max(...points.map((point) => point.x)),
+    minY: Math.min(...points.map((point) => point.y)),
+    maxY: Math.max(...points.map((point) => point.y))
+  });
+  const firstBounds = bounds(a);
+  const secondBounds = bounds(b);
+  if (firstBounds.maxX < secondBounds.minX || secondBounds.maxX < firstBounds.minX ||
+      firstBounds.maxY < secondBounds.minY || secondBounds.maxY < firstBounds.minY) {
+    return false;
+  }
   for (let i = 0; i < a.length - 1; i += 1) {
     for (let j = 0; j < b.length - 1; j += 1) {
       if (segmentsIntersect(a[i], a[i + 1], b[j], b[j + 1])) return true;
