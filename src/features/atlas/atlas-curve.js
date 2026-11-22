@@ -136,6 +136,20 @@ function boundsDistance(a, b) {
   return Math.hypot(dx, dy);
 }
 
+/** Cheap conservative broad phase for a requested curve-to-curve clearance. */
+export function atlasConnectionCurvesMayBeNear(first, second, threshold, options = {}) {
+  const bounds = (curve) => {
+    const points = sampleAtlasConnectionCurve(curve, options);
+    return {
+      minX: Math.min(...points.map((point) => point.x)),
+      maxX: Math.max(...points.map((point) => point.x)),
+      minY: Math.min(...points.map((point) => point.y)),
+      maxY: Math.max(...points.map((point) => point.y))
+    };
+  };
+  return boundsDistance(bounds(first), bounds(second)) < Math.max(0, threshold);
+}
+
 /** Minimum distance between sampled filament segments, not just sample points. */
 export function atlasConnectionCurvesClearance(first, second, options = {}) {
   const a = sampleAtlasConnectionCurve(first, options);
