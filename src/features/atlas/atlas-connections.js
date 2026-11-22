@@ -9,6 +9,31 @@ import { PALETTE } from "./atlas-palette.js";
  */
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+const connectionCurveCache = new WeakMap();
+
+/**
+ * Reuse world-space curve geometry while an edge's geometric inputs remain
+ * unchanged. Endpoint object identity is included so replacing a node cannot
+ * leave the curve holding stale endpoint references.
+ */
+export function getAtlasConnectionCurveForEdge(edge, depth, sharedPathway) {
+  const a = edge.a;
+  const b = edge.b;
+  const signature = [
+    a, b, a.x, a.y, a.id, b.x, b.y, b.id,
+    edge.seed, depth, sharedPathway
+  ];
+  const cached = connectionCurveCache.get(edge);
+  if (cached && signature.every((value, index) => Object.is(value, cached.signature[index]))) {
+    return cached.curve;
+  }
+  const curve = createAtlasConnectionCurve(a, b, {
+    seed: edge.seed, depth, sharedPathway
+  });
+  connectionCurveCache.set(edge, { signature, curve });
+  return curve;
+}
+
 export function renderAtlasConnections({
   filaments, junctions, edges, selected, scale, reduced, relationFilter,
   time, alphaFor, activeBranch
@@ -38,9 +63,7 @@ export function renderAtlasConnections({
 
     // Pure curve geometry is shared by strokes, junctions and animated particles.
     const sharedPathway = edge.basis === "academy-pathway-network";
-    const curve = createAtlasConnectionCurve(edge.a, edge.b, {
-      seed: edge.seed, depth, sharedPathway
-    });
+    const curve = getAtlasConnectionCurveForEdge(edge, depth, sharedPathway);
     const { a, b, c1, c2, seed } = curve;
     const length = curve.length;
     const relationColors = {
