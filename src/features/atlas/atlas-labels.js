@@ -6,6 +6,13 @@ import { placeAtlasLabel } from "./atlas-label-placement.js";
 
 const hitDataByCanvas = new WeakMap();
 const EMPTY_HIT_DATA = Object.freeze({ visibleNodeIds: new Set(), hitBoxes: Object.freeze({}) });
+const shortRoots={
+ fr:{bio:"BIOTECH",myco:"MYCO",soil:"TECHNOSOIL",lab:"LABO",products:"PRODUITS",iot:"IOT",work:"R&D",evidence:"PREUVES"},
+ en:{bio:"BIOTECH",myco:"MYCOLOGY",soil:"TECHNOSOIL",lab:"LAB",products:"PRODUCTS",iot:"IOT",work:"PROJECTS",evidence:"EVIDENCE"},
+ ar:{bio:"حيوية",myco:"فطريات",soil:"تربة",lab:"مختبر",products:"منتجات",iot:"إنترنت",work:"مشاريع",evidence:"الأدلة"},
+ pt:{bio:"BIOTECH",myco:"MICO",soil:"TECHNOSOIL",lab:"LAB",products:"PRODUTOS",iot:"IOT",work:"PROJETOS",evidence:"EVIDÊNCIAS"}
+ };
+
 
 export function getAtlasLabelHitData(canvas) {
  return hitDataByCanvas.get(canvas) || EMPTY_HIT_DATA;
@@ -15,12 +22,6 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
 export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,labelResources,nodes,selected,scale,offset,width,height,alphaFor,activeBranch,lineage,lang,live=new Set()}) {
  if(labelResources) labelResources.beginFrame();
- const shortRoots={
- fr:{bio:"BIOTECH",myco:"MYCO",soil:"TECHNOSOIL",lab:"LABO",products:"PRODUITS",iot:"IOT",work:"R&D",evidence:"PREUVES"},
- en:{bio:"BIOTECH",myco:"MYCOLOGY",soil:"TECHNOSOIL",lab:"LAB",products:"PRODUCTS",iot:"IOT",work:"PROJECTS",evidence:"EVIDENCE"},
- ar:{bio:"حيوية",myco:"فطريات",soil:"تربة",lab:"مختبر",products:"منتجات",iot:"إنترنت",work:"مشاريع",evidence:"الأدلة"},
- pt:{bio:"BIOTECH",myco:"MICO",soil:"TECHNOSOIL",lab:"LAB",products:"PRODUTOS",iot:"IOT",work:"PROJETOS",evidence:"EVIDÊNCIAS"}
- };
  const candidates=[];
  for(const n of nodes){
  if(n.entity_type==="PATHWAY" && n.level===0 && selected?.entity_type!=="PATHWAY") continue;
@@ -33,7 +34,7 @@ export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,lab
  if(show)candidates.push({n,alpha,priority:selected?.id===n.id?0:lineage.has(n.id)?1:n.level===0?2:3,distance:selected?Math.hypot(n.x-selected.x,n.y-selected.y):Math.hypot(n.x,n.y)});
  }
  candidates.sort((a,b)=>a.priority-b.priority||a.distance-b.distance);
- const rootCount=candidates.filter(c=>c.n.level===0).length;
+ let rootCount=0;for(const candidate of candidates)if(candidate.n.level===0)rootCount++;
  const labelBudget=rootCount+Math.min(220,Math.max(32,Math.round(32+scale*24)));
  const occupied=[];const hitBoxes={};let drawn=0;
  for(const {n,alpha} of candidates){
