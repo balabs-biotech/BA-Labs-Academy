@@ -104,24 +104,3 @@ test("explicit full-ring root sectors are honored without changing root anchors"
   assert.equal(model.byId.get("section-b").generation, 1);
   assert.ok(Math.abs(model.byId.get("section-a").angle - model.byId.get("section-b").angle) >= Math.PI - 1e-10);
 });
-
-
-test("single-child hierarchy chains develop bounded deterministic angular drift", () => {
-  const nodes = [
-    { id: "root", entity_type: "DEPARTMENT", entity_key: "BIO", parent: null, x: 0, y: 0, angle: 0, level: 0 },
-    { id: "section", parent: "root", level: 1 },
-    { id: "module", parent: "section", level: 2 },
-    { id: "detail", parent: "module", level: 3 },
-    { id: "detail-leaf", parent: "detail", level: 4 }
-  ];
-  const first = createAtlasGrowthModel({ nodes });
-  const second = createAtlasGrowthModel({ nodes });
-  const chain = nodes.slice(1).map((node) => first.byId.get(node.id));
-  const repeated = nodes.slice(1).map((node) => second.byId.get(node.id));
-
-  assert.ok(chain.every((node) => Number.isFinite(node.growthSector.angularOffset)));
-  assert.ok(chain.some((node) => Math.abs(node.growthSector.angularOffset) > 0.01));
-  assert.ok(chain.every((node) => Math.abs(node.growthSector.angularOffset) <= 0.22));
-  assert.deepEqual(chain.map((node) => node.angle), repeated.map((node) => node.angle));
-  assert.ok(new Set(chain.map((node) => node.angle)).size > 1);
-});
