@@ -5,7 +5,17 @@
 import { placeAtlasLabel } from "./atlas-label-placement.js";
 
 const hitDataByCanvas = new WeakMap();
+const frameStateByCanvas = new WeakMap();
 const EMPTY_HIT_DATA = Object.freeze({ visibleNodeIds: new Set(), hitBoxes: Object.freeze({}) });
+
+function getFrameState(canvas) {
+ let state=frameStateByCanvas.get(canvas);
+ if(!state){
+  state={candidates:[],occupied:[],hitBoxes:{},visibleNodeIds:new Set()};
+  frameStateByCanvas.set(canvas,state);
+ }
+ return state;
+}
 const shortRoots={
  fr:{bio:"BIOTECH",myco:"MYCO",soil:"TECHNOSOIL",lab:"LABO",products:"PRODUITS",iot:"IOT",work:"R&D",evidence:"PREUVES"},
  en:{bio:"BIOTECH",myco:"MYCOLOGY",soil:"TECHNOSOIL",lab:"LAB",products:"PRODUCTS",iot:"IOT",work:"PROJECTS",evidence:"EVIDENCE"},
@@ -20,9 +30,17 @@ export function getAtlasLabelHitData(canvas) {
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 
-export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,labelResources,nodes,selected,scale,offset,width,height,alphaFor,activeBranch,lineage,lang,live=new Set()}) {
+export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,labelResources,nodes,selected,scale,offset,width,height,alphaFor,activeBranch,lineage,lang,live=null}) {
+ const state=getFrameState(canvas);
+ const candidates=state.candidates;
+ const occupied=state.occupied;
+ const hitBoxes=state.hitBoxes;
+ const visible=live||state.visibleNodeIds;
+ candidates.length=0;
+ occupied.length=0;
+ for(const id of Object.keys(hitBoxes))delete hitBoxes[id];
+ if(!live)visible.clear();
  if(labelResources) labelResources.beginFrame();
- const candidates=[];
  for(const n of nodes){
  if(n.entity_type==="PATHWAY" && n.level===0 && selected?.entity_type!=="PATHWAY") continue;
  let alpha=alphaFor(n.level);if(alpha<.015)continue;
@@ -36,7 +54,7 @@ export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,lab
  candidates.sort((a,b)=>a.priority-b.priority||a.distance-b.distance);
  let rootCount=0;for(const candidate of candidates)if(candidate.n.level===0)rootCount++;
  const labelBudget=rootCount+Math.min(220,Math.max(32,Math.round(32+scale*24)));
- const occupied=[];const hitBoxes={};let drawn=0;
+ let drawn=0;
  for(const {n,alpha} of candidates){
  if(n.level!==0&&drawn>=labelBudget)continue;
  const sx=width/2+offset.x+n.x*scale,sy=height/2+offset.y+n.y*scale;
@@ -59,10 +77,10 @@ export function renderAtlasLabels({canvas,labels,labelPool,style,createLabel,lab
  const {x,y,box}=placement;
  label.position.set(x,y);label.alpha=Math.max(alpha,selected?0.76:0.88);label.visible=true;
  hitBoxes[n.id]=box;
- occupied.push(box);live.add(n.id);labelResources?.markVisible(n.id);drawn++;
+ occupied.push(box);visible.add(n.id);labelResources?.markVisible(n.id);drawn++;
  }
  if(labelResources) labelResources.endFrame();
- else for(const [id,label] of labelPool){if(!live.has(id))label.visible=false;}
- hitDataByCanvas.set(canvas,{visibleNodeIds:new Set(live),hitBoxes});
- canvas.dataset.visibleNodeCount=String(live.size);
+ else for(const [id,label] of labelPool){if(!visible.has(id))label.visible=false;}
+ hitDataByCanvas.set(canvas,{visibleNodeIds:visible,hitBoxes});
+ canvas.dataset.visibleNodeCount=String(visible.size);
 }

@@ -929,3 +929,30 @@ test("Atlas view initializes the renderer through its backend-neutral host", () 
   assert.ok(source.includes("rendererHost.dispose()"));
   assert.ok(!source.includes("instance.destroy()"));
 });
+
+
+test("Atlas label renderer reuses per-canvas frame buffers and removes stale hit boxes", async () => {
+  const { renderAtlasLabels, getAtlasLabelHitData } = await import("../src/features/atlas/atlas-labels.js");
+  const canvas = { dataset: {} };
+  const pool = new Map();
+  const render = (nodes) => renderAtlasLabels({
+    canvas, labels: { addChild() {} }, labelPool: pool, style: {},
+    createLabel: () => ({ style: {}, width: 52, height: 18, visible: false, anchor: { set() {} }, position: { set() {} } }),
+    nodes, selected: null, scale: 1, offset: { x: 0, y: 0 }, width: 400, height: 700,
+    alphaFor: () => 1, activeBranch: new Set(), lineage: new Set(), lang: "fr"
+  });
+  const root = { id: "root", entity_type: "DEPARTMENT", level: 0, rootId: "bio", title: "Biologie", shortTitle: "BIO", x: 0, y: 0, r: 10, angle: 0 };
+  render([root]);
+  const first = getAtlasLabelHitData(canvas);
+  const visibleSet = first.visibleNodeIds;
+  const hitBoxes = first.hitBoxes;
+  assert.ok(visibleSet.has("root"));
+  assert.ok(hitBoxes.root);
+  render([]);
+  const second = getAtlasLabelHitData(canvas);
+  assert.strictEqual(second.visibleNodeIds, visibleSet, "visible-node set is reused per canvas");
+  assert.strictEqual(second.hitBoxes, hitBoxes, "hit-box dictionary is reused per canvas");
+  assert.equal(second.visibleNodeIds.size, 0);
+  assert.deepEqual(Object.keys(second.hitBoxes), [], "hit boxes from the previous frame are removed");
+  assert.equal(canvas.dataset.visibleNodeCount, "0");
+});
