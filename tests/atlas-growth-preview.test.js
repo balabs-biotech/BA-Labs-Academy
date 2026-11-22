@@ -164,6 +164,20 @@ test("dense secondary fans receive bounded radial spacing without moving primary
   assert.ok(primary.every((node) => node.growthSector.densityScale === 1));
 });
 
+test("spatial collision candidate indexing is deterministic and prunes distant branches", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const first = createAtlasGrowthModel({ nodes: graph.nodes });
+  const second = createAtlasGrowthModel({ nodes: graph.nodes });
+  assert.deepEqual(first.collisionCandidateDiagnostics, second.collisionCandidateDiagnostics);
+  const metrics = first.collisionCandidateDiagnostics;
+  assert.ok(metrics.possibleChecks > 0);
+  assert.ok(metrics.candidateChecks >= 0);
+  assert.ok(metrics.candidateChecks <= metrics.possibleChecks);
+  assert.equal(metrics.excludedChecks, metrics.possibleChecks - metrics.candidateChecks);
+  assert.ok(metrics.candidateRatio >= 0 && metrics.candidateRatio <= 1);
+  assert.ok(metrics.candidateChecks < metrics.possibleChecks);
+});
+
 test("growth model exposes deterministic sibling filament fan diagnostics", () => {
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
   const first = createAtlasGrowthGraph(graph);
