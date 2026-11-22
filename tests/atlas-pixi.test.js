@@ -489,7 +489,9 @@ test("Atlas renderer delegates label layout to its dedicated layer", () => {
   assert.ok(!source.includes("const shortRoots="));
   assert.ok(labelsSource.includes("export function renderAtlasLabels"));
   assert.ok(labelsSource.includes("placeAtlasLabel("));
-  assert.ok(labelsSource.includes("canvas.dataset.visibleNodeHitBoxes"));
+  assert.ok(labelsSource.includes("hitDataByCanvas.set(canvas"));
+  const viewSource = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(viewSource.includes("getAtlasLabelHitData(canvas)"));
 });
 
 test("Atlas department palette is a single shared rendering contract", () => {
