@@ -87,14 +87,24 @@ export function createAtlasGrowthModel({
     children.forEach((child, index) => {
       const sector = sectors[index];
       const generation = Number.isFinite(child.level) ? child.level : (parent.level || 0) + 1;
-      const distance = branchLength(generation, parent.rootId);
+      // Small, stable deviations prevent the hierarchy from reading as a perfect
+      // geometric fan. Jitter stays inside each child's allocated angular sector.
+      const angularUnit = stableUnit(hashString(parent.id + "|" + child.id + "|angle"));
+      const lengthUnit = stableUnit(hashString(parent.id + "|" + child.id + "|length"));
+      const allocatedWidth = sector.spread * occupancy;
+      const angularJitter = children.length > 1
+        ? (angularUnit - 0.5) * allocatedWidth * 0.18
+        : 0;
+      const angle = sector.angle + angularJitter;
+      const distance = branchLength(generation, parent.rootId) *
+        (0.94 + lengthUnit * 0.12);
       const point = {
         ...child,
-        x: parent.x + Math.cos(sector.angle) * distance,
-        y: parent.y + Math.sin(sector.angle) * distance,
-        angle: sector.angle,
+        x: parent.x + Math.cos(angle) * distance,
+        y: parent.y + Math.sin(angle) * distance,
+        angle,
         generation,
-        growthSector: { angle: sector.angle, spread: sector.spread }
+        growthSector: { angle, spread: sector.spread }
       };
       positioned.set(child.id, point);
       const source = positioned.get(parent.id) || parent;
@@ -140,6 +150,10 @@ export function createAtlasGrowthModel({
     byId: new Map(allNodes.map((node) => [node.id, node])),
     maxDepth: allNodes.reduce((max, node) => Math.max(max, node.generation || 0), 0)
   };
+}
+
+function stableUnit(hash) {
+  return (hash >>> 0) / 0xffffffff;
 }
 
 function hashString(value) {
