@@ -2,6 +2,7 @@ import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgre
 import { escapeHtml } from "./core/dom.js";
 import { renderAcademyAtlas, mountAcademyAtlas } from "./features/atlas/atlas-view.js";
 import { buildAcademyGraph } from "./features/atlas/atlas-graph.js";
+import { createAtlasGrowthGraph } from "./features/atlas/atlas-growth-model.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
@@ -944,7 +945,16 @@ function render() {
     [...(data.domains || []), ...(data.editorialDomains || [])]
       .map((domain) => [domain.code, domain])
   ).values()];
-  const atlasGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, atlasDomains, cataloguePathways) : null;
+  const atlasBaseGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, atlasDomains, cataloguePathways) : null;
+  const atlasQuery = new URLSearchParams(location.search);
+  const atlasGrowthEnabled = atlasQuery.get("atlas-growth") === "1";
+  const atlasDepthValue = Number(atlasQuery.get("atlas-depth"));
+  const atlasGraph = atlasBaseGraph && atlasGrowthEnabled
+    ? createAtlasGrowthGraph(atlasBaseGraph, {
+        visibleDepth: Number.isInteger(atlasDepthValue) && atlasDepthValue >= 0
+          ? atlasDepthValue : 2
+      })
+    : atlasBaseGraph;
   const pathItemId = new URLSearchParams(query).get("pathItem") || "";
   updateNavigation(route);
   if (loadError) {

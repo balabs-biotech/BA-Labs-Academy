@@ -29,6 +29,17 @@ export function renderAcademyAtlas(graph) {
   const domainSummary = domains ? `${domains} domaines <i>·</i> ` : "";
   const departmentRoots = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.level === 0);
   const pathwayRoots = graph.nodes.filter((node) => node.entity_type === "PATHWAY" && node.level === 0);
+  const growthControls = graph.growthPreview
+    ? `<div class="atlas-growth-preview-controls">
+        <span class="eyebrow">APERÇU EXPÉRIMENTAL · CROISSANCE ORGANIQUE</span>
+        <span>Profondeur ${graph.growthPreview.depth} / ${graph.growthPreview.maxDepth} · ${graph.growthPreview.visibleNodes} nœuds visibles</span>
+        <a class="text-link" href="?atlas-growth=1&atlas-depth=1#/atlas">Génération 1</a>
+        <a class="text-link" href="?atlas-growth=1&atlas-depth=2#/atlas">Génération 2</a>
+        <a class="text-link" href="?/atlas">Vue actuelle</a>
+      </div>`
+    : `<div class="atlas-growth-preview-controls">
+        <a class="text-link" href="?atlas-growth=1&atlas-depth=2#/atlas">Tester l'aperçu de croissance organique ↗</a>
+      </div>`;
   const rootNavigation = (items, kind, label) => {
     const content = `
       <div class="atlas-root-group atlas-root-group--${kind}">
@@ -47,6 +58,7 @@ export function renderAcademyAtlas(graph) {
       <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
       <h1>Atlas des connaissances</h1>
       <p>La mycologie forme le noyau vivant de l’Atlas. Autour d’elle, les autres disciplines déploient leurs propres constellations ; les parcours relient les espaces entre eux.</p>
+      ${growthControls}
     </section>
     <section class="academy-atlas" id="academy-atlas">
       <div class="atlas-topline">

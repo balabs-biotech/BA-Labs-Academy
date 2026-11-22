@@ -151,3 +151,48 @@ export const ATLAS_GROWTH_DEFAULTS = Object.freeze({
   generationLengthBase: ATLAS_GEOMETRY.childDistances[1],
   generationLengthRatio: ATLAS_GOLDEN_RATIO
 });
+
+
+/**
+ * Creates a render-ready graph snapshot for the optional growth preview.
+ * Hierarchy edges follow the new positions; transversal edges are retained
+ * only when both endpoints are visible at the requested depth.
+ */
+export function createAtlasGrowthGraph(graph, { visibleDepth = Number.POSITIVE_INFINITY } = {}) {
+  if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
+    throw new TypeError("Atlas growth preview requires a graph with nodes and edges");
+  }
+  const growthModel = createAtlasGrowthModel({ nodes: graph.nodes, visibleDepth });
+  const nodes = growthModel.visibleNodes;
+  const visibleIds = new Set(nodes.map((node) => node.id));
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const edges = graph.edges
+    .filter((edge) => visibleIds.has(edge.a.id) && visibleIds.has(edge.b.id))
+    .map((edge) => ({
+      ...edge,
+      a: byId.get(edge.a.id),
+      b: byId.get(edge.b.id)
+    }));
+  const remap = (index) => new Map(
+    [...(index || new Map()).entries()]
+      .filter(([, node]) => byId.has(node.id))
+      .map(([key, node]) => [key, byId.get(node.id)])
+  );
+
+  return {
+    ...graph,
+    nodes,
+    edges,
+    byId,
+    departmentNodes: remap(graph.departmentNodes),
+    domainNodes: remap(graph.domainNodes),
+    sectionNodes: remap(graph.sectionNodes),
+    growthPreview: {
+      depth: visibleDepth,
+      maxDepth: growthModel.maxDepth,
+      totalNodes: growthModel.nodes.length,
+      visibleNodes: nodes.length,
+      visibleBranches: growthModel.visibleBranches.length
+    }
+  };
+}
