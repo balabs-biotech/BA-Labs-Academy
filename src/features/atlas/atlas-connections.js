@@ -54,8 +54,41 @@ export function getAtlasConnectionCurveForEdge(edge, depth, sharedPathway) {
 
 export function renderAtlasConnections({
   filaments, junctions, edges, selected, scale, reduced, relationFilter,
-  time, alphaFor, activeBranch
+  time, alphaFor, activeBranch, morphologyBranches = []
 }) {
+  // Morphology trunks are a separate visual layer, never academic graph edges.
+  for (const branch of morphologyBranches) {
+    const { source, target } = branch;
+    const dx = target.x - source.x;
+    const dy = target.y - source.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const ux = dx / length;
+    const uy = dy / length;
+    const start = {
+      id: branch.id + ":start",
+      x: source.x + ux * (source.r + 18),
+      y: source.y + uy * (source.r + 18)
+    };
+    const end = {
+      id: branch.id + ":end",
+      x: target.x - ux * (target.r + 5),
+      y: target.y - uy * (target.r + 5)
+    };
+    const curve = createAtlasConnectionCurve(start, end, {
+      seed: branch.seed, depth: 1
+    });
+    const color = PALETTE[branch.rootId] || 0x91a99b;
+    const drawTrunk = () => filaments.moveTo(curve.a.x, curve.a.y)
+      .bezierCurveTo(curve.c1.x, curve.c1.y, curve.c2.x, curve.c2.y, curve.b.x, curve.b.y);
+    const focusAlpha = selected ? (selected.id === source.id || selected.id === target.id ? 1 : 0.34) : 0.78;
+    drawTrunk().stroke({
+      color, alpha: focusAlpha * 0.13, width: curve.profile.width * 4.2, cap: "round"
+    });
+    drawTrunk().stroke({
+      color, alpha: focusAlpha * 0.62, width: curve.profile.width * 1.9, cap: "round"
+    });
+  }
+
   for (const edge of edges) {
     if ((edge.a.entity_type === "PATHWAY" || edge.b.entity_type === "PATHWAY") &&
         selected?.entity_type !== "PATHWAY") continue;
