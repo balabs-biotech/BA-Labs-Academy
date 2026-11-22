@@ -161,7 +161,10 @@ export function createAtlasGrowthModel({
       const allocatedWidth = sector.spread * occupancy;
       const angularJitter = children.length > 1
         ? (angularUnit - 0.5) * allocatedWidth * 0.18
-        : 0;
+        // A unary hierarchy chain must not collapse into a straight ray.
+        // Give each single-child generation a small deterministic drift,
+        // bounded in radians so broad inherited sectors cannot create jumps.
+        : (angularUnit - 0.5) * 2 * Math.min(0.22, allocatedWidth * 0.12);
       const angle = sector.angle + angularJitter;
       // Radial spacing responds to both fan population and actual angular
       // crowding. Narrow sectors receive a small bounded extension; the eight
