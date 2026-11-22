@@ -9,14 +9,15 @@ Il ne s'agit pas d'imposer une fractale mathématique autosimilaire stricte. Le 
 ## Règles structurelles
 
 1. Le cœur MYC porte le symbole BA Labs et reste fixé à l'origine du repère.
-2. Huit troncs morphologiques relient ce cœur aux huit départements satellites. Ils sont des primitives visuelles dédiées, jamais des relations taxonomiques ou scientifiques.
-3. Chaque département prolonge son tronc par les branches de ses sections, domaines et modules, selon la hiérarchie canonique.
-4. Chaque relation parent-enfant hiérarchique produit une branche de croissance ; les courbes et leurs épaisseurs diminuent avec la génération.
-5. Les relations transversales (parcours, complémentarités, prérequis, transferts) restent des connexions secondaires ; elles ne deviennent jamais des instructions de croissance.
-6. Les terminaisons sont les positions finales des nœuds feuilles. Elles ne sont pas ajoutées après le tracé des branches.
-7. Les secteurs sont répartis selon le poids réel des sous-arbres, avec une marge angulaire contrôlée.
-8. La croissance fractale est le mode spatial par défaut ; l'ancienne vue orbitale reste disponible comme comparaison.
-9. La génération est déterministe pour un même graphe : l'ouverture d'un niveau de profondeur ne déplace pas les générations déjà visibles.
+2. La croissance hiérarchique interne de MYCOLOGIE reste compacte autour du cœur ; elle ne doit pas créer visuellement une neuvième grande ramification.
+3. Huit troncs morphologiques relient ce cœur aux huit départements satellites. Ils sont des primitives visuelles dédiées, jamais des relations taxonomiques ou scientifiques.
+4. Chaque département prolonge son tronc par les branches de ses sections, domaines et modules, selon la hiérarchie canonique.
+5. Chaque relation parent-enfant hiérarchique produit une branche de croissance ; les courbes et leurs épaisseurs diminuent avec la génération.
+6. Les relations transversales (parcours, complémentarités, prérequis, transferts) restent des connexions secondaires ; elles ne deviennent jamais des instructions de croissance.
+7. Les terminaisons sont les positions finales des nœuds feuilles. Elles ne sont pas ajoutées après le tracé des branches.
+8. Les secteurs sont répartis selon le poids réel des sous-arbres, avec une marge angulaire contrôlée.
+9. La croissance fractale est le mode spatial par défaut ; l'ancienne vue orbitale reste disponible comme comparaison.
+10. La génération est déterministe pour un même graphe : l'ouverture d'un niveau de profondeur ne déplace pas les générations déjà visibles.
 
 ## Contrat logiciel
 
