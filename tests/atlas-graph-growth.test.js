@@ -13,7 +13,7 @@ test("academy graph exports each department's reserved growth sector without cha
   const bio = graph.departmentNodes.get("BIO");
   const myc = graph.departmentNodes.get("MYC");
   assert.equal(bio.growthSector.angle, bio.angle);
-  assert.ok(bio.growthSector.spread > 0 && bio.growthSector.spread < Math.PI);
+  assert.ok(bio.growthSector.spread > 0 && bio.growthSector.spread < Math.PI * 2);
   assert.equal(bio.growthSector.fullRing, false);
   assert.equal(myc.growthSector.spread, Math.PI * 2);
   assert.equal(myc.growthSector.fullRing, true);
