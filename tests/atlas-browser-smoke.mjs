@@ -117,7 +117,7 @@ try {
     await page.locator('[data-atlas-action="reset"]').click();
     assert.equal(await canvas.getAttribute("data-renderer"), "pixijs-webgl");
 
-    // Exercise the optional fractal-growth mode without replacing the default Atlas.
+    // Exercise explicit fractal depth changes and return to the orbital reference view.
     await page.goto(`${siteBase}?atlas-growth=1&atlas-depth=1#/atlas`, { waitUntil: "domcontentloaded" });
     await page.waitForSelector("#academy-atlas-canvas", { state: "visible", timeout: 30000 });
     await page.waitForFunction(
@@ -125,7 +125,7 @@ try {
       undefined,
       { timeout: 30000 }
     );
-    assert.match(await page.locator(".atlas-growth-preview-controls").innerText(), /APERÇU EXPÉRIMENTAL/);
+    assert.match(await page.locator(".atlas-growth-preview-controls").innerText(), /STRUCTURE FRACTALE ACTIVE/);
     const shallowCount = await page.locator("#academy-atlas-accessible button").count();
     assert.ok(shallowCount > 9 && shallowCount < 330, "Generation 1 must expose a partial hierarchy, not the full catalogue");
     assert.equal(await page.locator("#academy-atlas-canvas").getAttribute("data-renderer"), "pixijs-webgl");
@@ -140,7 +140,7 @@ try {
     const deepCount = await page.locator("#academy-atlas-accessible button").count();
     assert.ok(deepCount > shallowCount, "Each depth step must reveal only the next hierarchy generation");
 
-    await page.locator(".atlas-growth-preview-controls a").filter({ hasText: "Vue actuelle" }).click();
+    await page.locator(".atlas-growth-preview-controls a").filter({ hasText: "Vue orbitale de référence" }).click();
     await page.waitForFunction(() => new URLSearchParams(location.search).get("atlas-growth") === "0");
     await page.waitForFunction(
       () => document.querySelector("#atlas-engine-state")?.textContent.includes("Moteur actif"),
