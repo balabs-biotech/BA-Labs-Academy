@@ -51,9 +51,16 @@ function allocateSectors(children, parentSector, weights, occupancy) {
   const totalWeight = children.reduce((sum, child) => sum + weights.get(child.id), 0);
   // Occupancy creates a visible gap between sibling fans, but is not
   // compounded into the next generation's reserved sector.
-  const allocationSpread = parentSector.fullRing
+  // Terminal modules are the endpoints of a branch, not another fan
+  // generation. Pack their angular positions tightly while preserving the
+  // parent-to-terminal branch length.
+  const terminalScale = children.length > 1 &&
+    children.every((child) => !(childrenByParent.get(child.id) || []).length)
+    ? 0.62
+    : 1;
+  const allocationSpread = (parentSector.fullRing
     ? parentSector.spread
-    : parentSector.spread * occupancy;
+    : parentSector.spread * occupancy) * terminalScale;
   const start = parentSector.fullRing ? 0 : -allocationSpread / 2;
   let cursor = start;
   return children.map((child) => {
