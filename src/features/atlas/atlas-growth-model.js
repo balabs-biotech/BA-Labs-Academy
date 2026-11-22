@@ -154,7 +154,7 @@ export function createAtlasGrowthModel({
     // Preserve the compact MYCOLOGIE heart; open the eight satellite fans.
     const localOccupancy = parent.rootId === "myc" ? 0.99 : occupancy;
     const terminalFanExpansion = parent.rootId !== "myc" &&
-      (parent.level || 0) >= 1 &&
+      (parent.generation || parent.level || 0) >= 1 &&
       children.every((child) => !(childrenByParent.get(child.id) || []).length)
       ? 1.38
       : 1;
