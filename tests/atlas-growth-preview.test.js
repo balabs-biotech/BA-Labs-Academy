@@ -63,3 +63,31 @@ test("MYCOLOGIE grows as a compact central heart without shrinking the eight sat
   assert.ok(coreRadius < Math.min(...satelliteRadii) * 0.25);
   assert.equal(model.morphologyBranches.length, 8);
 });
+
+
+test("fractal growth adds bounded deterministic biological irregularity", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const first = createAtlasGrowthGraph(graph);
+  const second = createAtlasGrowthGraph(graph);
+  const firstById = new Map(first.nodes.map((node) => [node.id, node]));
+  const secondById = new Map(second.nodes.map((node) => [node.id, node]));
+
+  assert.equal(first.nodes.length, second.nodes.length);
+  for (const node of first.nodes) {
+    const repeated = secondById.get(node.id);
+    assert.ok(repeated);
+    assert.equal(node.x, repeated.x);
+    assert.equal(node.y, repeated.y);
+  }
+
+  const parent = firstById.get("department:MIC");
+  const children = first.nodes.filter((node) => node.parent === parent.id);
+  assert.ok(children.length > 1);
+  const angles = children.map((node) => node.angle).sort((a, b) => a - b);
+  assert.ok(new Set(angles).size === angles.length);
+  for (const child of children) {
+    const distance = Math.hypot(child.x - parent.x, child.y - parent.y);
+    assert.ok(distance >= 760 * 0.94 - 0.001);
+    assert.ok(distance <= 760 * 1.06 + 0.001);
+  }
+});
