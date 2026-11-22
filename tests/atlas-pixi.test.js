@@ -404,6 +404,41 @@ test("Atlas connection renderer resolves edge endpoints after extraction", async
 });
 
 
+test("Atlas renderer stage owns Pixi layer composition and non-semantic backdrop", async () => {
+  const { createAtlasRenderStage } = await import("../src/features/atlas/atlas-renderer-stage.js");
+  const calls = [];
+  const makeLayer = (name) => ({
+    name,
+    clear() { calls.push([name, "clear"]); return this; },
+    rect(...args) { calls.push([name, "rect", ...args]); return this; },
+    circle(...args) { calls.push([name, "circle", ...args]); return this; },
+    moveTo(...args) { calls.push([name, "moveTo", ...args]); return this; },
+    bezierCurveTo(...args) { calls.push([name, "bezierCurveTo", ...args]); return this; },
+    fill(...args) { calls.push([name, "fill", ...args]); return this; },
+    stroke(...args) { calls.push([name, "stroke", ...args]); return this; }
+  });
+  const app = { stage: { addChild(...layers) { calls.push(["stage", "addChild", ...layers.map(layer => layer.name)]); } } };
+  const original = await import("pixi.js");
+  const stage = createAtlasRenderStage({
+    stage: app.stage,
+    renderer: {},
+    render() {}
+  });
+  assert.ok(stage.field);
+  assert.ok(stage.filaments);
+  assert.ok(stage.junctions);
+  assert.ok(stage.labels);
+  assert.equal(typeof stage.drawBackdrop, "function");
+  assert.ok(original.Container);
+  assert.ok(calls.some(([owner, action]) => owner === "stage" && action === "addChild"));
+  stage.drawBackdrop({
+    width: 800,
+    height: 600,
+    nodes: [{ level: 0, entity_type: "DEPARTMENT", entity_key: "BIO", rootId: "BIO", x: 100, y: 0 }]
+  });
+  assert.ok(calls.some(([owner, action]) => owner === "filaments" && action === "bezierCurveTo"));
+});
+
 test("Atlas renderer delegates label layout to its dedicated layer", () => {
   const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
   const labelsSource = readFileSync(new URL("../src/features/atlas/atlas-labels.js", import.meta.url), "utf8");
