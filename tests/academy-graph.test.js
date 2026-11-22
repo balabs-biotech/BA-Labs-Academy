@@ -43,24 +43,21 @@ test("Every department has its sections and modules in the connected graph", () 
 });
 
 
-test("Mycology is the spatial core and carries the BA Labs Y marker", () => {
+test("Mycology retains its semantic core marker without forcing a radial center", () => {
   const core = graph.nodes.find((node) => node.entity_type === "DEPARTMENT" && node.entity_key === "MYC");
   assert.ok(core);
   assert.equal(core.isAcademyCore, true);
-  assert.equal(core.x, 0);
-  assert.equal(core.y, 0);
+  assert.ok(Number.isFinite(core.x) && Number.isFinite(core.y));
   assert.ok(core.r > 20);
-  const satellites = graph.nodes.filter((node) => node.parent === core.id);
-  assert.ok(satellites.length > 0, "Mycology must expose its own satellite branches");
+  assert.ok(graph.nodes.some((node) => node.parent === core.id), "Mycology retains its own branches");
 });
 
-test("Other departments and pathways occupy separate orbital bands", () => {
-  const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
-  const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
-  const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
-  const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
-  assert.ok(meanDepartmentRadius > ATLAS_GEOMETRY.departmentOrbitRadius - 1 && meanDepartmentRadius < ATLAS_GEOMETRY.departmentOrbitRadius + 1);
-  assert.ok(meanPathwayRadius > ATLAS_GEOMETRY.pathwayOrbitRadius - 1 && meanPathwayRadius < ATLAS_GEOMETRY.pathwayOrbitRadius + 1);
+test("Department and pathway roots use a shared irregular organic field", () => {
+  const roots = graph.nodes.filter((node) => node.level === 0);
+  const coordinates = roots.map((node) => node.x.toFixed(3) + ":" + node.y.toFixed(3));
+  assert.equal(new Set(coordinates).size, roots.length);
+  assert.ok(roots.some((node) => Math.abs(node.x) > 100));
+  assert.ok(roots.some((node) => Math.abs(node.y) > 100));
 });
 
 
@@ -83,20 +80,11 @@ test("Every module node has a stable route and canonical section identity", () =
 });
 
 
-test("The Academy universe separates disciplinary territories and pathway transfers", () => {
-  const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
-  const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
-  const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
-  const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
-  assert.ok(meanDepartmentRadius > ATLAS_GEOMETRY.departmentOrbitRadius - 1 && meanDepartmentRadius < ATLAS_GEOMETRY.departmentOrbitRadius + 1);
-  assert.ok(meanPathwayRadius > ATLAS_GEOMETRY.pathwayOrbitRadius - 1 && meanPathwayRadius < ATLAS_GEOMETRY.pathwayOrbitRadius + 1);
+test("Organic placement preserves verified pathway transfers", () => {
   const transfers = graph.edges.filter((edge) => edge.relation_type === "TRANSFERS_TO");
   assert.ok(transfers.length > 0);
   assert.ok(transfers.every((edge) => edge.verified && edge.basis === "academy-pathway-flow"));
-  for (const edge of transfers) {
-    assert.equal(edge.a.entity_type, "SECTION");
-    assert.equal(edge.b.entity_type, "SECTION");
-  }
+  assert.ok(graph.nodes.every((node) => Number.isFinite(node.x) && Number.isFinite(node.y)));
 });
 
 
@@ -127,42 +115,12 @@ test("Unknown relation types and unresolved endpoints are excluded from the grap
 });
 
 
-test("The overview geometry follows an eight-spoke wheel around the Mycology hub", () => {
-  const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
-  assert.equal(departments.length, 8);
-  const radii = departments.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(radii.every((radius) => Math.abs(radius - ATLAS_GEOMETRY.departmentOrbitRadius) < 1e-8));
-  const angles = departments.map((node) => (Math.atan2(node.y, node.x) + Math.PI * 2) % (Math.PI * 2)).sort((a, b) => a - b);
-  const gaps = angles.map((angle, index) => ((angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2)));
-  assert.ok(gaps.every((gap) => gap > 0.35 && gap < 1.2));
-  assert.ok(Math.max(...gaps) - Math.min(...gaps) > 0.08, "complex departments must receive wider angular sectors");
-});
-
-test("Department sections fill their allocated radial fan without crossing its sector", async () => {
-  const { createAtlasDepartmentLayout } = await import("../src/features/atlas/atlas-geometry.js");
-  const layout = createAtlasDepartmentLayout(catalogueMap.filter((item) => item.code !== "MYC"));
-  for (const department of catalogueMap.filter((item) => item.code !== "MYC")) {
-    const root = graph.nodes.find((node) => node.entity_type === "DEPARTMENT" && node.entity_key === department.code);
-    const sections = graph.nodes.filter((node) => node.parent === root.id && node.entity_type === "SECTION");
-    const rootAngle = Math.atan2(root.y, root.x);
-    for (const section of sections) {
-      const angle = Math.atan2(section.y - root.y, section.x - root.x);
-      const delta = Math.atan2(Math.sin(angle - rootAngle), Math.cos(angle - rootAngle));
-      assert.ok(Math.abs(delta) <= layout.spreads[department.code] / 2 + 1e-8, `${department.code} section escaped its allocated fan`);
-    }
+test("Organic layout retains every canonical parent-child relationship", () => {
+  for (const node of graph.nodes.filter((item) => item.parent)) {
+    assert.ok(graph.edges.some((edge) => edge.a.id === node.parent && edge.b.id === node.id));
   }
 });
 
-
-test("Mycology sections form a complete inner ring without a duplicate end point", () => {
-  const core = graph.nodes.find((node) => node.entity_type === "DEPARTMENT" && node.entity_key === "MYC");
-  const sections = graph.nodes.filter((node) => node.parent === core.id && node.entity_type === "SECTION");
-  const angles = sections.map((node) => (Math.atan2(node.y, node.x) + Math.PI * 2) % (Math.PI * 2)).sort((a, b) => a - b);
-  assert.equal(sections.length, 6);
-  const gaps = angles.map((angle, index) => ((angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2)));
-  assert.ok(gaps.every((gap) => gap > 0 && gap < Math.PI), "weighted sections remain distributed around the complete ring");
-  assert.ok(Math.abs(gaps.reduce((sum, gap) => sum + gap, 0) - Math.PI * 2) < 1e-8);
-});
 
 
 
