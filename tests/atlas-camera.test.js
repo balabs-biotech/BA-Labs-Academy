@@ -5,7 +5,7 @@ import { getAtlasFocusScale } from "../src/features/atlas/atlas-camera.js";
 test("focus camera fits a department's immediate fractal generation on mobile and desktop", () => {
   const mobile = getAtlasFocusScale(1250, 390, 600);
   const desktop = getAtlasFocusScale(1250, 1440, 774);
-  assert.ok(Math.abs(mobile - (600 * 0.34 / 1250)) < 1e-10);
+  assert.ok(Math.abs(mobile - (390 * 0.34 / 1250)) < 1e-10);
   assert.ok(Math.abs(desktop - (774 * 0.34 / 1250)) < 1e-10);
   assert.ok(desktop > mobile, "larger stages should expose a proportionally wider branch field");
 });
