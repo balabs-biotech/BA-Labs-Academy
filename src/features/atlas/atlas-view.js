@@ -1,4 +1,5 @@
 import { createPixiRenderer } from "./pixi-renderer.js";
+import { createAtlasRendererHost } from "./atlas-renderer-contract.js";
 import { createAtlasNavigation, getAtlasBreadcrumbPath } from "./atlas-navigation.js";
 import { atlasScreenPoint, fitAtlasCamera, zoomAtlasCamera, interpolateAtlasCamera } from "./atlas-camera.js";
 import { createAtlasLifecycle } from "./atlas-lifecycle.js";
@@ -116,7 +117,8 @@ export function mountAcademyAtlas(container, graph) {
   const reduced = reducedMotion();
   let renderer = null;
   const lifecycle = createAtlasLifecycle();
-  lifecycle.add(() => renderer?.destroy());
+  const rendererHost = createAtlasRendererHost({ backendFactory: createPixiRenderer, canvas });
+  lifecycle.add(() => rendererHost.dispose());
   let width = 0;
   let height = 0;
   let hasInitialFit = false;
@@ -362,12 +364,9 @@ export function mountAcademyAtlas(container, graph) {
     lifecycle.listen(window, "resize", resize, { passive: true });
   }
 
-  createPixiRenderer(canvas).then((instance) => {
-    if (lifecycle.disposed) {
-      instance.destroy();
-      return;
-    }
-    renderer = instance;
+  rendererHost.initialize().then(() => {
+    if (lifecycle.disposed) return;
+    renderer = rendererHost;
     resize();
     renderAccessible();
     updateSelection();

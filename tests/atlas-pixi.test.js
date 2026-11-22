@@ -779,3 +779,78 @@ test("Pixi renderer delegates frame drawing to its dedicated adapter", () => {
   assert.ok(!source.includes("renderAtlasNodes({"));
   assert.ok(!source.includes("renderAtlasLabels({"));
 });
+
+test("Atlas renderer host enforces the shared backend lifecycle contract", async () => {
+  const { createAtlasRendererHost } = await import("../src/features/atlas/atlas-renderer-contract.js");
+  const calls = [];
+  const backend = {
+    capabilities: { backend: "test", renderer: "2d" },
+    render(frame) { calls.push(["render", frame.id]); },
+    resize(width, height) { calls.push(["resize", width, height]); },
+    dispose() { calls.push(["dispose"]); }
+  };
+  let creations = 0;
+  const host = createAtlasRendererHost({
+    canvas: {},
+    async backendFactory() { creations += 1; return backend; }
+  });
+
+  assert.equal(host.state, "idle");
+  assert.equal(host.render({ id: 1 }), false, "frames are ignored before initialization");
+  assert.equal(host.resize(800, 600), false, "resize is ignored before initialization");
+  const first = host.initialize();
+  const second = host.initialize();
+  assert.equal(first, second, "concurrent initialization shares one promise");
+  assert.equal(await first, host);
+  assert.equal(await host.initialize(), host, "initialization is idempotent");
+  assert.equal(creations, 1);
+  assert.equal(host.state, "ready");
+  assert.deepEqual(host.capabilities, { backend: "test", renderer: "2d" });
+  assert.equal(host.render({ id: 7 }), true);
+  assert.equal(host.resize(900, 500), true);
+  assert.equal(host.dispose(), true);
+  assert.equal(host.dispose(), false, "dispose is idempotent");
+  assert.equal(host.state, "disposed");
+  assert.equal(host.capabilities, null);
+  assert.equal(host.render({ id: 8 }), false);
+  assert.deepEqual(calls, [["render", 7], ["resize", 900, 500], ["dispose"]]);
+  await assert.rejects(host.initialize(), /disposed/);
+});
+
+test("Atlas renderer host disposes a backend that resolves after host disposal", async () => {
+  const { createAtlasRendererHost } = await import("../src/features/atlas/atlas-renderer-contract.js");
+  let resolveBackend;
+  let disposed = 0;
+  const host = createAtlasRendererHost({
+    canvas: {},
+    backendFactory: () => new Promise((resolve) => { resolveBackend = resolve; })
+  });
+  const pending = host.initialize();
+  await Promise.resolve();
+  assert.equal(host.state, "initializing");
+  host.dispose();
+  resolveBackend({
+    render() {},
+    resize() {},
+    dispose() { disposed += 1; }
+  });
+  assert.equal(await pending, false);
+  assert.equal(disposed, 1, "late backend is immediately disposed");
+  assert.equal(host.state, "disposed");
+});
+
+test("Pixi backend advertises capabilities and implements the shared dispose contract", () => {
+  const source = readFileSync(new URL("../src/features/atlas/pixi-renderer.js", import.meta.url), "utf8");
+  assert.ok(source.includes("function dispose()"));
+  assert.ok(source.includes("dispose,"));
+  assert.ok(source.includes('backend: "pixijs"'));
+  assert.ok(!source.includes("return { render, resize, destroy }"));
+});
+
+test("Atlas view initializes the renderer through its backend-neutral host", () => {
+  const source = readFileSync(new URL("../src/features/atlas/atlas-view.js", import.meta.url), "utf8");
+  assert.ok(source.includes('import { createAtlasRendererHost } from "./atlas-renderer-contract.js";'));
+  assert.ok(source.includes("rendererHost.initialize()"));
+  assert.ok(source.includes("rendererHost.dispose()"));
+  assert.ok(!source.includes("instance.destroy()"));
+});

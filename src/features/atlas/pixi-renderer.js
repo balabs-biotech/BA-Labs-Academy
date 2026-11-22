@@ -57,10 +57,21 @@ export async function createPixiRenderer(canvas) {
     app.renderer.resize(width, height);
   }
 
-  function destroy() {
+  function dispose() {
     frameRenderer.reset();
     app.destroy({ removeView: false, children: true });
   }
 
-  return { render, resize, destroy };
+  return {
+    render,
+    resize,
+    dispose,
+    capabilities: Object.freeze({
+      backend: "pixijs",
+      renderer: "webgl",
+      interactive: true,
+      supportsResize: true,
+      supportsReducedMotion: true
+    })
+  };
 }
