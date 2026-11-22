@@ -2,6 +2,9 @@ import { ATLAS_GOLDEN_RATIO, ATLAS_GEOMETRY } from "./atlas-geometry.js";
 import { atlasConnectionCurvesClearance, atlasConnectionCurvesIntersect, createAtlasConnectionCurve } from "./atlas-curve.js";
 
 const DEFAULT_OCCUPANCY = 1 - 1 / (ATLAS_GOLDEN_RATIO ** 3);
+// World-space clearance threshold used to flag visually crowded, non-crossing
+// filaments. It is diagnostic only; it never changes scientific relationships.
+const CROSS_GENERATION_CLEARANCE_THRESHOLD = 18;
 
 function descendantsWeight(nodeId, childrenByParent, memo, visiting) {
   if (memo.has(nodeId)) return memo.get(nodeId);
@@ -213,6 +216,8 @@ export function createAtlasGrowthModel({
   }
   let crossGenerationComparedPairs = 0;
   let crossGenerationCrossingCount = 0;
+  let crossGenerationNearMissCount = 0;
+  let crossGenerationMinimumClearance = Number.POSITIVE_INFINITY;
   for (let first = 0; first < allBranches.length; first += 1) {
     for (let second = first + 1; second < allBranches.length; second += 1) {
       const a = allBranches[first];
@@ -220,11 +225,25 @@ export function createAtlasGrowthModel({
       if (a.generation === b.generation || a.sourceId === b.sourceId ||
           a.targetId === b.sourceId || b.targetId === a.sourceId) continue;
       crossGenerationComparedPairs += 1;
-      if (atlasConnectionCurvesIntersect(a.curve, b.curve, {
-        steps: 16,
+      const comparisonOptions = {
+        steps: 12,
         startProgress: 0.12,
         endProgress: 0.9
-      })) crossGenerationCrossingCount += 1;
+      };
+      if (atlasConnectionCurvesIntersect(a.curve, b.curve, comparisonOptions)) {
+        crossGenerationCrossingCount += 1;
+        crossGenerationMinimumClearance = 0;
+        continue;
+      }
+      // Clearance is measured only for pairs whose sampled bounding boxes
+      // overlap or approach within the diagnostic threshold.
+      const clearance = atlasConnectionCurvesClearance(
+        a.curve, b.curve, comparisonOptions
+      );
+      crossGenerationMinimumClearance = Math.min(crossGenerationMinimumClearance, clearance);
+      if (clearance < CROSS_GENERATION_CLEARANCE_THRESHOLD) {
+        crossGenerationNearMissCount += 1;
+      }
     }
   }
   const fanDiagnostics = [...branchesByParent.entries()].map(([parentId, siblings]) => {
@@ -260,7 +279,12 @@ export function createAtlasGrowthModel({
     fanDiagnostics,
     crossGenerationDiagnostics: {
       comparedPairs: crossGenerationComparedPairs,
-      crossingCount: crossGenerationCrossingCount
+      crossingCount: crossGenerationCrossingCount,
+      nearMissCount: crossGenerationNearMissCount,
+      minimumClearance: Number.isFinite(crossGenerationMinimumClearance)
+        ? crossGenerationMinimumClearance
+        : null,
+      clearanceThreshold: CROSS_GENERATION_CLEARANCE_THRESHOLD
     },
     visibleNodes: allNodes.filter((node) => node.generation <= visibleDepth),
     visibleBranches: allBranches.filter((branch) => branch.generation <= visibleDepth),
