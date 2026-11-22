@@ -66,8 +66,8 @@ test("Other departments and pathways occupy separate orbital bands", () => {
 test("Terminal module nodes have expanded spacing and label visibility threshold", async () => {
   const { ATLAS_GEOMETRY } = await import("../src/features/atlas/atlas-geometry.js");
   assert.deepEqual(ATLAS_GEOMETRY.childDistances, { 1: 440, 2: 380 });
-  assert.equal(ATLAS_GEOMETRY.departmentPetalSpread, 0.96);
-  assert.equal(ATLAS_GEOMETRY.sectionSpread, 1.45);
+  assert.equal(ATLAS_GEOMETRY.departmentPetalSpread, 1.75);
+  assert.equal(ATLAS_GEOMETRY.sectionSpread, 2.85);
 });
 
 test("Every module node has a stable route and canonical section identity", () => {
@@ -137,7 +137,9 @@ test("The overview geometry follows an eight-spoke wheel around the Mycology hub
   assert.ok(Math.max(...gaps) - Math.min(...gaps) > 0.08, "complex departments must receive wider angular sectors");
 });
 
-test("Department sections occupy narrow radial petals instead of overlapping fans", () => {
+test("Department sections fill their allocated radial fan without crossing its sector", async () => {
+  const { createAtlasDepartmentLayout } = await import("../src/features/atlas/atlas-geometry.js");
+  const layout = createAtlasDepartmentLayout(catalogueMap.filter((item) => item.code !== "MYC"));
   for (const department of catalogueMap.filter((item) => item.code !== "MYC")) {
     const root = graph.nodes.find((node) => node.entity_type === "DEPARTMENT" && node.entity_key === department.code);
     const sections = graph.nodes.filter((node) => node.parent === root.id && node.entity_type === "SECTION");
@@ -145,7 +147,7 @@ test("Department sections occupy narrow radial petals instead of overlapping fan
     for (const section of sections) {
       const angle = Math.atan2(section.y - root.y, section.x - root.x);
       const delta = Math.atan2(Math.sin(angle - rootAngle), Math.cos(angle - rootAngle));
-      assert.ok(Math.abs(delta) <= 0.49 + 1e-8, `${department.code} section escaped its radial petal`);
+      assert.ok(Math.abs(delta) <= layout.spreads[department.code] / 2 + 1e-8, `${department.code} section escaped its allocated fan`);
     }
   }
 });

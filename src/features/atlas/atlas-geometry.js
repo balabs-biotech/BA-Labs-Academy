@@ -3,10 +3,10 @@ export const ATLAS_GEOMETRY = Object.freeze({
   pathwayOrbitRadius: 2080,
   mycologyCoreAngle: -Math.PI / 2,
   childDistances: Object.freeze({ 1: 440, 2: 380 }),
-  departmentPetalSpread: 1.35,
-  sectionSpread: 2.25,
-  minimumModuleGap: 0.58,
-  maximumModuleSpread: 4.4
+  departmentPetalSpread: 1.75,
+  sectionSpread: 2.85,
+  minimumModuleGap: 0.78,
+  maximumModuleSpread: 5.15
 });
 
 const TAU = Math.PI * 2;
@@ -40,7 +40,7 @@ export function createAtlasDepartmentLayout(departments) {
       (cursor + (entry.weight - firstWeight) / 2) * unit;
     sectorWidths[entry.code] = sectorWidth;
     // Leave a deliberate guard band between adjacent branch fans.
-    spreads[entry.code] = sectorWidth * 0.94;
+    spreads[entry.code] = sectorWidth * 0.97;
     cursor += entry.weight;
   }
 
