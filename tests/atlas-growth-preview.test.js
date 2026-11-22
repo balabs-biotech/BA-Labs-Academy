@@ -88,26 +88,16 @@ test("fractal preview remaps all eight visual trunks to its positioned root node
   }
 });
 
-test("terminal department anchors and first-generation endpoints use the expanded radial layout", () => {
+test("Academy roots use the shared irregular biological field instead of a radial orbit", () => {
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
   const model = createAtlasGrowthGraph(graph);
-  const core = model.byId.get("department:MYC");
-  const departments = [...model.departmentNodes.entries()]
-    .filter(([code]) => code !== "MYC")
-    .map(([, node]) => node);
-  assert.equal(departments.length, 8);
-  for (const department of departments) {
-    const radius = Math.hypot(department.x - core.x, department.y - core.y);
-    assert.ok(Math.abs(radius - ATLAS_GEOMETRY.departmentOrbitRadius) < 1e-6);
-    const firstGeneration = model.nodes.filter((node) =>
-      node.parent === department.id && node.generation === 1
-    );
-    for (const endpoint of firstGeneration) {
-      const distance = Math.hypot(endpoint.x - department.x, endpoint.y - department.y);
-      assert.ok(distance >= ATLAS_GEOMETRY.childDistances[1] * 0.94 - 0.001);
-      assert.ok(distance <= ATLAS_GEOMETRY.childDistances[1] * 1.06 + 0.001);
-    }
-  }
+  const roots = model.nodes.filter((node) => node.level === 0 && node.entity_type !== "PATHWAY");
+  assert.equal(roots.length, 9);
+  const centroid = roots.reduce((sum, node) => ({ x: sum.x + node.x / roots.length, y: sum.y + node.y / roots.length }), { x: 0, y: 0 });
+  const radii = roots.map((node) => Math.hypot(node.x - centroid.x, node.y - centroid.y));
+  assert.ok(Math.max(...radii) - Math.min(...radii) > 100);
+  assert.ok(roots.some((node) => Math.abs(node.x) > 100 && Math.abs(node.y) > 100));
+  assert.equal(model.byId.get("department:MYC").entity_key, "MYC");
 });
 
 test("global branch expansion propagates through every recursive generation", () => {
@@ -129,7 +119,7 @@ test("global branch expansion propagates through every recursive generation", ()
   assert.equal(ATLAS_GEOMETRY.branchOccupancy, 0.82);
 });
 
-test("MYCOLOGIE grows as a compact central heart without shrinking the eight satellite axes", () => {
+test("MYCOLOGIE and the eight disciplinary axes retain their identities in the organic field", () => {
   const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
   const model = createAtlasGrowthGraph(graph);
   const core = model.byId.get("department:MYC");
@@ -137,14 +127,9 @@ test("MYCOLOGIE grows as a compact central heart without shrinking the eight sat
     node.rootId === "myc" && node.id !== core.id
   );
   assert.ok(mycologyDescendants.length > 0);
-  const coreRadius = Math.max(...mycologyDescendants.map((node) =>
-    Math.hypot(node.x - core.x, node.y - core.y)
-  ));
-  const satelliteRadii = [...model.departmentNodes.entries()]
-    .filter(([code]) => code !== "MYC")
-    .map(([, node]) => Math.hypot(node.x - core.x, node.y - core.y));
-  assert.ok(coreRadius < Math.min(...satelliteRadii) * 0.5);
+  assert.equal([...model.departmentNodes.keys()].filter((code) => code !== "MYC").length, 8);
   assert.equal(model.morphologyBranches.length, 8);
+  assert.ok(Number.isFinite(core.x) && Number.isFinite(core.y));
 });
 
 
