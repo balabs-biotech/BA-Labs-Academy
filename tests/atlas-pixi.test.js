@@ -601,6 +601,34 @@ test("Atlas animation scheduler owns one frame loop and supports clean stop and 
   assert.equal(animation.start(), false);
 });
 
+test("Atlas animation stops scheduling frames when the renderer reports a settled scene", async () => {
+  const { createAtlasAnimation } = await import("../src/features/atlas/atlas-animation.js");
+  const callbacks = new Map();
+  const canceled = [];
+  let nextId = 0;
+  let frames = 0;
+  let continueFrames = true;
+  const animation = createAtlasAnimation({
+    requestFrame(callback) { const id = ++nextId; callbacks.set(id, callback); return id; },
+    cancelFrame(id) { canceled.push(id); callbacks.delete(id); },
+    onFrame() { frames += 1; return continueFrames; }
+  });
+  animation.start();
+  let id = nextId;
+  callbacks.get(id)();
+  assert.equal(callbacks.size, 1, "active scenes keep their frame loop");
+  continueFrames = false;
+  id = nextId;
+  callbacks.get(id)();
+  assert.equal(frames, 2);
+  assert.equal(animation.running, false, "settled scenes stop the frame loop");
+  assert.equal(callbacks.size, 0);
+  assert.equal(animation.start(), true, "user interaction can restart a settled renderer");
+  assert.equal(callbacks.size, 1);
+  animation.dispose();
+  assert.deepEqual(canceled, [nextId]);
+});
+
 test("Atlas animation respects reduced-motion mode and releases pending frames on disposal", async () => {
   const { createAtlasAnimation } = await import("../src/features/atlas/atlas-animation.js");
   let requested = 0;

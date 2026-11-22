@@ -148,6 +148,20 @@ export function mountAcademyAtlas(container, graph) {
     });
   };
 
+  const hasVisibleAnimatedTransfers = () => edges.some((edge) => {
+    const knowledge = edge.basis === "academy-knowledge-relation";
+    if (!knowledge && edge.basis !== "academy-pathway-flow") return false;
+    if ((edge.a.entity_type === "PATHWAY" || edge.b.entity_type === "PATHWAY") &&
+        navigation.selected?.entity_type !== "PATHWAY") return false;
+    if (knowledge && relationFilter !== "all" && edge.relation_type !== relationFilter) return false;
+    const depth = Math.max(edge.a.level, edge.b.level);
+    const thresholds = [0, 0.10, 0.16, 0.24, 0.4, 0.7, 1.1];
+    const threshold = thresholds[Math.min(depth, thresholds.length - 1)];
+    let alpha = depth === 0 ? 1 : clamp((scale - threshold * 0.72) / (threshold * 0.42), 0, 1);
+    if (knowledge) alpha *= clamp((scale - 0.12) / 0.55, 0, 1);
+    return alpha > 0.2;
+  });
+
   const animation = createAtlasAnimation({
     enabled: !reduced,
     requestFrame: (callback) => requestAnimationFrame(callback),
@@ -158,9 +172,13 @@ export function mountAcademyAtlas(container, graph) {
         { scale: targetScale, offset: targetOffset },
         0.12
       );
-      scale = camera.scale;
-      offset = camera.offset;
+      const settled = Math.abs(camera.scale - targetScale) < 0.0005 &&
+        Math.abs(camera.offset.x - targetOffset.x) < 0.05 &&
+        Math.abs(camera.offset.y - targetOffset.y) < 0.05;
+      scale = settled ? targetScale : camera.scale;
+      offset = settled ? { ...targetOffset } : camera.offset;
       draw();
+      return !settled || hasVisibleAnimatedTransfers();
     }
   });
   lifecycle.add(() => animation.dispose());
@@ -216,6 +234,7 @@ export function mountAcademyAtlas(container, graph) {
     targetOffset = { x: -node.x * targetScale, y: -node.y * targetScale };
     updateSelection();
     draw();
+    animation.start();
   };
 
   const zoom = (factor, x = width / 2, y = height / 2) => {
@@ -226,6 +245,8 @@ export function mountAcademyAtlas(container, graph) {
       scale = targetScale;
       offset = { ...targetOffset };
       draw();
+    } else {
+      animation.start();
     }
   };
 
@@ -293,6 +314,8 @@ export function mountAcademyAtlas(container, graph) {
       if (reduced) {
         offset = { ...targetOffset };
         draw();
+      } else {
+        animation.start();
       }
     },
     isReducedMotion: () => reduced,
@@ -316,6 +339,7 @@ export function mountAcademyAtlas(container, graph) {
       item.setAttribute("aria-pressed", String(item === button));
     });
     draw();
+    animation.start();
   };
 
   const onControls = (event) => {
@@ -334,6 +358,8 @@ export function mountAcademyAtlas(container, graph) {
           scale = targetScale;
           offset = { ...targetOffset };
           draw();
+        } else {
+          animation.start();
         }
       }
     } else {
@@ -344,6 +370,8 @@ export function mountAcademyAtlas(container, graph) {
         scale = targetScale;
         offset = { ...targetOffset };
         draw();
+      } else {
+        animation.start();
       }
     }
   };

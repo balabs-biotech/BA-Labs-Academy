@@ -20,8 +20,13 @@ export function createAtlasAnimation({
   const tick = () => {
     frameId = null;
     if (!running || disposed) return;
-    onFrame();
-    if (running && !disposed) frameId = requestFrame(tick);
+    const shouldContinue = onFrame();
+    if (!running || disposed) return;
+    if (shouldContinue === false) {
+      stop();
+      return;
+    }
+    frameId = requestFrame(tick);
   };
 
   function stop() {
