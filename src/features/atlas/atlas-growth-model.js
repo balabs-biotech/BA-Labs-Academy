@@ -243,9 +243,9 @@ export function createAtlasGrowthModel({
       });
       collisionCandidates = findCollisionCandidates(curve, parent.id);
       collisionCandidateChecks += collisionCandidates.length;
-      collisionPossibleChecks += branches.length - branches.filter((branch) =>
-        branch.sourceId === parent.id || branch.targetId === parent.id
-      ).length;
+      collisionPossibleChecks += Math.max(0,
+        branches.length - previousSiblings.length - (parent.parent ? 1 : 0)
+      );
       let adjustmentAttempts = 0;
       let crowdingAdjustmentAttempts = 0;
       // Resolve intersections first, then reduce cross-generation near misses.
@@ -472,6 +472,7 @@ export function createAtlasGrowthGraph(graph, { visibleDepth = Number.POSITIVE_I
     domainNodes: remap(graph.domainNodes),
     sectionNodes: remap(graph.sectionNodes),
     fanDiagnostics: growthModel.fanDiagnostics,
+    collisionCandidateDiagnostics: growthModel.collisionCandidateDiagnostics,
     crossGenerationDiagnostics: growthModel.crossGenerationDiagnostics,
     growthPreview: {
       depth: visibleDepth,
