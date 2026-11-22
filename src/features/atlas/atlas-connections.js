@@ -1,3 +1,5 @@
+import { ATLAS_GOLDEN_RATIO, getAtlasGoldenConnectionProfile } from "./atlas-geometry.js";
+
 /**
  * Draws the Atlas connection layer independently from node and label rendering.
  * Hierarchy, pathway transfers, shared-pathway bridges and evidence-backed
@@ -44,14 +46,15 @@ export function renderAtlasConnections({
     // A restrained, deterministic lateral sweep gives branches a living rhythm
     // without implying relationships that are not present in the graph.
     const sharedPathway=e.basis==="academy-pathway-network";
-    const bend=Math.min(sharedPathway?150:68,len*(sharedPathway?.17:.19))*side;
-    const drift=(((seed>>>12)&255)/255-.5)*Math.min(sharedPathway?18:14,len*.035);
-    const secondaryBend=(((seed>>>20)&127)/127-.5)*Math.min(sharedPathway?24:18,len*.045);
-    const c1={x:a.x+dx*.28+nx*bend+tx*drift,y:a.y+dy*.28+ny*bend+ty*drift};
-    const c2={x:a.x+dx*.72+nx*(bend*.58-secondaryBend)-tx*drift*.45,y:a.y+dy*.72+ny*(bend*.58-secondaryBend)-ty*drift*.45};
+    const golden=getAtlasGoldenConnectionProfile(len,depth);
+    const bend=Math.min(sharedPathway?150:68,golden.bend)*side;
+    const drift=(((seed>>>12)&255)/255-.5)*Math.min(sharedPathway?18:14,bend/ATLAS_GOLDEN_RATIO);
+    const secondaryBend=(((seed>>>20)&127)/127-.5)*Math.min(sharedPathway?24:18,bend/(ATLAS_GOLDEN_RATIO**2));
+    const c1={x:a.x+dx*golden.controlPointRatio+nx*bend+tx*drift,y:a.y+dy*golden.controlPointRatio+ny*bend+ty*drift};
+    const c2={x:a.x+dx*(1-golden.controlPointRatio)+nx*(bend/ATLAS_GOLDEN_RATIO-secondaryBend)-tx*drift/ATLAS_GOLDEN_RATIO,y:a.y+dy*(1-golden.controlPointRatio)+ny*(bend/ATLAS_GOLDEN_RATIO-secondaryBend)-ty*drift/ATLAS_GOLDEN_RATIO};
     const relationColors={PREREQUISITE:0x80aeb8,COMPLEMENTARY:0xa9a0d4,METHOD_TRANSFER:0xe8c99d,TECHNICAL_DEPENDENCY:0xc88773,APPLIED_IN:0x79a991,INTERDISCIPLINARY:0x7eaaa3};
     const color=PALETTE[e.a.rootId]||0x91a99b;
-    const widthBase=sharedPathway?1.25:knowledge?1.35:e.basis==="academy-pathway-flow"?1.05:e.verified?1.2:e.cross?.55:Math.max(.45,(e.depth===1?1.5:e.depth===2?1.15:.85));
+    const widthBase=(sharedPathway?1.25:knowledge?1.35:e.basis==="academy-pathway-flow"?1.05:golden.width)*(e.cross?1/ATLAS_GOLDEN_RATIO:1);
     const path=()=>filaments.moveTo(a.x,a.y).bezierCurveTo(c1.x,c1.y,c2.x,c2.y,b.x,b.y);
     if((!e.cross&&depth<=2&&len>34)||sharedPathway){
       path().stroke({color,alpha:alpha*(sharedPathway?.08:.105),width:widthBase*(sharedPathway?2.6:3.0),cap:"round"});
