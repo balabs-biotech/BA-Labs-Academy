@@ -65,3 +65,8 @@ Les diagnostics sont des informations de qualité géométrique. Ils ne modifien
 - Les croisements et distances sont testés sur des courbes synthétiques.
 - Les entrées avec identifiants absents, non textuels ou dupliqués sont rejetées.
 - Le renderer PixiJS doit rester fonctionnel sur desktop et mobile.
+
+
+## Global spatial expansion
+
+The default fractal layout uses a 1,250-world-unit first-generation branch length and a 0.9 angular occupancy. The 1,250-unit base is propagated recursively with the golden-ratio length progression, so every generation receives the larger spatial scale rather than expanding only the first visible endpoints. The higher occupancy uses more of each allocated angular sector, widening branch fans throughout the hierarchy. The Pixi stage provides a taller overview area; camera navigation remains responsible for inspecting dense local subtrees.
