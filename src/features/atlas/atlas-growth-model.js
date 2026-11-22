@@ -158,7 +158,12 @@ export function createAtlasGrowthModel({
     );
     // Give every recursive fan a deliberate angular guard band; terminal
     // fans receive a stronger expansion so neighboring endpoints do not merge.
-    const terminalFanExpansion = isTerminalFan ? 2.55 : children.length > 1 ? 1.22 : 1;
+    const parentGeneration = Number.isFinite(parent.level)
+      ? parent.level
+      : Number.isFinite(parent.generation) ? parent.generation : 0;
+    const terminalFanExpansion = isTerminalFan
+      ? 2.55
+      : children.length > 1 && parentGeneration >= 1 ? 1.22 : 1;
     const sectors = allocateSectors(
       children, parentSector, weights, localOccupancy, terminalFanExpansion
     );
