@@ -212,3 +212,20 @@ test("Cross-module relations exist only when explicitly verified and evidenced",
   assert.equal(verified.length, 1);
   assert.ok(verified[0].evidence);
 });
+
+
+test("the eight radial trunks remain visual morphology, separate from academic relations", () => {
+  const branches = graph.morphologyBranches;
+  assert.equal(branches.length, 8);
+  const core = graph.departmentNodes.get("MYC");
+  const targets = new Set(branches.map((branch) => branch.targetId));
+  assert.deepEqual(targets, new Set(["department:MIC","department:BIO","department:AGR","department:BPR","department:BMT","department:PHY","department:INF","department:GEN"]));
+  for (const branch of branches) {
+    assert.equal(branch.sourceId, core.id);
+    assert.equal(branch.source, core);
+    assert.equal(branch.target, graph.byId.get(branch.targetId));
+    assert.equal(branch.visualOnly, true);
+  }
+  assert.equal(graph.edges.some((edge) => branches.some((branch) => edge.id === branch.id)), false,
+    "morphology trunks must never become academic relationship edges");
+});
