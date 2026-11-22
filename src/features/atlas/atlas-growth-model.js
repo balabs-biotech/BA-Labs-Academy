@@ -47,7 +47,7 @@ function descendantsWeight(nodeId, childrenByParent, memo, visiting) {
   return Math.max(1, weight);
 }
 
-function allocateSectors(children, parentSector, weights, occupancy) {
+function allocateSectors(children, parentSector, weights, occupancy, childrenByParent) {
   const totalWeight = children.reduce((sum, child) => sum + weights.get(child.id), 0);
   // Occupancy creates a visible gap between sibling fans, but is not
   // compounded into the next generation's reserved sector.
@@ -156,7 +156,7 @@ export function createAtlasGrowthModel({
   function grow(parent, parentSector) {
     const children = childrenByParent.get(parent.id) || [];
     if (!children.length) return;
-    const sectors = allocateSectors(children, parentSector, weights, occupancy);
+    const sectors = allocateSectors(children, parentSector, weights, occupancy, childrenByParent);
 
     children.forEach((child, index) => {
       const sector = sectors[index];
