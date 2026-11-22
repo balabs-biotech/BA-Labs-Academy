@@ -8,7 +8,7 @@ export function createAtlasPixiFrameRenderer({
   function render(frame, backendRender) {
     const plan = frameModel.prepare(frame);
     const {
-      nodes, edges, selected, scale, reduced, relationFilter = "all",
+      nodes, edges, morphologyBranches = [], selected, scale, reduced, relationFilter = "all",
       lang = "fr", time = 0, alphaFor, lineage, activeBranch, transform
     } = plan;
 
@@ -16,7 +16,7 @@ export function createAtlasPixiFrameRenderer({
     stage.junctions.clear();
 
     connections({
-      filaments: stage.filaments, junctions: stage.junctions, edges, selected,
+      filaments: stage.filaments, junctions: stage.junctions, edges, morphologyBranches, selected,
       scale, reduced, relationFilter, time, alphaFor, activeBranch
     });
     nodesLayer({
