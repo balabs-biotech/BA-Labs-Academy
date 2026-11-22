@@ -259,7 +259,7 @@ test("Atlas connection layer hides pathway roots outside pathway focus", async (
   const source = readFileSync(new URL("../src/features/atlas/atlas-connections.js", import.meta.url), "utf8");
   assert.ok(source.includes('selected?.entity_type !== "PATHWAY"'));
   assert.ok(source.includes('edge.basis === "academy-pathway-network"'));
-  assert.ok(source.includes('const sharedPathway=e.basis==="academy-pathway-network"'));
+  assert.ok(source.includes('const sharedPathway = edge.basis === "academy-pathway-network"'));
 });
 
 
