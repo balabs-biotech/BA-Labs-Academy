@@ -258,7 +258,7 @@ test("Atlas wheel renderer keeps the restrained radial motif", () => {
 test("Atlas connection layer hides pathway roots outside pathway focus", async () => {
   const source = readFileSync(new URL("../src/features/atlas/atlas-connections.js", import.meta.url), "utf8");
   assert.ok(source.includes('selected?.entity_type !== "PATHWAY"'));
-  assert.ok(source.includes('e.basis==="academy-pathway-network"'));
+  assert.ok(source.includes('edge.basis === "academy-pathway-network"'));
   assert.ok(source.includes('const sharedPathway=e.basis==="academy-pathway-network"'));
 });
 
@@ -652,5 +652,5 @@ test("Atlas connection renderer consumes the shared curve and palette contracts"
   assert.ok(source.includes('from "./atlas-curve.js"'));
   assert.ok(source.includes('from "./atlas-palette.js"'));
   assert.ok(!source.includes("const PALETTE ="));
-  assert.ok(source.includes("getAtlasConnectionCurvePoint(curve,.5)"));
+  assert.ok(source.includes("getAtlasConnectionCurvePoint(curve, 0.5)"));
 });
