@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { catalogueMap, catalogueTotals } from "../src/catalogue-map.js";
 import { cataloguePathways } from "../src/catalogue-pathways.js";
 import { buildAcademyGraph } from "../src/features/atlas/atlas-graph.js";
+import { ATLAS_GEOMETRY } from "../src/features/atlas/atlas-geometry.js";
 
 const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
 
@@ -58,14 +59,14 @@ test("Other departments and pathways occupy separate orbital bands", () => {
   const pathways = graph.nodes.filter((node) => node.entity_type === "PATHWAY");
   const meanDepartmentRadius = departments.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / departments.length;
   const meanPathwayRadius = pathways.reduce((sum, node) => sum + Math.hypot(node.x, node.y), 0) / pathways.length;
-  assert.ok(meanDepartmentRadius > 1430 && meanDepartmentRadius < 1530);
-  assert.ok(meanPathwayRadius > 2030 && meanPathwayRadius < 2130);
+  assert.ok(meanDepartmentRadius > ATLAS_GEOMETRY.departmentOrbitRadius - 1 && meanDepartmentRadius < ATLAS_GEOMETRY.departmentOrbitRadius + 1);
+  assert.ok(meanPathwayRadius > ATLAS_GEOMETRY.pathwayOrbitRadius - 1 && meanPathwayRadius < ATLAS_GEOMETRY.pathwayOrbitRadius + 1);
 });
 
 
 test("Terminal module nodes have expanded spacing and label visibility threshold", async () => {
   const { ATLAS_GEOMETRY } = await import("../src/features/atlas/atlas-geometry.js");
-  assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - 760 / ((1 + Math.sqrt(5)) / 2)) < 1e-8);
+  assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - ATLAS_GEOMETRY.childDistances[1] / ((1 + Math.sqrt(5)) / 2)) < 1e-8);
   assert.equal(ATLAS_GEOMETRY.departmentPetalSpread, 1.95);
   assert.equal(ATLAS_GEOMETRY.sectionSpread, 3.4);
 });
@@ -130,7 +131,7 @@ test("The overview geometry follows an eight-spoke wheel around the Mycology hub
   const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
   assert.equal(departments.length, 8);
   const radii = departments.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(radii.every((radius) => Math.abs(radius - 1480) < 1e-8));
+  assert.ok(radii.every((radius) => Math.abs(radius - ATLAS_GEOMETRY.departmentOrbitRadius) < 1e-8));
   const angles = departments.map((node) => (Math.atan2(node.y, node.x) + Math.PI * 2) % (Math.PI * 2)).sort((a, b) => a - b);
   const gaps = angles.map((angle, index) => ((angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2)));
   assert.ok(gaps.every((gap) => gap > 0.35 && gap < 1.2));

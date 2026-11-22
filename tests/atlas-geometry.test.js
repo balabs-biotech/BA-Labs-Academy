@@ -86,8 +86,8 @@ test("large terminal module groups receive a wider fan and greater radial separa
   }));
   const angles = points.map((point) => Math.atan2(point.y, point.x));
   assert.ok(angles[7] - angles[0] >= 5.7, "terminal modules have a substantially wider lateral spread");
-  assert.ok(Math.abs(Math.hypot(points[7].x, points[7].y) - 760 / ATLAS_GOLDEN_RATIO) < 1e-8, "terminal radius follows the golden ratio");
-  assert.ok(Math.abs(Math.hypot(points[0].x, points[0].y) - 760 / ATLAS_GOLDEN_RATIO) < 1e-8);
+  assert.ok(Math.abs(Math.hypot(points[7].x, points[7].y) - ATLAS_GEOMETRY.childDistances[2]) < 1e-8, "terminal radius follows the golden ratio");
+  assert.ok(Math.abs(Math.hypot(points[0].x, points[0].y) - ATLAS_GEOMETRY.childDistances[2]) < 1e-8);
 });
 
 test("intermediate and terminal fans use wider angular spacing", () => {
@@ -103,7 +103,7 @@ test("intermediate and terminal fans use wider angular spacing", () => {
   assert.ok(spreadOf(intermediate) >= 3.4);
   assert.ok(spreadOf(terminal) >= 4.8);
   assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - ATLAS_GEOMETRY.childDistances[1] / ATLAS_GOLDEN_RATIO) < 1e-8);
-  assert.equal(ATLAS_GEOMETRY.departmentOrbitRadius, 1480);
+  assert.equal(ATLAS_GEOMETRY.departmentOrbitRadius, 1850);
   assert.equal(ATLAS_GEOMETRY.pathwayOrbitRadius, 2080);
 });
 
@@ -133,10 +133,10 @@ test("intermediate branch levels are separated by expanded radial distances", ()
   const module = getAtlasChildPosition({
     parent: section, index: 0, count: 5, depth: 2, branchAngle: section.angle, branchSpread: 0.5
   });
-  assert.equal(Math.hypot(section.x, section.y), 760);
-  assert.ok(Math.abs(Math.hypot(module.x - section.x, module.y - section.y) - 760 / ATLAS_GOLDEN_RATIO) < 1e-8);
-  assert.equal(ATLAS_GEOMETRY.childDistances[1], 760);
-  assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - 760 / ATLAS_GOLDEN_RATIO) < 1e-8);
+  assert.equal(Math.hypot(section.x, section.y), ATLAS_GEOMETRY.childDistances[1]);
+  assert.ok(Math.abs(Math.hypot(module.x - section.x, module.y - section.y) - ATLAS_GEOMETRY.childDistances[2]) < 1e-8);
+  assert.equal(ATLAS_GEOMETRY.childDistances[1], 1250);
+  assert.ok(Math.abs(ATLAS_GEOMETRY.childDistances[2] - ATLAS_GEOMETRY.childDistances[1] / ATLAS_GOLDEN_RATIO) < 1e-8);
 });
 
 test("Atlas branch sectors use the golden ratio to preserve visible guard space", () => {
