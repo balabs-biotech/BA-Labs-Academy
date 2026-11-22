@@ -130,7 +130,7 @@ test("Unknown relation types and unresolved endpoints are excluded from the grap
 test("The overview geometry follows an eight-spoke wheel around the Mycology hub", () => {
   const departments = graph.nodes.filter((node) => node.entity_type === "DEPARTMENT" && node.entity_key !== "MYC");
   assert.equal(departments.length, 8);
-  const radii = departments.map((node) => Math.hypot(node.x, node.y / ATLAS_GEOMETRY.orbitVerticalRatio));
+  const radii = departments.map((node) => Math.hypot(node.x, node.y));
   assert.ok(radii.every((radius) => Math.abs(radius - ATLAS_GEOMETRY.departmentOrbitRadius) < 1e-8));
   const angles = departments.map((node) => (Math.atan2(node.y, node.x) + Math.PI * 2) % (Math.PI * 2)).sort((a, b) => a - b);
   const gaps = angles.map((angle, index) => ((angles[(index + 1) % angles.length] - angle + Math.PI * 2) % (Math.PI * 2)));
