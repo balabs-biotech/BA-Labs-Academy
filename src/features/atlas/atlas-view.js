@@ -33,8 +33,9 @@ export function renderAcademyAtlas(graph) {
     ? `<div class="atlas-growth-preview-controls">
         <span class="eyebrow">APERÇU EXPÉRIMENTAL · CROISSANCE ORGANIQUE</span>
         <span>Profondeur ${graph.growthPreview.depth} / ${graph.growthPreview.maxDepth} · ${graph.growthPreview.visibleNodes} nœuds visibles</span>
-        <a class="text-link" href="?atlas-growth=1&atlas-depth=1#/atlas">Génération 1</a>
-        <a class="text-link" href="?atlas-growth=1&atlas-depth=2#/atlas">Génération 2</a>
+        ${Array.from({ length: graph.growthPreview.maxDepth + 1 }, (_, depth) =>
+          `<a class="text-link" href="?atlas-growth=1&atlas-depth=${depth}#/atlas" aria-current="${depth === graph.growthPreview.depth ? "page" : "false"}">Génération ${depth}</a>`
+        ).join("")}
         <a class="text-link" href="?atlas-growth=0#/atlas">Vue actuelle</a>
       </div>`
     : `<div class="atlas-growth-preview-controls">

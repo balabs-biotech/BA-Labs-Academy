@@ -33,3 +33,15 @@ test("growth preview reveals modules at the next depth while retaining root and 
     assert.equal(expanded.y, node.y);
   }
 });
+
+import { renderAcademyAtlas } from "../src/features/atlas/atlas-view.js";
+
+test("growth preview exposes a navigation link for every available generation", () => {
+  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const preview = createAtlasGrowthGraph(graph, { visibleDepth: 1 });
+  const html = renderAcademyAtlas(preview);
+  for (let depth = 0; depth <= preview.growthPreview.maxDepth; depth += 1) {
+    assert.ok(html.includes(`atlas-depth=${depth}#/atlas`), `generation ${depth} must be reachable`);
+  }
+  assert.ok(html.includes("aria-current="));
+});
