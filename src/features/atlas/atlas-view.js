@@ -69,8 +69,8 @@ export function renderAcademyAtlas(graph) {
       <div class="atlas-stage" id="academy-atlas-stage">
         <canvas id="academy-atlas-canvas" aria-label="Réseau de connaissances interactif BA Labs Academy"></canvas>
         <div class="atlas-stage-heading">
-          <span class="eyebrow">CŒUR MYCOLOGIE · HUIT RAMIFICATIONS DISCIPLINAIRES</span>
-          <p>Le Y BA Labs structure le noyau central · Explorer les disciplines par zoom</p>
+          <span class="eyebrow">RÉSEAU VIVANT · DISCIPLINES ET PARCOURS</span>
+          <p>Les connaissances se déploient en ramifications organiques · Explorer par zoom</p>
         </div>
         <nav class="atlas-controls" aria-label="Contrôles de la carte">
           <button type="button" class="btn btn-square btn-sm" data-atlas-action="in" aria-label="Zoom avant">＋</button>
@@ -114,7 +114,7 @@ export function renderAcademyAtlas(graph) {
     <section class="page-intro atlas-page-intro">
       <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
       <h1>Atlas des connaissances</h1>
-      <p>La mycologie forme le cœur vivant de l’Atlas. Huit ramifications disciplinaires prolongent le symbole BA Labs ; leurs branches secondaires se subdivisent selon la structure réelle des connaissances.</p>
+      <p>Les disciplines, cours, modules et parcours se déploient dans un même réseau organique. Les ramifications suivent la structure pédagogique réelle ; les relations transversales restent distinctes des liens de hiérarchie.</p>
       ${growthControls}
     </section>`;
 
