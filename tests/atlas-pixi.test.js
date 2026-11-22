@@ -993,3 +993,28 @@ test("Atlas label hit-test index preserves graph order while rendering prioritiz
   assert.deepEqual(hitData.visibleNodes.map((candidate) => candidate.n.id), ["far", "near"]);
   assert.equal(hitData.visibleNodes.length, 2);
 });
+
+
+test("Atlas connection layer renders the eight morphology trunks as organic curves", async () => {
+  const { renderAtlasConnections } = await import("../src/features/atlas/atlas-connections.js");
+  const calls = [];
+  const path = {
+    bezierCurveTo(...args) { calls.push(["bezier", ...args]); return path; },
+    stroke(...args) { calls.push(["stroke", ...args]); return path; }
+  };
+  const filaments = { moveTo(...args) { calls.push(["move", ...args]); return path; } };
+  const core = { id: "core", x: 0, y: 0, r: 42 };
+  const department = { id: "department:MIC", x: 1000, y: 0, r: 13, rootId: "mic" };
+  renderAtlasConnections({
+    filaments, junctions: { circle: () => path }, edges: [],
+    morphologyBranches: [{
+      id: "morphology:MYC:MIC", sourceId: core.id, targetId: department.id,
+      source: core, target: department, visualOnly: true, seed: 17
+    }],
+    selected: null, scale: 1, reduced: true, relationFilter: "all", time: 0,
+    alphaFor: () => 1, activeBranch: new Set()
+  });
+  assert.ok(calls.some(([kind]) => kind === "move"));
+  assert.ok(calls.some(([kind]) => kind === "bezier"), "trunks must use organic cubic curves");
+  assert.ok(calls.some(([kind, style]) => kind === "stroke" && style?.width > 2));
+});
