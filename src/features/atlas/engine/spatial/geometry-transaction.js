@@ -52,6 +52,8 @@ export function createGeometryTransaction({
           throw new Error(typeof accepted === "string" ? accepted : "Geometry validation rejected candidate");
         }
 
+        if (destroyed) return { ok: false, reason: "destroyed", snapshot: snapshot() };
+
         // Commit only after the complete candidate has passed validation.
         state = candidate;
         revision += 1;
