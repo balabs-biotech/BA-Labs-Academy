@@ -73,7 +73,7 @@ try {
     assert.ok(surface.width > 0 && surface.height > 0, "PixiJS must create a real drawing surface");
     assert.ok(surface.rect.width >= surface.stage.width * 0.98, "Canvas must fill the Atlas stage width");
     assert.ok(surface.rect.height >= surface.stage.height * 0.98, "Canvas must fill the Atlas stage height");
-    assert.ok(surface.stage.width >= viewport.width - 40, "The fractal field must use nearly the full viewport width");
+    assert.ok(surface.stage.width >= viewport.width - 40, "The organic field must use nearly the full viewport width");
     assert.ok(surface.stage.y < viewport.height * 0.3, "The Atlas map must begin in the first screen, not below the introduction");
     assert.ok(surface.stage.y + surface.stage.height <= viewport.height + 24, "The initial map viewport must fit within the first screen");
     assert.ok(surface.visibleNodes >= 9, "The nine department anchors must be visible in the overview");
@@ -146,9 +146,11 @@ try {
     const deepCount = await page.locator("#academy-atlas-accessible button").count();
     assert.ok(deepCount > shallowCount, "Each depth step must reveal only the next hierarchy generation");
     // Capture the recursive organic morphology separately from the complete graph.
-    await page.screenshot({ path: `artifacts/atlas-fractal-${viewport.name}.png`, fullPage: false });
+    await page.screenshot({ path: `artifacts/atlas-organic-${viewport.name}.png`, fullPage: false });
 
-    await page.locator(".atlas-growth-preview-controls a").filter({ hasText: "Vue orbitale de référence" }).click();
+    // Return to the full organic graph through its supported URL state.
+    await page.goto(`${siteBase}?atlas-growth=0#/atlas`, { waitUntil: "domcontentloaded" });
+    await page.waitForSelector("#academy-atlas-canvas", { state: "visible", timeout: 30000 });
     await page.waitForFunction(() => new URLSearchParams(location.search).get("atlas-growth") === "0");
     await page.waitForFunction(
       () => document.querySelector("#atlas-engine-state")?.textContent.includes("Moteur actif"),
