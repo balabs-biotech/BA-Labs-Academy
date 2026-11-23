@@ -246,3 +246,45 @@ Lorsqu'un besoin nouveau apparaît :
 5. préserver l'indépendance des modules et des données canoniques.
 
 Toute évolution doit préserver l'intention fondatrice : **un organisme de connaissances à croissance fractale rhizomorphique, rayonnant depuis un noyau central, extensible en nombre d'univers et en profondeur, organique mais toujours lisible.**
+
+## 12. Registre d'implémentation V2
+
+Ce registre suit l'état réel de la branche `feat/academy-atlas-v2-foundation`. Il ne vaut pas autorisation de bascule en production.
+
+| Capacité | État | Implémentation |
+|---|---|---|
+| Topologie canonique et validation des identités | Implémenté | `engine/core/topology.js` |
+| Configuration radiale à nombre variable d'univers | Implémenté | `engine/spatial/radial-topology.js` |
+| Morphogenèse rhizomorphique déterministe | Implémenté | `engine/biology/morphogenesis.js` |
+| Enveloppes conservatives et index spatial | Implémenté | `engine/spatial/collision-index.js` |
+| Anastomoses visuelles distinctes des relations pédagogiques | Implémenté | `engine/biology/visual-anastomoses.js` |
+| Transaction géométrique avec conservation du dernier état valide | Implémenté | `engine/spatial/geometry-transaction.js` |
+| Solveur de collisions nodales borné | Implémenté | `engine/spatial/node-collision-solver.js` |
+| Scène neutre indépendante du backend | Implémenté | `engine/rendering/scene-model.js` |
+| Adaptateur PixiJS | Implémenté, smoke navigateur en validation CI | `engine/rendering/pixi-adapter.js` |
+| Supervision des erreurs runtime du renderer | Implémenté | `engine/rendering/renderer-supervisor.js` |
+| Interaction, caméra, gestes tactiles et accessibilité intégrés à V2 | À construire | Aucun branchement de production |
+| LOD et rendu progressif à grande échelle | À construire | À définir après le contrat d'interaction |
+| Baselines visuelles comparatives et QA sur appareils réels | À construire | Les captures de smoke ne constituent pas encore des baselines de référence |
+| Intégration dans l'Atlas de l'Académie | Non commencée | L'ancien Atlas reste actif |
+
+### Validation automatisée
+
+La CI dédiée doit exécuter, dans cet ordre :
+1. la suite complète de tests Node ;
+2. le benchmark du moteur historique, conservé comme point de comparaison ;
+3. le contrôle syntaxique et la génération du bundle statique ;
+4. un smoke test Chromium avec PixiJS/WebGL sur deux viewports (ordinateur et mobile) ;
+5. la conservation des captures d'écran comme artefacts de diagnostic.
+
+Le smoke test navigateur vérifie le démarrage du backend, la création d'une surface réelle, le dessin d'une scène de test contenant hiérarchie et anastomose, le redimensionnement, le second rendu et l'absence d'erreurs non interceptées. Il ne prétend pas encore valider la morphologie du catalogue complet, la qualité esthétique, les gestes tactiles, l'accessibilité ou les performances sur matériel mobile réel.
+
+### Règle de passage à l'intégration
+
+Aucune bascule ne doit être effectuée sur la seule base de tests unitaires ou d'un smoke test WebGL. L'intégration exige encore :
+- l'adaptation des données pédagogiques réelles au contrat de scène V2 ;
+- la validation des 330 nœuds et de leurs relations ;
+- la caméra, les interactions, la sélection et la navigation clavier/tactile ;
+- des captures comparatives avec critères d'espacement, lisibilité et stabilité ;
+- des essais sur matériel mobile réel et une mesure de performance ;
+- une stratégie de repli vers l'Atlas actuel pendant la phase de comparaison.
