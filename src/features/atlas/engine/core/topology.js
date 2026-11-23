@@ -82,6 +82,6 @@ export function createAtlasTopology({ nodes, edges = [] }) {
   return {
     nodes: [...nodes], edges: normalizedEdges, byId, edgeById, roots,
     childrenByParent, parentById, depthById,
-    maxDepth: Math.max(0, ...depthById.values())
+    maxDepth: depthById.size ? [...depthById.values()].reduce((maximum, depth) => Math.max(maximum, depth), 0) : 0
   };
 }
