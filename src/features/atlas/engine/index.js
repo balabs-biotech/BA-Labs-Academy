@@ -10,3 +10,4 @@ export { createAtlasRendererSupervisor } from "./rendering/renderer-supervisor.j
 export { createPixiSceneAdapter } from "./rendering/pixi-adapter.js";
 export { createAcademyAtlasV2 } from "../adapters/academy-graph-v2.js";
 export { createAtlasCameraController } from "./presentation/camera-controller.js";
+export { attachAtlasPointerInteractions } from "./presentation/pointer-interactions.js";
