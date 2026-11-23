@@ -39,8 +39,18 @@ window.runAtlasV2BrowserSmoke = async () => {
   const firstRender = supervisor.render(scene, { x: 320, y: 240, scale: 1 });
   const firstResize = supervisor.resize(960, 640);
   const secondRender = supervisor.render(scene, { x: 320, y: 240, scale: 1.1 });
+  const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
+  if (!gl) throw new Error("PixiJS did not create a WebGL context");
+  gl.finish();
+  const pixels = new Uint8Array(canvas.width * canvas.height * 4);
+  gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+  let nonTransparentPixels = 0;
+  for (let index = 3; index < pixels.length; index += 4) {
+    if (pixels[index] > 0) nonTransparentPixels += 1;
+  }
   const result = {
     state: supervisor.state,
+    nonTransparentPixels,
     renderer: canvas.dataset.renderer,
     width: canvas.width,
     height: canvas.height,
