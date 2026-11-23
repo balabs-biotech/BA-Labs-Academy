@@ -288,3 +288,18 @@ Aucune bascule ne doit être effectuée sur la seule base de tests unitaires ou 
 - des captures comparatives avec critères d'espacement, lisibilité et stabilité ;
 - des essais sur matériel mobile réel et une mesure de performance ;
 - une stratégie de repli vers l'Atlas actuel pendant la phase de comparaison.
+
+### Adaptation du catalogue réel
+
+Le premier adaptateur de composition Academy est `src/features/atlas/adapters/academy-graph-v2.js`. Il consomme le graphe canonique déjà produit par l'Académie, sans importer ni réutiliser le moteur spatial historique.
+
+La composition distingue trois familles :
+- MYC reste le noyau central ;
+- les autres départements sont les univers périphériques radiaux ;
+- les parcours transversaux occupent une orbite secondaire et restent reliés par les seules relations canoniques déclarées.
+
+Les relations transversales vérifiées possèdent une géométrie de rendu dérivée dans `relationshipPaths`, séparée des branches hiérarchiques et des anastomoses décoratives. Les anastomoses ne deviennent jamais des relations pédagogiques. Le contrat de scène conserve chaque nœud et chaque relation du graphe d'entrée ; une omission d'identifiant provoque un échec explicite au lieu de produire une carte partielle silencieuse.
+
+Le contrat de rayon utilise `r` du graphe historique comme rayon de nœud par défaut, sans reprendre ses coordonnées. Les couleurs de territoire sont dérivées des jetons de palette Academy.
+
+**Test d'intégration du modèle :** le catalogue courant doit produire 330 nœuds visibles, neuf départements (MYC + huit univers), dix ancres de parcours et conserver toutes les relations canoniques. Ce test de composition n'autorise pas encore le branchement du renderer dans l'application publiée.
