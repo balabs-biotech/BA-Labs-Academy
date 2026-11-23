@@ -3,6 +3,7 @@ function validateOptions({ maxDistance, maxLinks, maxDegree, cellSize }) {
   if (!Number.isSafeInteger(maxLinks) || maxLinks < 0) throw new RangeError("maxLinks must be a non-negative safe integer");
   if (!Number.isSafeInteger(maxDegree) || maxDegree < 1) throw new RangeError("maxDegree must be a positive safe integer");
   if (!Number.isFinite(cellSize) || cellSize <= 0) throw new RangeError("cellSize must be positive");
+  if (Math.ceil(maxDistance / cellSize) > 16) throw new RangeError("cellSize creates an excessive neighborhood search");
 }
 
 function cellKey(x, y) {
