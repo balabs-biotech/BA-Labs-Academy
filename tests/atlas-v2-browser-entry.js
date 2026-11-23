@@ -23,6 +23,9 @@ window.runAtlasV2BrowserSmoke = async () => {
       { id: "BIO", x: 150, y: -70, radius: 16, label: "Biologie", kind: "universe", color: "#55a78c" },
       { id: "bio-1", x: 280, y: -105, radius: 10, label: "Sous-domaine", kind: "knowledge", color: "#55a78c" }
     ],
+    relationshipPaths: [{ id: "canonical-link", sourceId: "MYC", targetId: "bio-1", relationType: "APPLIES_TO", visualOnly: false, curve: {
+      a: { x: 0, y: 0 }, c1: { x: 95, y: 35 }, c2: { x: 185, y: 15 }, b: { x: 280, y: -105 }
+    }}],
     paths: [
       { id: "trunk", sourceId: "MYC", targetId: "BIO", type: "universe-trunk", curve: {
         a: { x: 0, y: 0 }, c1: { x: 55, y: -15 }, c2: { x: 95, y: -55 }, b: { x: 150, y: -70 }
