@@ -1,6 +1,6 @@
 import { catalogueMap } from "../../../../catalogue-map.js";
 import { cataloguePathways } from "../../../../catalogue-pathways.js";
-import { buildAcademyGraph } from "../../atlas-graph.js";
+import { buildAcademyCatalogueGraph } from "../../adapters/academy-catalogue-graph.js";
 import { createAcademyAtlasV2 } from "../../adapters/academy-graph-v2.js";
 import { createPixiSceneAdapter } from "../rendering/pixi-adapter.js";
 import { createAtlasCameraController } from "../presentation/camera-controller.js";
@@ -20,7 +20,7 @@ function fail(error) {
 }
 
 async function start() {
-  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
   const result = createAcademyAtlasV2({
     graph,
     seed: "ba-labs-academy-v2-preview",
