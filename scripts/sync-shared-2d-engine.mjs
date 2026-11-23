@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
-const sourceCommit = "411252112de3758afb0950df3ada39815f6d6f86";
+const sourceCommit = "596ee3587d4343bba218fe45dd3a8b4f57c1ad8c";
 const sourceRepository = "balabs-biotech/BA-lab";
 const files = [
   { source: "ecosystem-core/explorer-2d-network.js", target: "src/features/atlas/shared/explorer-2d-network.js" },
