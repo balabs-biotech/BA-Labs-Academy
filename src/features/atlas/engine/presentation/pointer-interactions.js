@@ -76,9 +76,10 @@ export function attachAtlasPointerInteractions(element, camera, {
     const pointer = pointers.get(pointerId);
     if (!pointer) return;
     event.preventDefault?.();
-    pointer.last = pointFromEvent(element, event);
+    const nextPoint = pointFromEvent(element, event);
 
     if (pointers.size >= 2) {
+      pointer.last = nextPoint;
       const [first, second] = [...pointers.values()].slice(0, 2);
       const nextDistance = Math.max(1e-6, distance(first.last, second.last));
       const nextCenter = midpoint(first.last, second.last);
@@ -89,13 +90,12 @@ export function attachAtlasPointerInteractions(element, camera, {
       gesture.pinchDistance = nextDistance;
       gesture.pinchCenter = nextCenter;
     } else {
-      const dx = pointer.last.x - pointer.previousX ?? 0;
-      const dy = pointer.last.y - pointer.previousY ?? 0;
+      const dx = nextPoint.x - pointer.last.x;
+      const dy = nextPoint.y - pointer.last.y;
+      pointer.last = nextPoint;
       camera.panBy(dx, dy);
     }
 
-    pointer.previousX = pointer.last.x;
-    pointer.previousY = pointer.last.y;
     pointer.moved = pointer.moved || distance(pointer.start, pointer.last) > clickTolerance;
     emitChange();
   }
