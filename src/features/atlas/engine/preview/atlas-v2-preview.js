@@ -1,5 +1,5 @@
-import { catalogueMap } from "../../../catalogue-map.js";
-import { cataloguePathways } from "../../../catalogue-pathways.js";
+import { catalogueMap } from "../../../../catalogue-map.js";
+import { cataloguePathways } from "../../../../catalogue-pathways.js";
 import { buildAcademyGraph } from "../../atlas-graph.js";
 import { createAcademyAtlasV2 } from "../../adapters/academy-graph-v2.js";
 import { createPixiSceneAdapter } from "../rendering/pixi-adapter.js";
