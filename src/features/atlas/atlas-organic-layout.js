@@ -20,18 +20,55 @@ export function createAtlasOrganicLayout(nodes) {
       roots.push(copy);
     }
   }
+  // Academy departments often expose many sections directly under one root.
+  // Feeding all of them as siblings creates a wide fan. Add invisible spatial
+  // branch points (never Academy entities) so the shared engine grows several
+  // subordinate clusters before reaching the real sections/domains.
+  const makeSpatialClusters = (root) => {
+    const children = root.children;
+    if (children.length <= 5) return children;
+    const clusters = [];
+    const byType = new Map();
+    for (const child of children) {
+      const type = child.entity_type || "NODE";
+      if (!byType.has(type)) byType.set(type, []);
+      byType.get(type).push(child);
+    }
+    let clusterIndex = 0;
+    for (const [type, group] of byType) {
+      if (group.length <= 4) {
+        clusters.push(...group);
+        continue;
+      }
+      const clusterCount = Math.ceil(group.length / 4);
+      const chunkSize = Math.ceil(group.length / clusterCount);
+      for (let offset = 0; offset < group.length; offset += chunkSize) {
+        clusters.push({
+          id: "__academy-spatial__" + root.id + "__" + clusterIndex++,
+          title: "",
+          children: group.slice(offset, offset + chunkSize),
+          relations: [],
+          entity_type: "SPATIAL_GROUP",
+          spatialOnly: true,
+          groupType: type
+        });
+      }
+    }
+    return clusters;
+  };
   const tree = roots.map((root) => ({
     ...root,
     relations: [],
-    children: root.children
+    children: makeSpatialClusters(root)
   }));
   // Each Academy root needs its own deterministic layout seed. Pathways share the
   // semantic rootId "pathways", but must not inherit identical biological jitter.
   const rootLayoutIds = roots.map((root) => root.id);
   const layout = createVernpixiNetwork(tree, { rootLayoutIds });
-  const positioned = new Map(layout.nodes.map((node) => [node.id, node]));
+  const visibleLayoutNodes = layout.nodes.filter((node) => byId.has(node.id));
+  const positioned = new Map(visibleLayoutNodes.map((node) => [node.id, node]));
   return {
-    nodes: layout.nodes,
+    nodes: visibleLayoutNodes,
     edges: layout.edges,
     byId: positioned,
     stats: layout.stats
