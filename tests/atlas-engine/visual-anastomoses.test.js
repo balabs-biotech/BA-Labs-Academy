@@ -59,5 +59,6 @@ test("anastomoses validate limits and handle empty results", () => {
   const morphology = createRhizomorphicMorphology({ topology, radialTopology });
   assert.deepEqual(createVisualAnastomoses(morphology, { maxLinks: 0 }).links, []);
   assert.throws(() => createVisualAnastomoses(morphology, { maxDistance: 0 }), /maxDistance/);
+  assert.throws(() => createVisualAnastomoses(morphology, { cellSize: 0.001 }), /excessive neighborhood/);
   assert.throws(() => createVisualAnastomoses(null), /morphology/);
 });
