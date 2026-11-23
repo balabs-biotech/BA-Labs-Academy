@@ -303,3 +303,17 @@ Les relations transversales vérifiées possèdent une géométrie de rendu dér
 Le contrat de rayon utilise `r` du graphe historique comme rayon de nœud par défaut, sans reprendre ses coordonnées. Les couleurs de territoire sont dérivées des jetons de palette Academy.
 
 **Test d'intégration du modèle :** le catalogue courant produit 330 nœuds visibles, neuf départements (MYC + huit univers), dix ancres de parcours et conserve toutes les relations canoniques. La suite complète de la branche a passé 334 tests sur le commit validé. Ce test de composition n'autorise pas encore le branchement du renderer dans l'application publiée.
+
+### Navigation et interactions de caméra
+
+La caméra V2 est un contrôleur pur, sans dépendance DOM ni PixiJS : `engine/presentation/camera-controller.js`. Elle expose les conversions monde/écran, le cadrage, le déplacement, le zoom ancré sous le pointeur, les limites d'échelle et une contrainte de visibilité minimale.
+
+Les événements de pointeur sont isolés dans `engine/presentation/pointer-interactions.js`. Le contrat distingue explicitement :
+- glissement mono-pointeur : déplacement de caméra ;
+- pincement à deux pointeurs : zoom autour du centre du geste et translation ;
+- tap sans déplacement : sélection ;
+- `pointercancel` et perte de capture : annulation, jamais conversion en sélection ;
+- molette : zoom local au curseur ;
+- destruction : retrait des listeners, libération des captures et restauration de `touch-action`.
+
+Les tests unitaires utilisent une cible événementielle simulée pour vérifier la sémantique des gestes et le nettoyage. Le smoke WebGL précédent valide le renderer, pas encore l'interaction tactile sur un appareil physique.
