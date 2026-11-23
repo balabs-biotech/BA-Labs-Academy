@@ -5,3 +5,4 @@ export { createCurveSpatialIndex, getConservativeBezierBounds } from "./spatial/
 export { createVisualAnastomoses } from "./biology/visual-anastomoses.js";
 export { createGeometryTransaction } from "./spatial/geometry-transaction.js";
 export { createAtlasScene } from "./rendering/scene-model.js";
+export { resolveNodeOverlaps } from "./spatial/node-collision-solver.js";
