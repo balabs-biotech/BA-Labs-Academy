@@ -16,7 +16,7 @@ function fixture() {
       { id: "AGR", parent: null, title: "Agronomy" },
       { id: "agr-a", parent: "AGR" }
     ],
-    edges: [{ id: "semantic", sourceId: "bio-a", targetId: "agr-a", label: "related" }]
+    edges: [{ id: "semantic", sourceId: "bio-a", targetId: "agr-a", label: "related", cross: true }]
   });
   const radialTopology = createRadialTopology({
     core: { id: "MYC" },
@@ -33,12 +33,15 @@ test("scene model keeps canonical relationships separate from decorative paths",
   const scene = createAtlasScene({ topology, morphology, anastomoses });
   assert.equal(scene.relationships.length, 1);
   assert.equal(scene.relationships[0].type, "pedagogy");
+  assert.equal(scene.relationshipPaths.length, 1);
+  assert.equal(scene.relationshipPaths[0].visualOnly, false);
   assert.ok(scene.paths.some((path) => path.type === "hierarchy" && !path.visualOnly));
   assert.ok(scene.paths.filter((path) => path.type !== "hierarchy").every((path) => path.visualOnly));
   assert.ok(scene.paths.some((path) => path.type === "anastomosis"));
   assert.ok(scene.paths.some((path) => path.type === "universe-trunk"));
   assert.equal(scene.metrics.nodeCount, morphology.nodes.length);
   assert.equal(scene.metrics.decorativePathCount, scene.paths.filter((path) => path.visualOnly).length);
+  assert.equal(scene.metrics.semanticRelationshipPathCount, 1);
 });
 
 test("scene model is renderer-neutral, bounded and does not mutate its sources", () => {
