@@ -131,7 +131,8 @@ export function attachAtlasPointerInteractions(element, camera, {
     if (destroyed) return;
     event.preventDefault?.();
     const point = pointFromEvent(element, event);
-    const factor = Math.exp(-event.deltaY * wheelSensitivity);
+    const wheelDelta = Math.max(-2000, Math.min(2000, Number.isFinite(event.deltaY) ? event.deltaY : 0));
+    const factor = Math.exp(-wheelDelta * wheelSensitivity);
     camera.zoomAt(factor, point);
     emitChange();
   }
