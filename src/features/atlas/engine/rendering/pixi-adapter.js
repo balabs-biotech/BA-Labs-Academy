@@ -1,5 +1,3 @@
-import { Application, Container, Graphics, Text, TextStyle } from "pixi.js";
-
 function positive(value, name) {
   if (!Number.isFinite(value) || value <= 0) throw new RangeError(name + " must be positive");
 }
@@ -19,6 +17,7 @@ export async function createPixiSceneAdapter(canvas, {
   antialias = true
 } = {}) {
   if (!canvas) throw new TypeError("Pixi scene adapter requires a canvas");
+  const { Application, Container, Graphics, Text, TextStyle } = await import("pixi.js");
   positive(resolutionCap, "resolutionCap");
   if (!Number.isFinite(backgroundAlpha) || backgroundAlpha < 0 || backgroundAlpha > 1) {
     throw new RangeError("backgroundAlpha must be between 0 and 1");
