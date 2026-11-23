@@ -43,10 +43,11 @@ export async function createPixiSceneAdapter(canvas, {
   }
 
   const world = new Container();
+  const relations = new Graphics();
   const paths = new Graphics();
   const nodes = new Graphics();
   const labels = new Container();
-  world.addChild(paths, nodes, labels);
+  world.addChild(relations, paths, nodes, labels);
   app.stage.addChild(world);
   app.stage.eventMode = "none";
   if (canvas.dataset) canvas.dataset.renderer = "academy-atlas-v2-pixijs";
@@ -71,9 +72,21 @@ export async function createPixiSceneAdapter(canvas, {
     positive(scale, "camera scale");
 
     const nodeById = new Map(scene.nodes.map((node) => [node.id, node]));
+    relations.clear();
     paths.clear();
     nodes.clear();
     for (const label of labels.removeChildren()) label.destroy();
+
+    for (const relation of scene.relationshipPaths || []) {
+      const curve = relation.curve;
+      relations.moveTo(curve.a.x, curve.a.y);
+      relations.bezierCurveTo(
+        curve.c1.x, curve.c1.y,
+        curve.c2.x, curve.c2.y,
+        curve.b.x, curve.b.y
+      );
+      relations.stroke({ color: 0xa9a0d4, width: 1, alpha: 0.2 });
+    }
 
     for (const path of scene.paths) {
       const source = nodeById.get(path.sourceId);
