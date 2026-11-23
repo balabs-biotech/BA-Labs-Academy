@@ -80,7 +80,7 @@ export function createAtlasScene({
 
   const relationships = topology.edges.map((edge) => Object.freeze({
     id: edge.id, sourceId: edge.sourceId, targetId: edge.targetId,
-    type: "pedagogy", data: edge
+    type: "pedagogy", data: Object.freeze({ ...edge })
   }));
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
