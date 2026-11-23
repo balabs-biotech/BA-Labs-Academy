@@ -5,9 +5,14 @@ on:
     branches: [main]
     paths:
       - "src/features/atlas/engine/**"
+      - "src/features/atlas/adapters/**"
+      - "src/catalogue-*.js"
+      - "atlas-v2-preview.html"
+      - "scripts/build.mjs"
       - "tests/atlas-engine/**"
       - "tests/atlas-v2-browser-*.js"
       - "tests/atlas-v2-browser-*.mjs"
+      - "tests/atlas-v2-preview-smoke.mjs"
       - "package.json"
       - ".github/workflows/atlas-v2-validation.yml"
   workflow_dispatch:
@@ -37,6 +42,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Run PixiJS browser smoke on desktop and mobile viewports
         run: node tests/atlas-v2-browser-smoke.mjs
+      - name: Smoke-test standalone Academy V2 preview
+        run: node tests/atlas-v2-preview-smoke.mjs
       - name: Upload V2 browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
