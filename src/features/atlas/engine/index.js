@@ -7,3 +7,4 @@ export { createGeometryTransaction } from "./spatial/geometry-transaction.js";
 export { createAtlasScene } from "./rendering/scene-model.js";
 export { resolveNodeOverlaps } from "./spatial/node-collision-solver.js";
 export { createAtlasRendererSupervisor } from "./rendering/renderer-supervisor.js";
+export { createPixiSceneAdapter } from "./rendering/pixi-adapter.js";
