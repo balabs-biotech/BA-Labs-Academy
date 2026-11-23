@@ -68,14 +68,14 @@ export function createAtlasScene({
       sourceId: path.sourceId,
       targetId: path.targetId,
       type,
-      visualOnly: type !== "pedagogy",
+      visualOnly: Boolean(path.visualOnly) || type === "anastomosis",
       territoryId: path.territoryId ?? null,
       territoryIds: path.territoryIds ? Object.freeze([...path.territoryIds]) : null,
       curve: copyCurve(path.curve, path.id)
     }));
   };
 
-  for (const branch of morphology.branches) appendPath(branch, branch.visualOnly ? "universe-trunk" : "morphology");
+  for (const branch of morphology.branches) appendPath(branch, branch.visualOnly ? "universe-trunk" : "hierarchy");
   for (const link of anastomoses) appendPath(link, "anastomosis");
 
   const relationships = topology.edges.map((edge) => Object.freeze({
