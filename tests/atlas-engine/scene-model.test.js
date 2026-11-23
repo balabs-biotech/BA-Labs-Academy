@@ -24,7 +24,7 @@ function fixture() {
     radius: 100
   });
   const morphology = createRhizomorphicMorphology({ topology, radialTopology, branchLength: 80 });
-  const anastomoses = createVisualAnastomoses(morphology, { maxDistance: 500 });
+  const anastomoses = createVisualAnastomoses(morphology, { maxDistance: 500 }).links;
   return { topology, morphology, anastomoses };
 }
 
