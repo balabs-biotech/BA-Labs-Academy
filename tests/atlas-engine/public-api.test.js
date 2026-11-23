@@ -14,4 +14,5 @@ test("V2 public entry point exposes the first stable engine contracts", () => {
   assert.equal(typeof engine.resolveNodeOverlaps, "function");
   assert.equal(typeof engine.createAtlasRendererSupervisor, "function");
   assert.equal(typeof engine.createPixiSceneAdapter, "function");
+  assert.equal(typeof engine.createAcademyAtlasV2, "function");
 });
