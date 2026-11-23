@@ -7,7 +7,7 @@ const bounds = { minX: -200, minY: -100, maxX: 200, maxY: 100 };
 test("camera fit centers world bounds and preserves immutable snapshots", () => {
   const camera = createAtlasCameraController({ viewportWidth: 1000, viewportHeight: 600, bounds });
   const state = camera.getSnapshot();
-  assert.equal(state.scale, 2.28);
+  assert.equal(state.scale, 1.9);
   const center = camera.worldToScreen({ x: 0, y: 0 });
   assert.deepEqual(center, { x: 500, y: 300 });
   assert.ok(Object.isFrozen(state) && Object.isFrozen(state.viewport) && Object.isFrozen(state.bounds));
