@@ -317,3 +317,9 @@ Les événements de pointeur sont isolés dans `engine/presentation/pointer-inte
 - destruction : retrait des listeners, libération des captures et restauration de `touch-action`.
 
 Les tests unitaires utilisent une cible événementielle simulée pour vérifier la sémantique des gestes et le nettoyage. Le smoke WebGL précédent valide le renderer, pas encore l'interaction tactile sur un appareil physique.
+
+### Graphe canonique sans moteur spatial historique
+
+L'adaptateur `adapters/academy-catalogue-graph.js` reconstruit la topologie éditoriale depuis le catalogue Academy en laissant volontairement les coordonnées à zéro. Il ne dépend ni de `atlas-organic-layout.js`, ni de `explorer-2d-network.js`, ni de PixiJS. La morphogenèse V2 est donc l'unique autorité spatiale dans la prévisualisation V2.
+
+Le générateur historique `atlas-graph.js` reste intact pour l'Atlas actuellement publié. Les deux adaptateurs partagent le même contenu canonique, mais pas leur moteur de disposition. Un test de non-régression vérifie explicitement l'absence de dépendance spatiale historique dans le nouvel adaptateur.
