@@ -29,3 +29,16 @@ jobs:
         run: npm run benchmark:atlas
       - name: Verify source syntax and public bundle
         run: npm run build
+      - name: Install browser smoke dependencies
+        run: npm install --no-save esbuild pixi.js playwright
+      - name: Install Chromium for real WebGL smoke test
+        run: npx playwright install --with-deps chromium
+      - name: Run PixiJS browser smoke on desktop and mobile viewports
+        run: node tests/atlas-v2-browser-smoke.mjs
+      - name: Upload V2 browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-atlas-v2-browser-screenshots
+          path: artifacts/atlas-v2-*.png
+          if-no-files-found: ignore
