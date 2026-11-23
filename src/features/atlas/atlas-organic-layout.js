@@ -25,7 +25,9 @@ export function createAtlasOrganicLayout(nodes) {
     relations: [],
     children: root.children
   }));
-  const rootLayoutIds = roots.map((root) => root.rootId || root.id);
+  // Each Academy root needs its own deterministic layout seed. Pathways share the
+  // semantic rootId "pathways", but must not inherit identical biological jitter.
+  const rootLayoutIds = roots.map((root) => root.id);
   const layout = createVernpixiNetwork(tree, { rootLayoutIds });
   const positioned = new Map(layout.nodes.map((node) => [node.id, node]));
   return {
