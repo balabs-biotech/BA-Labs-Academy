@@ -1,0 +1,31 @@
+name: Validate Academy Atlas V2
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/features/atlas/engine/**"
+      - "tests/atlas-engine/**"
+      - "package.json"
+      - ".github/workflows/atlas-v2-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run complete test suite
+        run: npm test
+      - name: Benchmark current Atlas baseline
+        run: npm run benchmark:atlas
+      - name: Verify source syntax and public bundle
+        run: npm run build
