@@ -123,7 +123,7 @@ try {
     await page.locator('[data-atlas-action="reset"]').click();
     assert.equal(await canvas.getAttribute("data-renderer"), "pixijs-webgl");
 
-    // Exercise explicit fractal depth changes and return to the orbital reference view.
+    // Exercise explicit organic growth-depth changes and return to the complete graph view.
     await page.goto(`${siteBase}?atlas-growth=1&atlas-depth=1#/atlas`, { waitUntil: "domcontentloaded" });
     await page.waitForSelector("#academy-atlas-canvas", { state: "visible", timeout: 30000 });
     await page.waitForFunction(
@@ -131,7 +131,7 @@ try {
       undefined,
       { timeout: 30000 }
     );
-    assert.match(await page.locator(".atlas-growth-preview-controls").innerText(), /STRUCTURE FRACTALE ACTIVE/);
+    assert.match(await page.locator(".atlas-growth-preview-controls").innerText(), /RÉSEAU ORGANIQUE ACTIF/);
     const shallowCount = await page.locator("#academy-atlas-accessible button").count();
     assert.ok(shallowCount > 9 && shallowCount < 330, "Generation 1 must expose a partial hierarchy, not the full catalogue");
     assert.equal(await page.locator("#academy-atlas-canvas").getAttribute("data-renderer"), "pixijs-webgl");
@@ -145,7 +145,7 @@ try {
     );
     const deepCount = await page.locator("#academy-atlas-accessible button").count();
     assert.ok(deepCount > shallowCount, "Each depth step must reveal only the next hierarchy generation");
-    // Capture the actual recursive morphology separately from the orbital overview.
+    // Capture the recursive organic morphology separately from the complete graph.
     await page.screenshot({ path: `artifacts/atlas-fractal-${viewport.name}.png`, fullPage: false });
 
     await page.locator(".atlas-growth-preview-controls a").filter({ hasText: "Vue orbitale de référence" }).click();
