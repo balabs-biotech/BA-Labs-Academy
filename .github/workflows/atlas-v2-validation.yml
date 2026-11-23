@@ -6,6 +6,8 @@ on:
     paths:
       - "src/features/atlas/engine/**"
       - "tests/atlas-engine/**"
+      - "tests/atlas-v2-browser-*.js"
+      - "tests/atlas-v2-browser-*.mjs"
       - "package.json"
       - ".github/workflows/atlas-v2-validation.yml"
   workflow_dispatch:
