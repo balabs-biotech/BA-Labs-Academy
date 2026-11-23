@@ -4,6 +4,17 @@ function finitePoint(point, label) {
   }
 }
 
+function relationshipCurve(source, target) {
+  const dx = target.x - source.x;
+  const dy = target.y - source.y;
+  return Object.freeze({
+    a: Object.freeze({ x: source.x, y: source.y }),
+    c1: Object.freeze({ x: source.x + dx / 3, y: source.y + dy / 3 }),
+    c2: Object.freeze({ x: source.x + 2 * dx / 3, y: source.y + 2 * dy / 3 }),
+    b: Object.freeze({ x: target.x, y: target.y })
+  });
+}
+
 function copyCurve(curve, id) {
   const names = ["a", "c1", "c2", "b"];
   const copied = {};
@@ -39,7 +50,7 @@ export function createAtlasScene({
     if (seenNodes.has(node.id)) throw new Error("Scene contains duplicate node id: " + node.id);
     seenNodes.add(node.id);
     finitePoint(node, "Scene node " + node.id);
-    const radius = node.radius === undefined ? defaultNodeRadius : node.radius;
+    const radius = node.radius ?? node.r ?? defaultNodeRadius;
     if (!Number.isFinite(radius) || radius <= 0) throw new RangeError("Scene node radius must be positive: " + node.id);
     return Object.freeze({
       id: node.id,
@@ -78,10 +89,30 @@ export function createAtlasScene({
   for (const branch of morphology.branches) appendPath(branch, branch.visualOnly ? "universe-trunk" : "hierarchy");
   for (const link of anastomoses) appendPath(link, "anastomosis");
 
-  const relationships = topology.edges.map((edge) => Object.freeze({
-    id: edge.id, sourceId: edge.sourceId, targetId: edge.targetId,
-    type: "pedagogy", data: Object.freeze({ ...edge })
-  }));
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const relationships = topology.edges.map((edge) => {
+    if (!seenNodes.has(edge.sourceId) || !seenNodes.has(edge.targetId)) {
+      throw new Error("Canonical relationship references a node absent from the scene: " + edge.id);
+    }
+    const { a, b, ...metadata } = edge;
+    return Object.freeze({
+      id: edge.id, sourceId: edge.sourceId, targetId: edge.targetId,
+      type: "pedagogy", data: Object.freeze({ ...metadata })
+    });
+  });
+  const relationshipPaths = topology.edges.filter((edge) => edge.cross === true).map((edge) => {
+    const source = nodeById.get(edge.sourceId);
+    const target = nodeById.get(edge.targetId);
+    return Object.freeze({
+      id: "relationship-path:" + edge.id,
+      sourceId: edge.sourceId,
+      targetId: edge.targetId,
+      relationType: edge.relation_type || "RELATED",
+      directed: Boolean(edge.directed),
+      visualOnly: false,
+      curve: relationshipCurve(source, target)
+    });
+  });
 
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   for (const node of nodes) {
@@ -98,19 +129,29 @@ export function createAtlasScene({
       maxY = Math.max(maxY, point.y);
     }
   }
+  for (const path of relationshipPaths) {
+    for (const point of Object.values(path.curve)) {
+      minX = Math.min(minX, point.x);
+      minY = Math.min(minY, point.y);
+      maxX = Math.max(maxX, point.x);
+      maxY = Math.max(maxY, point.y);
+    }
+  }
   const bounds = nodes.length ? Object.freeze({ minX, minY, maxX, maxY }) : null;
 
   return Object.freeze({
     version: 1,
     nodes: Object.freeze(nodes),
     relationships: Object.freeze(relationships),
+    relationshipPaths: Object.freeze(relationshipPaths),
     paths: Object.freeze(paths),
     bounds,
     metrics: Object.freeze({
       nodeCount: nodes.length,
       relationshipCount: relationships.length,
       pathCount: paths.length,
-      decorativePathCount: paths.filter((path) => path.visualOnly).length
+      decorativePathCount: paths.filter((path) => path.visualOnly).length,
+      semanticRelationshipPathCount: relationshipPaths.length
     })
   });
 }
