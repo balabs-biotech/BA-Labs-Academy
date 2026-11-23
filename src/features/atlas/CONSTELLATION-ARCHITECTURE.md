@@ -277,7 +277,7 @@ La CI dédiée doit exécuter, dans cet ordre :
 4. un smoke test Chromium avec PixiJS/WebGL sur deux viewports (ordinateur et mobile) ;
 5. la conservation des captures d'écran comme artefacts de diagnostic.
 
-Le smoke test navigateur vérifie le démarrage du backend, la création d'une surface réelle, le dessin d'une scène de test contenant hiérarchie et anastomose, le redimensionnement, le second rendu et l'absence d'erreurs non interceptées. Il ne prétend pas encore valider la morphologie du catalogue complet, la qualité esthétique, les gestes tactiles, l'accessibilité ou les performances sur matériel mobile réel.
+Le smoke test navigateur vérifie le démarrage du backend, la création d'une surface réelle, le dessin d'une scène de test contenant hiérarchie, relation transversale canonique et anastomose, la lecture de pixels WebGL non transparents, le redimensionnement, le second rendu et l'absence d'erreurs non interceptées. Il ne prétend pas encore valider la morphologie du catalogue complet, la qualité esthétique, les gestes tactiles, l'accessibilité ou les performances sur matériel mobile réel.
 
 ### Règle de passage à l'intégration
 
@@ -302,4 +302,4 @@ Les relations transversales vérifiées possèdent une géométrie de rendu dér
 
 Le contrat de rayon utilise `r` du graphe historique comme rayon de nœud par défaut, sans reprendre ses coordonnées. Les couleurs de territoire sont dérivées des jetons de palette Academy.
 
-**Test d'intégration du modèle :** le catalogue courant doit produire 330 nœuds visibles, neuf départements (MYC + huit univers), dix ancres de parcours et conserver toutes les relations canoniques. Ce test de composition n'autorise pas encore le branchement du renderer dans l'application publiée.
+**Test d'intégration du modèle :** le catalogue courant produit 330 nœuds visibles, neuf départements (MYC + huit univers), dix ancres de parcours et conserve toutes les relations canoniques. La suite complète de la branche a passé 334 tests sur le commit validé. Ce test de composition n'autorise pas encore le branchement du renderer dans l'application publiée.
