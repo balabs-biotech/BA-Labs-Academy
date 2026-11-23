@@ -64,7 +64,19 @@ export function createAtlasOrganicLayout(nodes) {
   // Each Academy root needs its own deterministic layout seed. Pathways share the
   // semantic rootId "pathways", but must not inherit identical biological jitter.
   const rootLayoutIds = roots.map((root) => root.id);
-  const layout = createVernpixiNetwork(tree, { rootLayoutIds });
+  // Academy has 19 roots (9 departments + 10 pathways), unlike the site's
+  // eight universes. Use an irregular cellular field instead of recycling anchors.
+  const rootAnchors = [
+    [-1.18, -0.92], [-0.55, -1.12], [0.12, -0.98], [0.78, -1.08], [1.28, -0.72],
+    [-1.35, -0.22], [-0.72, -0.35], [-0.05, -0.28], [0.62, -0.30], [1.30, -0.10],
+    [-1.25, 0.48], [-0.60, 0.62], [0.08, 0.52], [0.76, 0.60], [1.34, 0.74],
+    [-0.95, 1.15], [-0.25, 1.28], [0.48, 1.18], [1.15, 1.28]
+  ];
+  const layout = createVernpixiNetwork(tree, {
+    rootLayoutIds,
+    rootAnchors,
+    rootTerritoryMass: 16
+  });
   const visibleLayoutNodes = layout.nodes.filter((node) => byId.has(node.id));
   const positioned = new Map(visibleLayoutNodes.map((node) => [node.id, node]));
   return {
