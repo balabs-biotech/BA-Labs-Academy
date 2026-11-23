@@ -41,7 +41,11 @@ try {
     { name: "desktop", width: 1440, height: 900 },
     { name: "mobile", width: 390, height: 844 }
   ]) {
-    const page = await browser.newPage({ viewport: { width: viewport.width, height: viewport.height } });
+    const page = await browser.newPage({
+      viewport: { width: viewport.width, height: viewport.height },
+      isMobile: viewport.name === "mobile",
+      hasTouch: viewport.name === "mobile"
+    });
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     page.on("console", (message) => {
@@ -52,6 +56,7 @@ try {
     assert.equal(result.state, "ready", viewport.name + ": supervisor must reach ready state");
     assert.equal(result.renderer, "academy-atlas-v2-pixijs");
     assert.ok(result.width > 0 && result.height > 0, viewport.name + ": PixiJS must allocate a drawing surface");
+    assert.ok(result.nonTransparentPixels > 100, viewport.name + ": PixiJS must draw visible WebGL pixels");
     assert.equal(result.firstRender, true);
     assert.equal(result.firstResize, true);
     assert.equal(result.secondRender, true);
