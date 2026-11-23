@@ -2,11 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { catalogueMap } from "../../src/catalogue-map.js";
 import { cataloguePathways } from "../../src/catalogue-pathways.js";
-import { buildAcademyGraph } from "../../src/features/atlas/atlas-graph.js";
+import { buildAcademyCatalogueGraph } from "../../src/features/atlas/adapters/academy-catalogue-graph.js";
 import { createAcademyAtlasV2 } from "../../src/features/atlas/adapters/academy-graph-v2.js";
 
 test("V2 composition maps all canonical Academy nodes without mutating the graph", () => {
-  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
   const beforeNodes = graph.nodes.map((node) => ({ id: node.id, x: node.x, y: node.y, parent: node.parent }));
   const beforeEdges = graph.edges.map((edge) => edge.id);
   const result = createAcademyAtlasV2({
@@ -29,7 +29,7 @@ test("V2 composition maps all canonical Academy nodes without mutating the graph
 });
 
 test("MYC remains central; eight departments orbit it and ten pathways occupy the outer ring", () => {
-  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
   const result = createAcademyAtlasV2({ graph, universeRadius: 700, pathwayOrbitRadius: 1400 });
   const core = result.scene.nodes.find((node) => node.id === "department:MYC");
   assert.deepEqual([core.x, core.y], [0, 0]);
@@ -48,7 +48,7 @@ test("MYC remains central; eight departments orbit it and ten pathways occupy th
 });
 
 test("cross-disciplinary visual paths are derived only from canonical cross edges", () => {
-  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
   const result = createAcademyAtlasV2({ graph });
   const expected = graph.edges.filter((edge) => edge.cross === true);
   assert.equal(result.scene.relationshipPaths.length, expected.length);
@@ -59,8 +59,19 @@ test("cross-disciplinary visual paths are derived only from canonical cross edge
 });
 
 test("V2 composition rejects missing core and unsupported disconnected roots", () => {
-  const graph = buildAcademyGraph(catalogueMap, [], cataloguePathways);
+  const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
   const noCore = { ...graph, nodes: graph.nodes.filter((node) => node.id !== "department:MYC") };
   assert.throws(() => createAcademyAtlasV2({ graph: noCore }), /Missing Atlas parent|unknown source|MYC core/);
   assert.throws(() => createAcademyAtlasV2({ graph, universeRadius: 100, pathwayOrbitRadius: 100 }), /greater than universeRadius/);
+});
+
+test("V2 catalogue adapter is spatially neutral and does not depend on the legacy layout", async () => {
+  const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
+  assert.ok(graph.nodes.every((node) => node.x === 0 && node.y === 0));
+  const result = createAcademyAtlasV2({ graph, seed: "neutral-catalogue-graph" });
+  assert.ok(result.scene.nodes.some((node) => Math.hypot(node.x, node.y) > 1));
+  const source = await import("node:fs/promises").then((fs) =>
+    fs.readFile(new URL("../../src/features/atlas/adapters/academy-catalogue-graph.js", import.meta.url), "utf8")
+  );
+  assert.doesNotMatch(source, /atlas-organic-layout|explorer-2d-network|pixi-renderer/i);
 });
