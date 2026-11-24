@@ -199,7 +199,7 @@ export function createRhizomorphicMorphology({
     if (topology.parentById.has(nodeId)) throw new Error("Mycelial territory must map to a hierarchy root: " + nodeId);
     if (positioned.has(nodeId)) throw new Error("Morphogenesis node belongs to multiple territories: " + nodeId);
     const node = {
-      ...record, x: territory.x, y: territory.y, angle: null,
+      ...record, x: territory.x, y: territory.y, angle: territory.angle,
       generation: 1, territoryId: territory.id, universeColor: territory.color
     };
     positioned.set(node.id, node);
