@@ -12,8 +12,8 @@ test("V2 composition maps all canonical Academy nodes without mutating the graph
   const result = createAcademyAtlasV2({
     graph,
     seed: "academy-catalogue-test",
-    universeRadius: 720,
-    pathwayOrbitRadius: 1280
+    universeRadius: 1050,
+    pathwayOrbitRadius: 1650
   });
 
   assert.equal(result.metrics.canonicalNodeCount, 330);
@@ -40,7 +40,7 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
   assert.ok(departments.every((node) => node.shortLabel && node.shortLabel.length <= 3),
     "department short codes must be available for compact mobile overview labels");
   const radii = departments.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(radii.every((radius) => Math.abs(radius - 760) < 1e-6),
+  assert.ok(radii.every((radius) => Math.abs(radius - 1050) < 1e-6),
     "all eight universes must occupy one controlled radial ring");
   const angles = departments.map((node) => Math.atan2(node.y, node.x)).sort((a, b) => a - b);
   const gaps = angles.map((angle, index) => {
@@ -54,14 +54,38 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
     return Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) < 1e-6;
   }), "each department must retain its radial axis for label placement");
 
-  const trunks = result.scene.paths.filter((path) => path.type === "universe-trunk");
-  assert.equal(trunks.length, 8);
-  assert.ok(trunks.every((path) => path.sourceId === core.id),
-    "each peripheral universe must grow from the central MYC hub");
+  const stems = result.scene.paths.filter((path) => path.style === "emblem-stem");
+  const armsRight = result.scene.paths.filter((path) => path.style === "emblem-arm-right");
+  const armsLeft = result.scene.paths.filter((path) => path.style === "emblem-arm-left");
+  const spokes = result.scene.paths.filter((path) => path.style === "universe-spoke");
+  assert.equal(stems.length, 1, "one central trunk must rise from the MYC nucleus");
+  assert.equal(armsRight.length, 4, "the right Y arm must carry four terminal universes");
+  assert.equal(armsLeft.length, 4, "the left Y arm must carry four terminal universes");
+  assert.equal(spokes.length, 8, "the two arms must divide into eight universe cords");
+  assert.ok(stems.every((path) => path.sourceId === core.id && path.targetId === null),
+    "the central trunk must emerge from the MYC nucleus");
+  assert.ok([...armsRight, ...armsLeft].every((path) => path.sourceId === null && path.targetId === null),
+    "the two continuous arms must use derived split geometry, not artificial pedagogical nodes");
+  assert.ok(spokes.every((path) => path.sourceId === null && path.targetId?.startsWith("department:")),
+    "eight terminal cords must connect the Y arms to the eight universe anchors");
+  const stemAxis = Math.atan2(stems[0].curve.c1.y, stems[0].curve.c1.x);
+  assert.ok(Math.abs(Math.atan2(Math.sin(stemAxis + Math.PI / 2), Math.cos(stemAxis + Math.PI / 2))) < 0.15,
+    "the central trunk must preserve the vertical Y orientation");
+
+  const spines = result.scene.paths.filter((path) => path.style === "primary-spine");
+  const lateralBranches = result.scene.paths.filter((path) => path.style === "lateral-hypha");
+  assert.ok(spines.length >= 8,
+    "each multi-child universe must continue as a primary hyphal spine");
+  assert.ok(lateralBranches.length >= 24,
+    "disciplinary descendants must branch laterally from the spine at staggered depths");
+  assert.ok(spines.every((path) => path.targetId === null),
+    "primary spines must use derived split geometry, not artificial canonical nodes");
+  assert.ok(lateralBranches.every((path) => path.sourceId === null && path.targetId),
+    "lateral hyphae must connect virtual branch origins to real learning nodes");
   const pathways = result.scene.nodes.filter((node) => node.id.startsWith("pathway:"));
   assert.equal(pathways.length, 10);
   const pathwayRadii = pathways.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(pathwayRadii.every((radius) => Math.abs(radius - 1320) < 1e-6),
+  assert.ok(pathwayRadii.every((radius) => Math.abs(radius - 1650) < 1e-6),
     "pathways must occupy a separate controlled outer orbit");
   assert.equal(new Set(pathways.map((node) => node.angle)).size, 10,
     "pathway orbit positions must be unique");
@@ -96,3 +120,52 @@ test("V2 catalogue adapter is spatially neutral and does not depend on the legac
   assert.doesNotMatch(source, /atlas-organic-layout|explorer-2d-network|pixi-renderer/i);
 });
 
+
+
+test("the eight Academy spokes open into a reticulate mycelial silhouette", () => {
+  const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
+  const result = createAcademyAtlasV2({ graph, seed: "open-mycelial-logo" });
+  const coreId = result.topology.roots.find((node) => node.entity_key === "MYC").id;
+  const departments = result.scene.nodes.filter((node) =>
+    node.kind === "universe" && node.id.startsWith("department:")
+  );
+
+  assert.equal(departments.length, 8);
+  assert.ok(departments.every((node) => Math.abs(Math.hypot(node.x, node.y) - 1050) < 1e-6),
+    "the eight radial universes must sit on the wider inner orbit");
+
+  for (const department of departments) {
+    const children = result.topology.childrenByParent.get(department.id) || [];
+    const angles = children.map((child) => result.morphology.byId.get(child.id).angle);
+    const offsets = angles.map((angle) => Math.atan2(
+      Math.sin(angle - department.angle), Math.cos(angle - department.angle)
+    ));
+    if (offsets.length > 1) {
+      assert.ok(Math.max(...offsets) - Math.min(...offsets)  >= 0.56,
+        "each department must use a broad radial sector, not a narrow terminal fan");
+    }
+    const trunkId = "universe-spoke:" + department.id;
+    const lateralHyphae = result.morphology.hyphae.filter((hypha) =>
+      hypha.id.startsWith("hypha:" + trunkId + ":")
+    );
+    assert.ok(lateralHyphae.length >= 4,
+      "each primary spoke must grow lateral hyphae along its length");
+  }
+
+  assert.equal(result.anastomoses.links.length, 4,
+    "the logo uses four deliberate secondary bridges, not a closed polygon ring");
+  assert.ok(result.anastomoses.links.every((link) => link.territoryIds.length === 2),
+    "decorative anastomoses must connect distinct radial universes");
+
+  const staggeredTerritories = departments.filter((department) => {
+    const children = result.topology.childrenByParent.get(department.id) || [];
+    const radii = children.map((child) => {
+      const node = result.morphology.byId.get(child.id);
+      return Math.hypot(node.x, node.y);
+    });
+    return radii.length >= 3 && Math.max(...radii) - Math.min(...radii) >= 90;
+  });
+  assert.ok(staggeredTerritories.length >= 6,
+    "branches must advance at staggered radial depths instead of ending on one fan-shaped arc");
+
+});

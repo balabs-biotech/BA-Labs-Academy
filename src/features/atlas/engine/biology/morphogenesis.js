@@ -51,7 +51,7 @@ function allocateSectors(children, centerAngle, spread, weights, {
     const start = baseStart + cursor;
     const end = start + width;
     const center = start + width / 2;
-    const jitter = (stableUnit(seed + "|" + child.id) - 0.5) * width * 0.22;
+    const jitter = (stableUnit(seed + "|" + child.id) - 0.5) * width * 0.72;
     const angle = Math.max(start + width * 0.1, Math.min(end - width * 0.1, center + jitter));
     cursor += width + effectiveGap;
     return {
@@ -102,7 +102,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     const dy = branch.target.y - branch.source.y;
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
-    const desired = branch.generation <= 3 ? 2 : stableUnit(seed + "|density|" + branch.id) > 0.62 ? 1 : 0;
+    const desired = branch.style === "emblem-stem" ? 5 : branch.style?.startsWith("emblem-arm-") ? 4 : branch.style === "universe-spoke" ? 4 : branch.style === "primary-spine" ? 3 : branch.style === "lateral-hypha" ? 1 : branch.generation <= 3 ? 3 : stableUnit(seed + "|density|" + branch.id) > 0.55 ? 2 : 1;
     const normal = { x: -dy / length, y: dx / length };
     const tangent = { x: dx / length, y: dy / length };
     for (let index = 0; index < desired && hyphae.length < limit; index += 1) {
@@ -122,7 +122,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       hyphae.push({
         id, territoryId: branch.territoryId, color,
         style: "secondary-hypha",
-        width: 0.65 + stableUnit(localSeed + "|width") * 0.35,
+        width: 0.9 + stableUnit(localSeed + "|width") * 0.5,
         curve: createCurve(origin, endpoint, localSeed, 0.28)
       });
     }
@@ -180,14 +180,19 @@ export function createRhizomorphicMorphology({
   const core = { ...coreRecord, x: spatialTopology.core.x, y: spatialTopology.core.y, angle: null, generation: 1, territoryId: coreId };
   positioned.set(coreId, core);
 
-  const addBranch = (source, target, { id, territoryId, generation, visualOnly = false }) => {
+  const addBranch = (source, target, {
+    id, territoryId, generation, visualOnly = false, style = null,
+    sourceId, targetId, width = null, curve = null
+  }) => {
     branches.push({
-      id, sourceId: source.id, targetId: target.id, source, target,
-      territoryId, generation, visualOnly,
-      style: visualOnly ? "universe-trunk" : generation <= 2 ? "rhizomorph" : "primary-hypha",
-      width: visualOnly ? 5 : Math.max(1.1, 4.2 / Math.sqrt(generation)),
+      id,
+      sourceId: sourceId === undefined ? source.id : sourceId,
+      targetId: targetId === undefined ? target.id : targetId,
+      source, target, territoryId, generation, visualOnly,
+      style: style || (visualOnly ? "universe-trunk" : generation <= 2 ? "rhizomorph" : "primary-hypha"),
+      width: width ?? (visualOnly ? 6.5 : Math.max(1.2, 4.4 / Math.sqrt(generation))),
       seed: hashString(seed + "|" + id),
-      curve: createCurve(source, target, seed + "|" + id, curveBend)
+      curve: curve || createCurve(source, target, seed + "|" + id, curveBend)
     });
   };
 
@@ -207,18 +212,100 @@ export function createRhizomorphicMorphology({
     roots.push(node);
   }
 
-  // Radial architecture: MYC is the single biological core. Each peripheral
-  // department grows from its own spoke and expands outward along that spoke.
-  // MYC's own taxonomy occupies a complete inner ring around the central node.
-  for (const territory of spatialTopology.territories) {
-    const target = positioned.get(territory.nodeId || territory.id);
-    addBranch(core, target, {
-      id: "trunk:" + core.id + ":" + target.id,
-      territoryId: target.territoryId,
-      generation: 1,
-      visualOnly: true
+  // Emblem architecture: one central trunk rises from MYC and divides into
+  // two continuous arms. Each arm follows a curved arc and emits four terminal
+  // cords toward the eight universes distributed around the radial wheel.
+  // All split points are derived geometry; none becomes a pedagogical node.
+  const splitAngle = -Math.PI / 2;
+  const splitRadius = Math.min(420, coreBranchLength * 2.3);
+  const splitPoint = {
+    id: "emblem-split",
+    canonicalId: null,
+    x: core.x + Math.cos(splitAngle) * splitRadius,
+    y: core.y + Math.sin(splitAngle) * splitRadius,
+    angle: splitAngle,
+    generation: 1,
+    territoryId: coreId
+  };
+  addBranch(core, splitPoint, {
+    id: "emblem-stem",
+    territoryId: coreId,
+    generation: 1,
+    visualOnly: true,
+    style: "emblem-stem",
+    sourceId: core.id,
+    targetId: null,
+    width: 10,
+    curve: createCurve(core, splitPoint, seed + "|emblem-stem", curveBend * 0.2)
+  });
+
+  const signedDelta = (angle) => Math.atan2(
+    Math.sin(angle - splitAngle), Math.cos(angle - splitAngle)
+  );
+  const armBoundaryEpsilon = 1e-8;
+  const rightArm = spatialTopology.territories
+    .filter((territory) => {
+      const delta = signedDelta(territory.angle);
+      return delta >= -armBoundaryEpsilon && delta < Math.PI - armBoundaryEpsilon;
+    })
+    .sort((a, b) => signedDelta(a.angle) - signedDelta(b.angle));
+  const leftArm = spatialTopology.territories
+    .filter((territory) => {
+      const delta = signedDelta(territory.angle);
+      return delta < -armBoundaryEpsilon || delta >= Math.PI - armBoundaryEpsilon;
+    })
+    .sort((a, b) => Math.abs(signedDelta(a.angle)) - Math.abs(signedDelta(b.angle)));
+
+  const growEmblemArm = (territories, side) => {
+    let previousPoint = splitPoint;
+    territories.forEach((territory, index) => {
+      const target = positioned.get(territory.nodeId || territory.id);
+      const delta = signedDelta(territory.angle);
+      const branchAngle = splitAngle + delta * 0.66;
+      const targetRadius = Math.hypot(target.x - core.x, target.y - core.y);
+      const branchRadius = splitRadius + (targetRadius - splitRadius) * 0.56;
+      const branchPoint = {
+        id: "emblem-arm-point:" + side + ":" + index,
+        canonicalId: null,
+        x: core.x + Math.cos(branchAngle) * branchRadius,
+        y: core.y + Math.sin(branchAngle) * branchRadius,
+        angle: branchAngle,
+        generation: 1,
+        territoryId: target.territoryId
+      };
+      addBranch(previousPoint, branchPoint, {
+        id: "emblem-arm-" + side + ":" + index,
+        territoryId: target.territoryId,
+        generation: 1,
+        visualOnly: true,
+        style: "emblem-arm-" + side,
+        sourceId: null,
+        targetId: null,
+        width: 7.5,
+        curve: createCurve(previousPoint, branchPoint,
+          seed + "|emblem-arm|" + side + "|" + index, curveBend * 1.2)
+      });
+      addBranch(branchPoint, target, {
+        id: "universe-spoke:" + target.id,
+        territoryId: target.territoryId,
+        generation: 1,
+        visualOnly: true,
+        style: "universe-spoke",
+        sourceId: null,
+        targetId: target.id,
+        width: 5.5,
+        curve: createCurve(branchPoint, target,
+          seed + "|universe-spoke|" + target.id, curveBend * 1.15)
+      });
+      previousPoint = branchPoint;
     });
-  }
+  };
+
+  growEmblemArm(rightArm, "right");
+  growEmblemArm(leftArm, "left");
+
+  // MYC's own taxonomy occupies a compact complete inner ring around the
+  // central nucleus; the outer Y arms carry four universes each.
 
   for (const root of roots) {
     const isCore = root.id === coreId;
@@ -242,15 +329,44 @@ export function createRhizomorphicMorphology({
       fullRing: current.node.id === coreId,
       seed: seed + "|" + current.node.id + "|fan", minimumAngularGap
     });
+    const generation = current.generation + 1;
+    const nominalLength = current.node.id === coreId
+      ? coreBranchLength
+      : branchLength / (GOLDEN_RATIO ** Math.max(0, generation - 2));
+    const growsAlongSpine = current.node.id !== coreId && children.length > 1;
+    if (growsAlongSpine) {
+      const spineLength = nominalLength * 0.88;
+      const spineEnd = {
+        id: "spine-end:" + current.node.id,
+        canonicalId: null,
+        x: current.node.x + Math.cos(current.angle) * spineLength,
+        y: current.node.y + Math.sin(current.angle) * spineLength,
+        angle: current.angle,
+        territoryId: current.territoryId
+      };
+      addBranch(current.node, spineEnd, {
+        id: "spine:" + current.node.id,
+        territoryId: current.territoryId,
+        generation: current.generation,
+        visualOnly: true,
+        style: "primary-spine",
+        sourceId: current.node.id,
+        targetId: null,
+        width: Math.max(3.2, 5.2 / Math.sqrt(current.generation)),
+        curve: createCurve(current.node, spineEnd, seed + "|spine|" + current.node.id, curveBend * 0.75)
+      });
+    }
     children.forEach((child, index) => {
       if (positioned.has(child.id)) throw new Error("Morphogenesis encountered a node more than once: " + child.id);
-      const generation = current.generation + 1;
       const { angle, sector } = sectors[index];
-      const nominalLength = current.node.id === coreId
-        ? coreBranchLength
-        : branchLength / (GOLDEN_RATIO ** Math.max(0, generation - 2));
       const lengthUnit = stableUnit(seed + "|length|" + current.node.id + "|" + child.id);
-      const distance = Math.max(minimumBranchLength, nominalLength * (1 - lengthVariation + 2 * lengthVariation * lengthUnit));
+      // Siblings do not terminate on one shared circular arc: side branches
+      // emerge at staggered radial depths while the stronger subtrees can
+      // continue farther into the territory, like an exploring mycelium.
+      const radialProgress = children.length <= 1 ? 0.82 : index / (children.length - 1);
+      const radialJitter = (stableUnit(seed + "|radial-depth|" + child.id) - 0.5) * 0.22;
+      const radialFactor = current.node.id === coreId ? 1 : Math.max(0.52, Math.min(1.08, 0.58 + radialProgress * 0.38 + radialJitter));
+      const distance = Math.max(minimumBranchLength, nominalLength * radialFactor * (1 - lengthVariation + 2 * lengthVariation * lengthUnit));
       const node = {
         ...child,
         x: current.node.x + Math.cos(angle) * distance,
@@ -258,7 +374,28 @@ export function createRhizomorphicMorphology({
         angle, sector, generation, territoryId: current.territoryId
       };
       positioned.set(node.id, node);
-      addBranch(current.node, node, { id: "branch:" + current.node.id + ":" + node.id, territoryId: current.territoryId, generation });
+
+      const branchOriginDistance = distance * (0.2 + radialProgress * 0.42);
+      const branchOrigin = growsAlongSpine ? {
+        id: "branch-origin:" + child.id,
+        canonicalId: null,
+        x: current.node.x + Math.cos(current.angle) * branchOriginDistance,
+        y: current.node.y + Math.sin(current.angle) * branchOriginDistance,
+        angle: current.angle,
+        territoryId: current.territoryId,
+        universeColor: current.node.universeColor
+      } : current.node;
+      addBranch(branchOrigin, node, {
+        id: "branch:" + current.node.id + ":" + node.id,
+        territoryId: current.territoryId,
+        generation,
+        visualOnly: growsAlongSpine,
+        style: growsAlongSpine ? "lateral-hypha" : null,
+        sourceId: growsAlongSpine ? null : current.node.id,
+        targetId: node.id,
+        width: growsAlongSpine ? Math.max(1.6, 3.4 / Math.sqrt(generation)) : null,
+        curve: createCurve(branchOrigin, node, seed + "|branch|" + child.id, curveBend * (growsAlongSpine ? 1.25 : 1))
+      });
       queue.push({ node, angle, generation, territoryId: current.territoryId, spread: Math.max(0.28, current.spread / GOLDEN_RATIO) });
     });
   }

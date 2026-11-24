@@ -16,12 +16,13 @@ Les trois exigences sont indissociables :
 ## 2.1 Contrat de composition radiale
 
 1. MYC est le noyau spatial exact : coordonnées (0, 0), identité et libellé prioritaires.
-2. Les huit autres départements sont distribués sur un anneau radial commun, à intervalles angulaires réguliers, et reliés au noyau par huit cordons principaux.
-3. Les descendants de MYC se développent dans une couronne interne compacte ; ils ne remplacent pas les huit rayons disciplinaires.
-4. Chaque département périphérique développe ses branches depuis son axe radial vers l’extérieur, dans un secteur angulaire réservé.
-5. Les dix parcours sont positionnés sur une orbite extérieure distincte. Ils ne sont pas dispersés par coordonnées arbitraires.
-6. Les hyphes secondaires et anastomoses ajoutent une texture biologique contrôlée, sans brouiller la silhouette de la roue.
-7. Les relations pédagogiques transversales sont une couche secondaire : masquées ou très discrètes à faible zoom, puis révélées progressivement au zoom.
+2. L'emblème de référence impose une morphologie en Y : un tronc unique part de MYC, se divise en deux bras organiques, puis chaque bras distribue quatre cordons terminaux vers les huit univers.
+3. Les huit univers restent répartis sur un anneau radial complet et régulier ; l'anneau est décalé de 22,5° par rapport à l'axe du tronc pour préserver la bifurcation centrale.
+4. Chaque univers développe ensuite un rachis mycélien local ; ses descendants émergent latéralement à des profondeurs radiales décalées, au lieu de former un éventail terminal depuis un seul point.
+5. Les descendants de MYC se développent dans une couronne interne compacte ; ils ne remplacent pas les huit univers périphériques.
+6. Les dix parcours sont positionnés sur une orbite extérieure distincte et restent discrets à faible zoom.
+7. Quatre anastomoses secondaires relient sélectivement des territoires distincts ; elles ne doivent pas fermer la roue en polygone.
+8. Les relations pédagogiques transversales sont une couche secondaire : masquées ou très discrètes à faible zoom, puis révélées progressivement au zoom.
 
 La composition est recalculable pour un nombre variable d’univers. Les huit secteurs décrivent la configuration éditoriale actuelle, pas une limite du moteur.
 
@@ -45,8 +46,9 @@ Les paramètres d'espacement sont centralisés, validés, bornés et versionnés
 ### 2.2 Croissance biologique des branches
 
 Le modèle de branche doit distinguer :
-- **cordons rhizomorphiques primaires :** trait plus épais, silhouette sinueuse et continue, courbure asymétrique ;
-- **hyphes secondaires :** ramifications latérales plus fines, plus courtes et moins nombreuses ;
+- **tronc et deux bras fondateurs :** un axe central épais, une bifurcation en Y et deux bras continus, courbés de façon asymétrique ;
+- **cordons terminaux :** quatre départs par bras vers les huit univers, sans huit rayons indépendants issus du centre ;
+- **rachis locaux :** une continuité principale par univers, avec des ramifications latérales plus fines, plus courtes et décalées en profondeur ;
 - **bifurcations :** angles et longueurs variables, déterministes et dépendants de la profondeur et du poids du sous-arbre ;
 - **anastomoses :** uniquement lorsque la relation canonique ou la règle décorative explicitement autorisée le permet.
 
@@ -87,7 +89,7 @@ La garantie visée est l'absence de chevauchement entre libellés affichés et e
 
 1. Ajouter des tests de contrat pour l'allocation angulaire : gaps positifs, limites de secteurs, enfants nombreux, sous-arbres déséquilibrés, stabilité et profondeur élevée.
 2. Introduire un allocateur sectoriel récursif avec intervalles réservés.
-3. Remplacer la courbe simple par un modèle de cordon principal et de ramifications hyphales secondaires, borné et déterministe.
+3. Construire le tronc unique, les deux bras, les huit cordons terminaux et les rachis locaux avec points de bifurcation purement géométriques ; conserver les nœuds et relations pédagogiques canoniques inchangés.
 4. Ajouter une étape de placement de libellés fondée sur leurs dimensions mesurées et indépendante de la topologie.
 5. Adapter PixiJS pour dessiner les styles hiérarchiques et appliquer le LOD des libellés.
 6. Ajouter des tests de scène et des contrôles navigateur ciblant explicitement `atlas-v2-preview.html`.
@@ -123,6 +125,6 @@ La garantie visée est l'absence de chevauchement entre libellés affichés et e
 
 ## 7. Questions de validation
 
-La direction proposée est celle d'un **arbre rhizomorphique à secteurs contraints**, avec des cordons primaires, des hyphes secondaires, des intervalles angulaires explicites à chaque niveau et une résolution réelle des collisions de texte.
+La direction retenue suit le fichier de référence BA Labs : **un tronc central, deux bras, huit terminaisons hyphales et quatre connexions secondaires**. L'Atlas conserve huit univers sur un anneau complet, mais la géométrie de croissance suit le Y de l'emblème : les univers ne partent plus chacun directement du noyau.
 
-La direction a été retenue et implémentée dans la branche `feat/atlas-v2-rhizomorphic-spacing`. Les paramètres initiaux sont `minimumAngularGap = 0.08` radian, courbure déterministe des cordons, plafond global de 1 200 hyphes secondaires, marge de collision de 12 unités monde et seuils LOD décrits ci-dessus. Les tests Node, le build et un premier smoke Chromium/WebGL desktop/mobile ont passé. La validation finale porte sur le dernier commit et les captures associées. La fusion et le remplacement de l'Atlas publié restent hors de ce chantier.
+La composition en Y est implémentée dans la branche `fix/atlas-open-mycelial-logo-morphology`. La configuration conserve un anneau à huit univers, avec un tronc unique, deux bras à quatre cordons chacun, des rachis locaux à ramifications latérales et quatre anastomoses secondaires. La validation Node et le smoke Chromium/WebGL desktop/mobile sont exécutés sur le dernier commit avant fusion. Le moteur de production reste inchangé jusqu'à validation du déploiement GitHub Pages.
