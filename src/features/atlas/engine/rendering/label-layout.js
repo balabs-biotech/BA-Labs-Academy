@@ -72,10 +72,7 @@ export function resolveAtlasLabelLayout({
 
     const baseAngle = Number.isFinite(node.angle) ? node.angle : -Math.PI / 2;
     const radialLabel = node.kind === "universe" || node.kind === "pathway";
-    const collisionNodes = radialLabel
-      ? nodes.filter((other) => other.id !== node.id
-        && (other.kind === "core" || other.kind === "universe" || other.kind === "pathway"))
-      : nodes.filter((other) => other.id !== node.id);
+    const collisionNodes = nodes.filter((other) => other.id !== node.id);
     const radialFirst = [Math.PI, Math.PI / 2, Math.PI * 1.5, Math.PI / 4,
       Math.PI * 1.75, Math.PI * 0.75, Math.PI * 1.25, 0];
     const directions = radialLabel
