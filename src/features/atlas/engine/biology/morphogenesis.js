@@ -245,7 +245,7 @@ export function createRhizomorphicMorphology({
       if (positioned.has(child.id)) throw new Error("Morphogenesis encountered a node more than once: " + child.id);
       const generation = current.generation + 1;
       const { angle, sector } = sectors[index];
-      const nominalLength = branchLength / (GOLDEN_RATIO ** Math.max(0, generation - 2));
+      const nominalLength = current.node.id === coreId\n        ? coreBranchLength\n        : branchLength / (GOLDEN_RATIO ** Math.max(0, generation - 2));
       const lengthUnit = stableUnit(seed + "|length|" + current.node.id + "|" + child.id);
       const distance = Math.max(minimumBranchLength, nominalLength * (1 - lengthVariation + 2 * lengthVariation * lengthUnit));
       const node = {
