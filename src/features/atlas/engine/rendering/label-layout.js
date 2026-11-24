@@ -12,7 +12,12 @@ function zoomThreshold(node) {
   return 0.78;
 }
 
-function angularDistance(a, b) {\n  const delta = Math.abs(a - b) % (Math.PI * 2);\n  return Math.min(delta, Math.PI * 2 - delta);\n}\n\nfunction overlapsRect(a, b, gap) {
+function angularDistance(a, b) {
+  const delta = Math.abs(a - b) % (Math.PI * 2);
+  return Math.min(delta, Math.PI * 2 - delta);
+}
+
+function overlapsRect(a, b, gap) {
   return a.left < b.right + gap && a.right + gap > b.left
     && a.top < b.bottom + gap && a.bottom + gap > b.top;
 }
