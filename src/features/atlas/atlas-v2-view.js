@@ -103,7 +103,7 @@ export async function mountAcademyAtlasV2View(container, graph) {
       cameraOptions: {
         minScale: 0.035,
         maxScale: 3.5,
-        fitPadding: window.innerWidth < 700 ? 0.08 : 0.11,
+        fitPadding: window.innerWidth < 700 ? 0.14 : 0.11,
         minVisibleRatio: 0.08
       },
       onSelect: showSelection,
