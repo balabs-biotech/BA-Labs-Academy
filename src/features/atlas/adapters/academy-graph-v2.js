@@ -26,6 +26,16 @@ export function createAcademyAtlasV2({
   pathwayDirection = 1,
   universeStartAngle = -Math.PI / 2,
   universeDirection = 1,
+  universeAnchors = {
+    MIC: { angle: -1.62, radius: 700 },
+    BIO: { angle: -0.78, radius: 860 },
+    AGR: { angle: -0.08, radius: 730 },
+    BPR: { angle: 0.72, radius: 900 },
+    BMT: { angle: 1.42, radius: 770 },
+    PHY: { angle: 2.12, radius: 880 },
+    INF: { angle: 2.88, radius: 720 },
+    GEN: { angle: 3.72, radius: 840 }
+  },
   universeColors = {},
   morphologyOptions = {},
   anastomosisOptions = {}
@@ -62,7 +72,8 @@ export function createAcademyAtlasV2({
       id: node.id,
       nodeId: node.id,
       label: node.title,
-      color: resolveColor(node, universeColors)
+      color: resolveColor(node, universeColors),
+      ...(universeAnchors[node.entity_key] || {})
     }));
 
   const radialTopology = createRadialTopology({
@@ -116,7 +127,13 @@ export function createAcademyAtlasV2({
     throw new Error("V2 composition omitted a canonical Academy node: " + (missing?.id || "unknown"));
   }
 
-  const anastomoses = createVisualAnastomoses(morphology, anastomosisOptions);
+  const anastomoses = createVisualAnastomoses(morphology, {
+    maxDistance: 420,
+    maxLinks: 84,
+    maxDegree: 3,
+    cellSize: 210,
+    ...anastomosisOptions
+  });
   const scene = createAtlasScene({
     topology,
     morphology,

@@ -1,8 +1,7 @@
 import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, saveProgramDraft, publishProgram, publishDepartment, publishDomain, saveCompetency, saveCompetencyDomains, saveCompetencyPrerequisites, publishCompetency, saveContentEditorial, saveContentAssets, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, enrollInTrainingSession, saveTrainingOffering, saveTrainingSession, setTrainingStatus, recordTrainingAttendance, setTrainingEnrollmentStatus, issueTrainingDocument, revokeTrainingDocument, verifyTrainingDocument, saveTrainingPartner, saveTrainingAgreement, setTrainingReferenceStatus, saveTrainingBillingRecord, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, saveAssessmentCompetencies, publishAssessment, savePathAssessments } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
-import { renderAcademyAtlas, mountAcademyAtlas } from "./features/atlas/atlas-view.js";
-import { buildAcademyGraph } from "./features/atlas/atlas-graph.js";
-import { createAtlasGrowthGraph } from "./features/atlas/atlas-growth-model.js";
+import { renderAcademyAtlasV2, mountAcademyAtlasV2View } from "./features/atlas/atlas-v2-view.js";
+import { buildAcademyCatalogueGraph } from "./features/atlas/adapters/academy-catalogue-graph.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
 import { getRoleCapabilities, hasEditorialAccess } from "./core/permissions.js";
@@ -371,7 +370,7 @@ function learningPathDetail(slug) {
 }
 
 function atlasView(graph) {
-  return renderAcademyAtlas(graph);
+  return renderAcademyAtlasV2(graph);
 }
 
 function loginView() {
@@ -945,19 +944,9 @@ function render() {
     [...(data.domains || []), ...(data.editorialDomains || [])]
       .map((domain) => [domain.code, domain])
   ).values()];
-  const atlasBaseGraph = route === "atlas" ? buildAcademyGraph(catalogueMap, atlasDomains, cataloguePathways) : null;
-  const atlasQuery = new URLSearchParams(location.search);
-  const atlasGrowthEnabled = atlasQuery.get("atlas-growth") !== "0";
-  const atlasDepthParameter = atlasQuery.get("atlas-depth");
-  const atlasDepthValue = atlasDepthParameter === null
-    ? Number.POSITIVE_INFINITY
-    : Number(atlasDepthParameter);
-  const atlasGraph = atlasBaseGraph && atlasGrowthEnabled
-    ? createAtlasGrowthGraph(atlasBaseGraph, {
-        visibleDepth: Number.isInteger(atlasDepthValue) && atlasDepthValue >= 0
-          ? atlasDepthValue : Number.POSITIVE_INFINITY
-      })
-    : atlasBaseGraph;
+  const atlasGraph = route === "atlas"
+    ? buildAcademyCatalogueGraph(catalogueMap, atlasDomains, cataloguePathways)
+    : null;
   const pathItemId = new URLSearchParams(query).get("pathItem") || "";
   updateNavigation(route);
   if (loadError) {
@@ -989,7 +978,10 @@ function render() {
   };
   root.innerHTML = (routes[route] || (() => notFound("Page introuvable", "Cette adresse ne correspond à aucune page publique de l’Academy.")))();
   if (route === "atlas" && atlasGraph) {
-    unbindAtlas = mountAcademyAtlas(root, atlasGraph);
+    mountAcademyAtlasV2View(root, atlasGraph).then((dispose) => {
+      if (location.hash.startsWith("#/atlas")) unbindAtlas = dispose;
+      else dispose();
+    });
   }
   if (route === "formations") {
     document.querySelectorAll("[data-training-enroll]").forEach((form)=>{

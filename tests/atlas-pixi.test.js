@@ -1051,8 +1051,11 @@ test("Pixi frame adapter forwards morphology trunks independently of academic ed
   assert.deepEqual(received.edges, []);
 });
 
-test("fractal growth is the default Atlas layout, with the former orbit view kept as opt-out", () => {
+test("the production Academy Atlas mounts the independent mycelial V2 engine", () => {
   const source = readFileSync(new URL("../src/main.js", import.meta.url), "utf8");
-  assert.ok(source.includes('atlasQuery.get("atlas-growth") !== "0"'));
-  assert.ok(source.includes("createAtlasGrowthGraph(atlasBaseGraph"));
+  assert.ok(source.includes("renderAcademyAtlasV2, mountAcademyAtlasV2View"));
+  assert.ok(source.includes("buildAcademyCatalogueGraph"));
+  assert.ok(source.includes("mountAcademyAtlasV2View(root, atlasGraph)"));
+  assert.ok(!source.includes("mountAcademyAtlas(root, atlasGraph)"));
+  assert.ok(!source.includes("createAtlasGrowthGraph"));
 });
