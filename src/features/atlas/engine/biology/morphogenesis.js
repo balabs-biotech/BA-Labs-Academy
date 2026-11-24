@@ -25,6 +25,9 @@ function allocateSectors(children, centerAngle, spread, weights, {
   fullRing = false, seed = "", minimumAngularGap = 0.08
 } = {}) {
   if (!children.length) return [];
+  if (children.length > 1 && !fullRing && spread <= 0) {
+    throw new RangeError("Branch spread must be positive when a parent has multiple children");
+  }
   if (children.length === 1) {
     const width = fullRing ? TAU : spread;
     const start = fullRing ? centerAngle - Math.PI : centerAngle - width / 2;
@@ -43,7 +46,7 @@ function allocateSectors(children, centerAngle, spread, weights, {
   const baseStart = fullRing ? centerAngle : centerAngle - available / 2;
   let cursor = 0;
 
-  return children.map((child) => {
+  return children.map((child, index) => {
     const width = usable * weights.get(child.id) / total;
     const start = baseStart + cursor;
     const end = start + width;
@@ -54,7 +57,9 @@ function allocateSectors(children, centerAngle, spread, weights, {
     return {
       angle,
       sector: {
-        start, end, center, gapAfter: effectiveGap, effectiveGap
+        start, end, center,
+        gapAfter: fullRing || index < children.length - 1 ? effectiveGap : 0,
+        effectiveGap
       }
     };
   });
@@ -149,6 +154,7 @@ export function createRhizomorphicMorphology({
     if (!Number.isFinite(value) || value < 0) throw new RangeError(name + " must be finite and non-negative");
   }
   if (branchLength <= 0 || coreBranchLength <= 0 || minimumBranchLength <= 0) throw new RangeError("Branch lengths must be positive");
+  if (minimumAngularGap <= 0) throw new RangeError("minimumAngularGap must be positive");
   if (lengthVariation > 0.5 || curveBend > 0.5 || universeSpread > TAU || branchSpread > TAU || minimumAngularGap > TAU) {
     throw new RangeError("Morphogenesis variation and spread exceed safe bounds");
   }
