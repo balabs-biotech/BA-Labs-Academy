@@ -131,3 +131,29 @@ test("morphogenesis adapts angular gaps safely for crowded sibling sets", () => 
   assert.ok(sectors.every((sector) => sector.end > sector.start));
   assert.ok(sectors.every((sector) => Number.isFinite(sector.gapAfter) && sector.gapAfter >= 0));
 });
+
+
+test("morphogenesis creates asymmetric primary cords and bounded secondary hyphae", () => {
+  const { topology, radialTopology } = fixture();
+  const input = { topology, radialTopology, seed: "hypha-fixture" };
+  const first = createRhizomorphicMorphology(input);
+  const second = createRhizomorphicMorphology(input);
+  assert.ok(first.branches.every((branch) => Number.isFinite(branch.width) && branch.width > 0));
+  assert.ok(first.branches.some((branch) => branch.style === "rhizomorph"));
+  assert.ok(first.hyphae.length > 0);
+  assert.ok(first.hyphae.length <= 1200);
+  assert.equal(new Set(first.hyphae.map((hypha) => hypha.id)).size, first.hyphae.length);
+  assert.ok(first.hyphae.every((hypha) => hypha.style === "secondary-hypha" && hypha.width < 1.5));
+  assert.ok(first.hyphae.every((hypha) => Object.values(hypha.curve).every((point) =>
+    Number.isFinite(point.x) && Number.isFinite(point.y))));
+  assert.deepEqual(first.hyphae, second.hyphae);
+  const curved = first.branches.find((branch) => branch.style === "rhizomorph");
+  const dx = curved.target.x - curved.source.x;
+  const dy = curved.target.y - curved.source.y;
+  const normal = { x: -dy / Math.hypot(dx, dy), y: dx / Math.hypot(dx, dy) };
+  const bend1 = (curved.curve.c1.x - (curved.source.x + dx / 3)) * normal.x
+    + (curved.curve.c1.y - (curved.source.y + dy / 3)) * normal.y;
+  const bend2 = (curved.curve.c2.x - (curved.source.x + 2 * dx / 3)) * normal.x
+    + (curved.curve.c2.y - (curved.source.y + 2 * dy / 3)) * normal.y;
+  assert.notEqual(bend1, bend2, "primary cord control bends must be asymmetric");
+});
