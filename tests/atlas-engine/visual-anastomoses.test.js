@@ -80,3 +80,39 @@ test("intra-territory anastomoses create local loops without joining direct pare
   }), "anastomoses must not duplicate direct hierarchy edges");
   assert.ok(result.links.every((link) => link.territoryIds.length <= 2));
 });
+
+
+test("anastomoses connect every peripheral territory into one mycelial network", () => {
+  const territories = new Map(Array.from({ length: 8 }, (_, index) => [
+    "zone-" + index, { id: "zone-" + index, nodeId: "zone-" + index }
+  ]));
+  const nodes = [...territories.keys()].map((territoryId, index) => ({
+    id: "hypha-" + index,
+    territoryId,
+    generation: 2,
+    x: Math.cos(index * Math.PI / 4) * 100,
+    y: Math.sin(index * Math.PI / 4) * 100
+  }));
+  const result = createVisualAnastomoses({ nodes, branches: [], territories }, {
+    maxDistance: 1000,
+    maxLinks: 7,
+    maxDegree: 1,
+    cellSize: 300
+  });
+  const adjacency = new Map([...territories.keys()].map((id) => [id, new Set()]));
+  for (const link of result.links) {
+    const [a, b] = link.territoryIds;
+    adjacency.get(a).add(b);
+    adjacency.get(b).add(a);
+  }
+  const visited = new Set();
+  const queue = ["zone-0"];
+  while (queue.length) {
+    const current = queue.shift();
+    if (visited.has(current)) continue;
+    visited.add(current);
+    queue.push(...adjacency.get(current));
+  }
+  assert.equal(result.links.length, 7, "eight zones need at least seven bridges");
+  assert.equal(visited.size, 8, "all peripheral zones must belong to one connected network");
+});
