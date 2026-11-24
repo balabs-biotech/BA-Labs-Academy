@@ -36,7 +36,8 @@ test("morphogenesis builds a central core, radial trunks and recursive territory
   assert.equal(model.byId.get("BIO").y, radialTopology.byId.get("BIO").y);
   assert.equal(model.territories.size, 2);
   assert.equal(model.metrics.nodeCount, 9);
-  assert.ok(model.branches.some((branch) => branch.id === "trunk:MYC:BIO" && branch.visualOnly));
+  assert.ok(model.branches.some((branch) => branch.id === "emblem-stem:0" && branch.visualOnly));
+  assert.ok(model.branches.some((branch) => branch.id === "universe-spoke:BIO" && branch.visualOnly));
   assert.equal(model.byId.get("bio-module-a").territoryId, "BIO");
   assert.ok(model.byId.get("bio-module-a").generation > model.byId.get("BIO").generation);
   const mycChildren = topology.childrenByParent.get("MYC").map((node) => model.byId.get(node.id));
