@@ -6,6 +6,10 @@ on:
     paths:
       - "src/features/atlas/engine/**"
       - "src/features/atlas/adapters/**"
+      - "src/features/atlas/atlas-v2-view.js"
+      - "src/main.js"
+      - "src/styles.css"
+      - "tests/atlas-browser-smoke.mjs"
       - "src/catalogue-*.js"
       - "atlas-v2-preview.html"
       - "scripts/build.mjs"
@@ -40,7 +44,18 @@ jobs:
         run: npm install --no-save esbuild pixi.js playwright
       - name: Install Chromium for real WebGL smoke test
         run: npx playwright install --with-deps chromium
-      - name: Run PixiJS browser smoke on desktop and mobile viewports
+      - name: Serve production Academy for browser verification
+        run: |
+          python3 -m http.server 4173 --directory . > /tmp/academy-http.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/academy-http.log
+          exit 1
+      - name: Verify production mycelial Atlas V2 on desktop and mobile
+        run: node tests/atlas-browser-smoke.mjs
+      - name: Verify standalone V2 engine smoke
         run: node tests/atlas-v2-browser-smoke.mjs
       - name: Smoke-test standalone Academy V2 preview
         run: node tests/atlas-v2-preview-smoke.mjs
