@@ -72,6 +72,7 @@ export function createAcademyAtlasV2({
       id: node.id,
       nodeId: node.id,
       label: node.title,
+      entity_key: node.entity_key,
       color: resolveColor(node, universeColors),
       ...(universeAnchors[node.entity_key] || {})
     }));
@@ -86,7 +87,7 @@ export function createAcademyAtlasV2({
     },
     territories: universeRecords.map((territory) => ({
       ...territory,
-      ...(universeAnchors[territory.id] || { x: 0, y: 0 })
+      ...(universeAnchors[territory.entity_key] || { x: 0, y: 0 })
     }))
   });
 
