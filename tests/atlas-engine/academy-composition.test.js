@@ -130,4 +130,16 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
 
   assert.ok(result.anastomoses.links.length >= 120,
     "the eight territories must develop a visible reticulate mesh, not isolated fans");
+
+  const staggeredTerritories = departments.filter((department) => {
+    const children = result.topology.childrenByParent.get(department.id) || [];
+    const radii = children.map((child) => {
+      const node = result.morphology.byId.get(child.id);
+      return Math.hypot(node.x, node.y);
+    });
+    return radii.length >= 3 && Math.max(...radii) - Math.min(...radii) >= 140;
+  });
+  assert.ok(staggeredTerritories.length >= 6,
+    "branches must advance at staggered radial depths instead of ending on one fan-shaped arc");
+
 });
