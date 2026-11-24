@@ -96,8 +96,8 @@ export async function mountAcademyAtlasV2View(container, graph) {
       graph,
       compositionOptions: {
         seed: "ba-labs-academy-main-v2",
-        universeRadius: 620,
-        pathwayOrbitRadius: 1420
+        universeRadius: 900,
+        pathwayOrbitRadius: 1680
       },
       cameraOptions: {
         minScale: 0.035,
