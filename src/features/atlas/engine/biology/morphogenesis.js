@@ -122,7 +122,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       hyphae.push({
         id, territoryId: branch.territoryId, color,
         style: "secondary-hypha",
-        width: 1.05 + stableUnit(localSeed + "|width") * 0.65,
+        width: 0.9 + stableUnit(localSeed + "|width") * 0.5,
         curve: createCurve(origin, endpoint, localSeed, 0.28)
       });
     }
