@@ -21,14 +21,14 @@ export function createAcademyAtlasV2({
   graph,
   seed = "academy-atlas-v2",
   universeRadius = 900,
-  pathwayOrbitRadius = 1680,
+  pathwayOrbitRadius = 1500,
   pathwayStartAngle = -Math.PI / 2,
   pathwayDirection = 1,
   universeStartAngle = -Math.PI / 2,
   universeDirection = 1,
   universeColors = {},
   morphologyOptions = { branchLength: 390, universeSpread: 0.76, curveBend: 0.24, maximumSecondaryHyphae: 720 },
-  anastomosisOptions = { maxDistance: 1000, maxLinks: 200, maxDegree: 2, cellSize: 300, includeSameTerritory: false }
+  anastomosisOptions = { maxDistance: 1000, maxLinks: 4, maxDegree: 1, cellSize: 300, includeSameTerritory: false }
 } = {}) {
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
     throw new TypeError("Academy Atlas V2 requires a canonical Academy graph");
