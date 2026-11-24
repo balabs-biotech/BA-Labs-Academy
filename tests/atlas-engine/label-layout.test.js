@@ -84,9 +84,10 @@ test("invalid text measurements hide only the affected label", () => {
 
 test("radial department labels prefer an inward offset to preserve mobile viewport width", () => {
   const radialNode = { id: "bio", x: 760, y: 0, radius: 18, kind: "universe", generation: 1, angle: 0 };
+  const innerDescendant = { id: "bio-section", x: 600, y: 0, radius: 20, kind: "knowledge", generation: 2, angle: 0 };
   const result = resolveAtlasLabelLayout({
-    nodes: [radialNode],
-    measurements: [{ id: "bio", width: 220, height: 14 }],
+    nodes: [radialNode, innerDescendant],
+    measurements: [{ id: "bio", width: 220, height: 14 }, { id: "bio-section", width: 70, height: 14 }],
     scale: 0.2,
     gap: 8
   });
