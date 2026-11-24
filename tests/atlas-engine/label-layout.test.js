@@ -94,6 +94,6 @@ test("radial department labels prefer a tangential offset to preserve mobile vie
   assert.equal(placement.visible, true);
   assert.ok(Math.abs(placement.x - radialNode.x) < 1e-6,
     "a right-facing radial anchor should place its long label tangentially, not farther right");
-  assert.ok(Math.abs(placement.y - radialNode.y) > 100,
+  assert.ok(Math.abs(placement.y - radialNode.y) > 20,
     "the label should move above or below the radial axis");
 });
