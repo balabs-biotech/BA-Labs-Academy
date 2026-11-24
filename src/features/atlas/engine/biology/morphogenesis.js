@@ -219,20 +219,19 @@ export function createRhizomorphicMorphology({
   const core = { ...coreRecord, x: spatialTopology.core.x, y: spatialTopology.core.y, angle: null, generation: 1, territoryId: coreId };
   positioned.set(coreId, core);
 
-  const addBranch = (source, target, { id, territoryId, generation, visualOnly = false }) => {
+  const addBranch = (source, target, {
+    id, territoryId, generation, visualOnly = false, style = null,
+    sourceId, targetId, width = null, curve = null
+  }) => {
     branches.push({
-      id, sourceId: source.id, targetId: target.id, source, target,
-      territoryId, generation, visualOnly,
-      style: visualOnly ? "universe-trunk" : generation <= 2 ? "rhizomorph" : "primary-hypha",
-      width: visualOnly ? 6.5 : Math.max(1.2, 4.4 / Math.sqrt(generation)),
+      id,
+      sourceId: sourceId === undefined ? source.id : sourceId,
+      targetId: targetId === undefined ? target.id : targetId,
+      source, target, territoryId, generation, visualOnly,
+      style: style || (visualOnly ? "universe-trunk" : generation <= 2 ? "rhizomorph" : "primary-hypha"),
+      width: width ?? (visualOnly ? 6.5 : Math.max(1.2, 4.4 / Math.sqrt(generation))),
       seed: hashString(seed + "|" + id),
-      curve: visualOnly
-        ? createEmblemYCurve(
-          source, target, seed + "|" + id,
-          nearestFoundingAxis(Math.atan2(target.y - source.y, target.x - source.x)),
-          curveBend
-        )
-        : createCurve(source, target, seed + "|" + id, curveBend)
+      curve: curve || createCurve(source, target, seed + "|" + id, curveBend)
     });
   };
 
@@ -252,18 +251,54 @@ export function createRhizomorphicMorphology({
     roots.push(node);
   }
 
-  // Radial architecture: MYC is the single biological core. Each peripheral
-  // department grows from its own spoke and expands outward along that spoke.
-  // MYC's own taxonomy occupies a complete inner ring around the central node.
+  // Emblem architecture: three shared Y stems leave the MYC nucleus, then
+  // divide into eight peripheral universe cords. Split points are derived
+  // geometry only; they never become pedagogical nodes.
+  const splitRadius = Math.min(universeSpread > 0 ? 360 : 320, coreBranchLength * 2);
+  const splitPoints = new Map(Y_FOUNDING_AXES.map((angle, index) => {
+    const point = {
+      id: "emblem-split:" + index,
+      canonicalId: null,
+      x: core.x + Math.cos(angle) * splitRadius,
+      y: core.y + Math.sin(angle) * splitRadius,
+      angle,
+      generation: 1,
+      territoryId: coreId
+    };
+    addBranch(core, point, {
+      id: "emblem-stem:" + index,
+      territoryId: coreId,
+      generation: 1,
+      visualOnly: true,
+      style: "emblem-stem",
+      sourceId: core.id,
+      targetId: null,
+      width: 8,
+      curve: createCurve(core, point, seed + "|emblem-stem|" + index, curveBend * 0.65)
+    });
+    return [angle, point];
+  }));
+
   for (const territory of spatialTopology.territories) {
     const target = positioned.get(territory.nodeId || territory.id);
-    addBranch(core, target, {
-      id: "trunk:" + core.id + ":" + target.id,
+    const angle = Math.atan2(target.y - core.y, target.x - core.x);
+    const axis = nearestFoundingAxis(angle);
+    const splitPoint = splitPoints.get(axis);
+    addBranch(splitPoint, target, {
+      id: "universe-spoke:" + target.id,
       territoryId: target.territoryId,
       generation: 1,
-      visualOnly: true
+      visualOnly: true,
+      style: "universe-spoke",
+      sourceId: null,
+      targetId: target.id,
+      width: 5.5,
+      curve: createCurve(splitPoint, target, seed + "|universe-spoke|" + target.id, curveBend * 1.15)
     });
   }
+
+  // MYC's own taxonomy occupies a compact complete inner ring around the
+  // central nucleus; the eight outer universes use the three-stem Y scaffold.
 
   for (const root of roots) {
     const isCore = root.id === coreId;
