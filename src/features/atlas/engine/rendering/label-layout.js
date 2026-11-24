@@ -82,7 +82,23 @@ export function resolveAtlasLabelLayout({
     const distanceRings = [1, 1.4, 1.85, 2.35];
     let chosen = null;
 
-    for (const distanceFactor of distanceRings) {
+    if (node.kind === "core") {
+      const x = node.x;
+      const y = node.y - node.radius - gap - height / 2;
+      const rect = {
+        left: x - width / 2, right: x + width / 2,
+        top: y - height / 2, bottom: y + height / 2
+      };
+      const overlapsLabel = accepted.some((entry) => overlapsRect(rect, entry.rect, gap));
+      const overlapsNode = nodes.some((other) =>
+        other.id !== node.id && intersectsCircle(rect, other, gap)
+      );
+      if (!overlapsLabel && !overlapsNode) {
+        chosen = { id: node.id, x, y, width, height, visible: true, reason: "core-axis", rect };
+      }
+    }
+
+    for (const distanceFactor of (chosen ? [] : distanceRings)) {
       for (const offset of directions) {
         const angle = baseAngle + offset;
         const dx = Math.cos(angle);
