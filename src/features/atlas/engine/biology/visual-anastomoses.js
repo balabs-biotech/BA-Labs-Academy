@@ -85,11 +85,23 @@ export function createVisualAnastomoses(morphology, {
   const ordered = [...pairs.values()].sort((a, b) =>
     a.distance - b.distance || a.id.localeCompare(b.id)
   );
+  const territoryIds = morphology.territories instanceof Map
+    ? [...morphology.territories.keys()]
+    : [...new Set(candidates.map((node) => node.territoryId))];
+  if (maxLinks > 0 && maxLinks < territoryIds.length - 1) {
+    throw new RangeError("maxLinks must allow a bridge network across every territory");
+  }
+
+  const parent = new Map(territoryIds.map((id) => [id, id]));
+  const find = (id) => {
+    while (parent.get(id) !== id) id = parent.get(id);
+    return id;
+  };
   const degree = new Map();
+  const selected = new Set();
   const links = [];
-  for (const pair of ordered) {
-    if (links.length >= maxLinks) break;
-    if ((degree.get(pair.source.id) || 0) >= maxDegree || (degree.get(pair.target.id) || 0) >= maxDegree) continue;
+  const addLink = (pair) => {
+    selected.add(pair.id);
     degree.set(pair.source.id, (degree.get(pair.source.id) || 0) + 1);
     degree.set(pair.target.id, (degree.get(pair.target.id) || 0) + 1);
     links.push({
@@ -103,10 +115,37 @@ export function createVisualAnastomoses(morphology, {
       relationshipType: "anastomosis",
       curve: makeCurve(pair.source, pair.target, pair.id)
     });
+  };
+
+  // First build the shortest spanning network: every peripheral territory
+  // must communicate before optional local loops or extra cross-links appear.
+  for (const pair of ordered) {
+    if (links.length >= maxLinks) break;
+    if (pair.territoryIds.length !== 2) continue;
+    const [first, second] = pair.territoryIds;
+    const a = find(first), b = find(second);
+    if (a === b) continue;
+    parent.set(a, b);
+    addLink(pair);
   }
 
+  // Spend the remaining link budget on nearby hyphal loops and reinforcement.
+  for (const pair of ordered) {
+    if (links.length >= maxLinks) break;
+    if (selected.has(pair.id)) continue;
+    if ((degree.get(pair.source.id) || 0) >= maxDegree || (degree.get(pair.target.id) || 0) >= maxDegree) continue;
+    addLink(pair);
+  }
+
+  const connectedTerritories = new Set(territoryIds.map(find)).size <= 1 ? territoryIds.length : 0;
   return {
     links,
-    metrics: { candidateCount: pairs.size, linkCount: links.length }
+    metrics: {
+      candidateCount: pairs.size,
+      linkCount: links.length,
+      territoryCount: territoryIds.length,
+      connected: territoryIds.length <= 1 || connectedTerritories === territoryIds.length,
+      bridgeCount: links.filter((link) => !link.intraTerritory).length
+    }
   };
 }
