@@ -28,7 +28,7 @@ test("V2 composition maps all canonical Academy nodes without mutating the graph
   assert.deepEqual(graph.edges.map((edge) => edge.id), beforeEdges);
 });
 
-test("MYC remains central; eight departments orbit it and ten pathways occupy the outer ring", () => {
+test("MYC remains central; eight territories occupy an irregular field and ten pathways the outer ring", () => {
   const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
   const result = createAcademyAtlasV2({ graph, universeRadius: 700, pathwayOrbitRadius: 1400 });
   const core = result.scene.nodes.find((node) => node.id === "department:MYC");
@@ -37,9 +37,10 @@ test("MYC remains central; eight departments orbit it and ten pathways occupy th
     node.kind === "universe" && node.id.startsWith("department:")
   );
   assert.equal(departments.length, 8);
-  for (const node of departments) {
-    assert.ok(Math.abs(Math.hypot(node.x, node.y) - 700) < 1e-6);
-  }
+  const territoryRadii = departments.map((node) => Math.hypot(node.x, node.y));
+  assert.ok(territoryRadii.every((radius) => radius >= 700 && radius <= 900));
+  assert.ok(Math.max(...territoryRadii) - Math.min(...territoryRadii) >= 150,
+    "department anchors must not collapse into a uniform radial ring");
   const pathways = result.scene.nodes.filter((node) => node.id.startsWith("pathway:"));
   assert.equal(pathways.length, 10);
   for (const node of pathways) {
