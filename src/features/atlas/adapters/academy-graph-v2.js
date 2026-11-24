@@ -20,14 +20,14 @@ function resolveColor(node, colors) {
 export function createAcademyAtlasV2({
   graph,
   seed = "academy-atlas-v2",
-  universeRadius = 900,
-  pathwayOrbitRadius = 1500,
+  universeRadius = 1050,
+  pathwayOrbitRadius = 1650,
   pathwayStartAngle = -Math.PI / 2,
   pathwayDirection = 1,
   universeStartAngle = -Math.PI / 2,
   universeDirection = 1,
   universeColors = {},
-  morphologyOptions = { branchLength: 390, universeSpread: 0.76, curveBend: 0.24, maximumSecondaryHyphae: 720 },
+  morphologyOptions = { branchLength: 280, universeSpread: 0.76, curveBend: 0.24, maximumSecondaryHyphae: 720 },
   anastomosisOptions = { maxDistance: 1000, maxLinks: 4, maxDegree: 1, cellSize: 300, includeSameTerritory: false }
 } = {}) {
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
