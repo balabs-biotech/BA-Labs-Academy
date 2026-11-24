@@ -80,7 +80,7 @@ export function resolveAtlasLabelLayout({
         .filter((angle) => !radialFirst.includes(angle))]
       : Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
         .sort((a, b) => angularDistance(a, 0) - angularDistance(b, 0));
-    const distanceRings = [1, 1.4, 1.85, 2.35];
+    const distanceRings = radialLabel ? [2.35, 1.85, 1.4, 1] : [1, 1.4, 1.85, 2.35];
     let chosen = null;
 
     if (node.kind === "core") {
