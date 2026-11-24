@@ -37,6 +37,8 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
     node.kind === "universe" && node.id.startsWith("department:")
   );
   assert.equal(departments.length, 8);
+  assert.ok(departments.every((node) => node.shortLabel && node.shortLabel.length <= 3),
+    "department short codes must be available for compact mobile overview labels");
   const radii = departments.map((node) => Math.hypot(node.x, node.y));
   assert.ok(radii.every((radius) => Math.abs(radius - 760) < 1e-6),
     "all eight universes must occupy one controlled radial ring");
