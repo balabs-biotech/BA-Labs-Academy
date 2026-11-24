@@ -43,7 +43,7 @@ async function start() {
     bounds,
     minScale: 0.045,
     maxScale: 2.8,
-    fitPadding: window.innerWidth < 680 ? 0.08 : 0.1,
+    fitPadding: window.innerWidth < 680 ? 0.14 : 0.1,
     minVisibleRatio: 0.08
   });
 
