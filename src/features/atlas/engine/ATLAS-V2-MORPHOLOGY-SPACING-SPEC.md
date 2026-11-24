@@ -13,7 +13,7 @@ Les trois exigences sont indissociables :
 2. **Espacement hiérarchique :** chaque parent réserve des secteurs angulaires à ses enfants, à toutes les profondeurs.
 3. **Lisibilité :** les collisions de libellés sont détectées et résolues avant le rendu ; le zoom réduit progressivement la densité visuelle sans supprimer l'accès aux nœuds.
 
-## 2. Direction retenue : roue radiale fractale à secteurs contraints
+## 2.1 Contrat de composition radiale
 
 1. MYC est le noyau spatial exact : coordonnées (0, 0), identité et libellé prioritaires.
 2. Les huit autres départements sont distribués sur un anneau radial commun, à intervalles angulaires réguliers, et reliés au noyau par huit cordons principaux.
