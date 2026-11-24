@@ -322,13 +322,36 @@ export function createRhizomorphicMorphology({
       fullRing: current.node.id === coreId,
       seed: seed + "|" + current.node.id + "|fan", minimumAngularGap
     });
+    const generation = current.generation + 1;
+    const nominalLength = current.node.id === coreId
+      ? coreBranchLength
+      : branchLength / (GOLDEN_RATIO ** Math.max(0, generation - 2));
+    const growsAlongSpine = current.node.id !== coreId && children.length > 1;
+    if (growsAlongSpine) {
+      const spineLength = nominalLength * 0.88;
+      const spineEnd = {
+        id: "spine-end:" + current.node.id,
+        canonicalId: null,
+        x: current.node.x + Math.cos(current.angle) * spineLength,
+        y: current.node.y + Math.sin(current.angle) * spineLength,
+        angle: current.angle,
+        territoryId: current.territoryId
+      };
+      addBranch(current.node, spineEnd, {
+        id: "spine:" + current.node.id,
+        territoryId: current.territoryId,
+        generation: current.generation,
+        visualOnly: true,
+        style: "primary-spine",
+        sourceId: current.node.id,
+        targetId: null,
+        width: Math.max(3.2, 5.2 / Math.sqrt(current.generation)),
+        curve: createCurve(current.node, spineEnd, seed + "|spine|" + current.node.id, curveBend * 0.75)
+      });
+    }
     children.forEach((child, index) => {
       if (positioned.has(child.id)) throw new Error("Morphogenesis encountered a node more than once: " + child.id);
-      const generation = current.generation + 1;
       const { angle, sector } = sectors[index];
-      const nominalLength = current.node.id === coreId
-        ? coreBranchLength
-        : branchLength / (GOLDEN_RATIO ** Math.max(0, generation - 2));
       const lengthUnit = stableUnit(seed + "|length|" + current.node.id + "|" + child.id);
       // Siblings do not terminate on one shared circular arc: side branches
       // emerge at staggered radial depths while the stronger subtrees can
@@ -344,7 +367,28 @@ export function createRhizomorphicMorphology({
         angle, sector, generation, territoryId: current.territoryId
       };
       positioned.set(node.id, node);
-      addBranch(current.node, node, { id: "branch:" + current.node.id + ":" + node.id, territoryId: current.territoryId, generation });
+
+      const branchOriginDistance = distance * (0.2 + radialProgress * 0.42);
+      const branchOrigin = growsAlongSpine ? {
+        id: "branch-origin:" + child.id,
+        canonicalId: null,
+        x: current.node.x + Math.cos(current.angle) * branchOriginDistance,
+        y: current.node.y + Math.sin(current.angle) * branchOriginDistance,
+        angle: current.angle,
+        territoryId: current.territoryId,
+        universeColor: current.node.universeColor
+      } : current.node;
+      addBranch(branchOrigin, node, {
+        id: "branch:" + current.node.id + ":" + node.id,
+        territoryId: current.territoryId,
+        generation,
+        visualOnly: growsAlongSpine,
+        style: growsAlongSpine ? "lateral-hypha" : null,
+        sourceId: growsAlongSpine ? null : current.node.id,
+        targetId: node.id,
+        width: growsAlongSpine ? Math.max(1.6, 3.4 / Math.sqrt(generation)) : null,
+        curve: createCurve(branchOrigin, node, seed + "|branch|" + child.id, curveBend * (growsAlongSpine ? 1.25 : 1))
+      });
       queue.push({ node, angle, generation, territoryId: current.territoryId, spread: Math.max(0.28, current.spread / GOLDEN_RATIO) });
     });
   }
