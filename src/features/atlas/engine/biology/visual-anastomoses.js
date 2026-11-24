@@ -34,7 +34,8 @@ export function createVisualAnastomoses(morphology, {
   maxLinks = 24,
   maxDegree = 2,
   cellSize = maxDistance,
-  includeRoots = false
+  includeRoots = false,
+  includeSameTerritory = false
 } = {}) {
   if (!morphology || !Array.isArray(morphology.nodes) || !Array.isArray(morphology.branches)) {
     throw new TypeError("Anastomoses require a morphology model");
@@ -63,14 +64,18 @@ export function createVisualAnastomoses(morphology, {
     for (let ox = -radius; ox <= radius; ox += 1) {
       for (let oy = -radius; oy <= radius; oy += 1) {
         for (const other of cells.get(cellKey(cx + ox, cy + oy)) || []) {
-          if (node.territoryId === other.territoryId || node.id === other.id) continue;
+          if (node.id === other.id) continue;
+          const sameTerritory = node.territoryId === other.territoryId;
+          if (sameTerritory && !includeSameTerritory) continue;
+          // Anastomoses connect separate hyphal branches, never a parent directly to its child.
+          if (node.parent === other.id || other.parent === node.id) continue;
           const distance = Math.hypot(node.x - other.x, node.y - other.y);
           if (distance > maxDistance) continue;
           const [first, second] = node.id < other.id ? [node, other] : [other, node];
           const id = "anastomosis:" + first.id + ":" + second.id;
           if (!pairs.has(id)) pairs.set(id, {
             id, source: first, target: second, distance,
-            territoryIds: [first.territoryId, second.territoryId].sort()
+            territoryIds: [...new Set([first.territoryId, second.territoryId])].sort()
           });
         }
       }
@@ -92,6 +97,7 @@ export function createVisualAnastomoses(morphology, {
       sourceId: pair.source.id,
       targetId: pair.target.id,
       territoryIds: pair.territoryIds,
+      intraTerritory: pair.territoryIds.length === 1,
       distance: pair.distance,
       visualOnly: true,
       relationshipType: "anastomosis",
