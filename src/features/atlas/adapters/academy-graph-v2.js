@@ -112,8 +112,8 @@ export function createAcademyAtlasV2({
     const angle = pathwayStartAngle + pathwayDirection * TAU * index / Math.max(1, pathwayCount);
     return {
       ...node,
-      x: [-720, -360, 80, 520, 900, 740, 300, -160, -600, -900][index % 10],
-      y: [-650, -820, -850, -680, -260, 260, 760, 900, 620, 80][index % 10],
+      x: [-600, -250, 80, 600, 1000, 700, 100, -500, -900, -100][index % 10],
+      y: [-700, -400, -800, -450, -100, 400, 900, 850, 300, 100][index % 10],
       angle,
       generation: 1,
       territoryId: "pathways",
