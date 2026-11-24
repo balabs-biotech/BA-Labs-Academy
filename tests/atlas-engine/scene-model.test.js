@@ -65,3 +65,14 @@ test("scene model rejects invalid radii and paths with unknown endpoints", () =>
     anastomoses: [{ id: "bad", sourceId: "missing", targetId: "MYC", curve: {} }]
   }), /missing node/);
 });
+
+
+test("scene model includes secondary hyphae as decorative paths, never pedagogy", () => {
+  const { topology, morphology } = fixture();
+  const scene = createAtlasScene({ topology, morphology });
+  const hyphaPaths = scene.paths.filter((path) => path.type === "hypha");
+  assert.ok(hyphaPaths.length > 0);
+  assert.ok(hyphaPaths.every((path) => path.visualOnly && path.width < 1.5));
+  assert.equal(scene.relationships.length, topology.edges.length);
+  assert.equal(scene.nodes.length, topology.nodes.length);
+});
