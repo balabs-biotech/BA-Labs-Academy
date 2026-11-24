@@ -979,7 +979,7 @@ function render() {
   root.innerHTML = (routes[route] || (() => notFound("Page introuvable", "Cette adresse ne correspond à aucune page publique de l’Academy.")))();
   if (route === "atlas" && atlasGraph) {
     mountAcademyAtlasV2View(root, atlasGraph).then((dispose) => {
-      if (location.hash.replace(/^#\\/?/, "").split("/")[0] === "atlas") unbindAtlas = dispose;
+      if (location.hash.startsWith("#/atlas")) unbindAtlas = dispose;
       else dispose();
     });
   }
