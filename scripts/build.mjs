@@ -22,6 +22,7 @@ await verifyJavaScript(sourceDirectory);
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 await cp(new URL("index.html", root), new URL("index.html", output));
+await cp(new URL("atlas-v2-preview.html", root), new URL("atlas-v2-preview.html", output));
 await cp(sourceDirectory, new URL("src/", output), { recursive: true });
 await assertPublicBundleSafe(output.pathname);
 console.log("Academy source syntax verified; public bundle credential guard passed; static build generated in dist/");

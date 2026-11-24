@@ -246,3 +246,80 @@ Lorsqu'un besoin nouveau apparaît :
 5. préserver l'indépendance des modules et des données canoniques.
 
 Toute évolution doit préserver l'intention fondatrice : **un organisme de connaissances à croissance fractale rhizomorphique, rayonnant depuis un noyau central, extensible en nombre d'univers et en profondeur, organique mais toujours lisible.**
+
+## 12. Registre d'implémentation V2
+
+Ce registre suit l'état réel de la branche `feat/academy-atlas-v2-foundation`. Il ne vaut pas autorisation de bascule en production.
+
+| Capacité | État | Implémentation |
+|---|---|---|
+| Topologie canonique et validation des identités | Implémenté | `engine/core/topology.js` |
+| Configuration radiale à nombre variable d'univers | Implémenté | `engine/spatial/radial-topology.js` |
+| Morphogenèse rhizomorphique déterministe | Implémenté | `engine/biology/morphogenesis.js` |
+| Enveloppes conservatives et index spatial | Implémenté | `engine/spatial/collision-index.js` |
+| Anastomoses visuelles distinctes des relations pédagogiques | Implémenté | `engine/biology/visual-anastomoses.js` |
+| Transaction géométrique avec conservation du dernier état valide | Implémenté | `engine/spatial/geometry-transaction.js` |
+| Solveur de collisions nodales borné | Implémenté | `engine/spatial/node-collision-solver.js` |
+| Scène neutre indépendante du backend | Implémenté | `engine/rendering/scene-model.js` |
+| Adaptateur PixiJS | Implémenté, smoke navigateur en validation CI | `engine/rendering/pixi-adapter.js` |
+| Supervision des erreurs runtime du renderer | Implémenté | `engine/rendering/renderer-supervisor.js` |
+| Interaction, caméra, gestes tactiles et accessibilité intégrés à V2 | À construire | Aucun branchement de production |
+| LOD et rendu progressif à grande échelle | À construire | À définir après le contrat d'interaction |
+| Baselines visuelles comparatives et QA sur appareils réels | À construire | Les captures de smoke ne constituent pas encore des baselines de référence |
+| Intégration dans l'Atlas de l'Académie | Non commencée | L'ancien Atlas reste actif |
+
+### Validation automatisée
+
+La CI dédiée doit exécuter, dans cet ordre :
+1. la suite complète de tests Node ;
+2. le benchmark du moteur historique, conservé comme point de comparaison ;
+3. le contrôle syntaxique et la génération du bundle statique ;
+4. un smoke test Chromium avec PixiJS/WebGL sur deux viewports (ordinateur et mobile) ;
+5. la conservation des captures d'écran comme artefacts de diagnostic.
+
+Le smoke test navigateur vérifie le démarrage du backend, la création d'une surface réelle, le dessin d'une scène de test contenant hiérarchie, relation transversale canonique et anastomose, la lecture de pixels WebGL non transparents, le redimensionnement, le second rendu et l'absence d'erreurs non interceptées. Il ne prétend pas encore valider la morphologie du catalogue complet, la qualité esthétique, les gestes tactiles, l'accessibilité ou les performances sur matériel mobile réel.
+
+### Règle de passage à l'intégration
+
+Aucune bascule ne doit être effectuée sur la seule base de tests unitaires ou d'un smoke test WebGL. L'intégration exige encore :
+- l'adaptation des données pédagogiques réelles au contrat de scène V2 ;
+- la validation des 330 nœuds et de leurs relations ;
+- la caméra, les interactions, la sélection et la navigation clavier/tactile ;
+- des captures comparatives avec critères d'espacement, lisibilité et stabilité ;
+- des essais sur matériel mobile réel et une mesure de performance ;
+- une stratégie de repli vers l'Atlas actuel pendant la phase de comparaison.
+
+### Adaptation du catalogue réel
+
+Le premier adaptateur de composition Academy est `src/features/atlas/adapters/academy-graph-v2.js`. Il consomme le graphe canonique déjà produit par l'Académie, sans importer ni réutiliser le moteur spatial historique.
+
+La composition distingue trois familles :
+- MYC reste le noyau central ;
+- les autres départements sont les univers périphériques radiaux ;
+- les parcours transversaux occupent une orbite secondaire et restent reliés par les seules relations canoniques déclarées.
+
+Les relations transversales vérifiées possèdent une géométrie de rendu dérivée dans `relationshipPaths`, séparée des branches hiérarchiques et des anastomoses décoratives. Les anastomoses ne deviennent jamais des relations pédagogiques. Le contrat de scène conserve chaque nœud et chaque relation du graphe d'entrée ; une omission d'identifiant provoque un échec explicite au lieu de produire une carte partielle silencieuse.
+
+Le contrat de rayon utilise `r` du graphe historique comme rayon de nœud par défaut, sans reprendre ses coordonnées. Les couleurs de territoire sont dérivées des jetons de palette Academy.
+
+**Test d'intégration du modèle :** le catalogue courant produit 330 nœuds visibles, neuf départements (MYC + huit univers), dix ancres de parcours et conserve toutes les relations canoniques. La suite complète de la branche a passé 334 tests sur le commit validé. Ce test de composition n'autorise pas encore le branchement du renderer dans l'application publiée.
+
+### Navigation et interactions de caméra
+
+La caméra V2 est un contrôleur pur, sans dépendance DOM ni PixiJS : `engine/presentation/camera-controller.js`. Elle expose les conversions monde/écran, le cadrage, le déplacement, le zoom ancré sous le pointeur, les limites d'échelle et une contrainte de visibilité minimale.
+
+Les événements de pointeur sont isolés dans `engine/presentation/pointer-interactions.js`. Le contrat distingue explicitement :
+- glissement mono-pointeur : déplacement de caméra ;
+- pincement à deux pointeurs : zoom autour du centre du geste et translation ;
+- tap sans déplacement : sélection ;
+- `pointercancel` et perte de capture : annulation, jamais conversion en sélection ;
+- molette : zoom local au curseur ;
+- destruction : retrait des listeners, libération des captures et restauration de `touch-action`.
+
+Les tests unitaires utilisent une cible événementielle simulée pour vérifier la sémantique des gestes et le nettoyage. Le smoke WebGL précédent valide le renderer, pas encore l'interaction tactile sur un appareil physique.
+
+### Graphe canonique sans moteur spatial historique
+
+L'adaptateur `adapters/academy-catalogue-graph.js` reconstruit la topologie éditoriale depuis le catalogue Academy en laissant volontairement les coordonnées à zéro. Il ne dépend ni de `atlas-organic-layout.js`, ni de `explorer-2d-network.js`, ni de PixiJS. La morphogenèse V2 est donc l'unique autorité spatiale dans la prévisualisation V2.
+
+Le générateur historique `atlas-graph.js` reste intact pour l'Atlas actuellement publié. Les deux adaptateurs partagent le même contenu canonique, mais pas leur moteur de disposition. Un test de non-régression vérifie explicitement l'absence de dépendance spatiale historique dans le nouvel adaptateur.

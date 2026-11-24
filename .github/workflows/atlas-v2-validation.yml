@@ -1,0 +1,53 @@
+name: Validate Academy Atlas V2
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/features/atlas/engine/**"
+      - "src/features/atlas/adapters/**"
+      - "src/catalogue-*.js"
+      - "atlas-v2-preview.html"
+      - "scripts/build.mjs"
+      - "tests/atlas-engine/**"
+      - "tests/atlas-v2-browser-*.js"
+      - "tests/atlas-v2-browser-*.mjs"
+      - "tests/atlas-v2-preview-smoke.mjs"
+      - "package.json"
+      - ".github/workflows/atlas-v2-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run complete test suite
+        run: npm test
+      - name: Benchmark current Atlas baseline
+        run: npm run benchmark:atlas
+      - name: Verify source syntax and public bundle
+        run: npm run build
+      - name: Install browser smoke dependencies
+        run: npm install --no-save esbuild pixi.js playwright
+      - name: Install Chromium for real WebGL smoke test
+        run: npx playwright install --with-deps chromium
+      - name: Run PixiJS browser smoke on desktop and mobile viewports
+        run: node tests/atlas-v2-browser-smoke.mjs
+      - name: Smoke-test standalone Academy V2 preview
+        run: node tests/atlas-v2-preview-smoke.mjs
+      - name: Upload V2 browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: academy-atlas-v2-browser-screenshots
+          path: artifacts/atlas-v2-*.png
+          if-no-files-found: ignore
