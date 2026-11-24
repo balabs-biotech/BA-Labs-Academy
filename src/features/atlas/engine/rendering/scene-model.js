@@ -95,7 +95,13 @@ export function createAtlasScene({
     }));
   };
 
-  for (const branch of morphology.branches) appendPath(branch, branch.visualOnly ? "universe-trunk" : "hierarchy");
+  for (const branch of morphology.branches) {
+    const type = ["emblem-stem", "universe-spoke", "primary-spine"].includes(branch.style)
+      ? "universe-trunk"
+      : branch.style === "lateral-hypha" ? "hypha"
+      : branch.visualOnly ? "universe-trunk" : "hierarchy";
+    appendPath(branch, type);
+  }
   for (const link of anastomoses) appendPath(link, "anastomosis");
 
   for (const hypha of morphology.hyphae || []) {
