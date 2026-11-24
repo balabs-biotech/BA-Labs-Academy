@@ -62,3 +62,21 @@ test("anastomoses validate limits and handle empty results", () => {
   assert.throws(() => createVisualAnastomoses(morphology, { cellSize: 0.001 }), /excessive neighborhood/);
   assert.throws(() => createVisualAnastomoses(null), /morphology/);
 });
+
+
+test("intra-territory anastomoses create local loops without joining direct parent-child pairs", () => {
+  const { topology, radialTopology } = fixture();
+  const morphology = createRhizomorphicMorphology({ topology, radialTopology, branchLength: 90 });
+  const result = createVisualAnastomoses(morphology, {
+    maxDistance: 500, maxLinks: 40, maxDegree: 4, includeSameTerritory: true
+  });
+  const byId = morphology.byId;
+  const localLoops = result.links.filter((link) => link.territoryIds.length === 1);
+  assert.ok(localLoops.length > 0, "nearby branches in one territory should form anastomoses");
+  assert.ok(result.links.every((link) => {
+    const a = byId.get(link.sourceId);
+    const b = byId.get(link.targetId);
+    return a.parent !== b.id && b.parent !== a.id;
+  }), "anastomoses must not duplicate direct hierarchy edges");
+  assert.ok(result.links.every((link) => link.territoryIds.length <= 2));
+});

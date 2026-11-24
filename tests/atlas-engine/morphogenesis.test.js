@@ -170,3 +170,10 @@ test("morphogenesis rejects a disabled angular gap configuration", () => {
   const input = fixture();
   assert.throws(() => createRhizomorphicMorphology({ ...input, minimumAngularGap: 0 }), /must be positive/);
 });
+
+
+test("morphogenesis honors a validated secondary hypha budget", () => {
+  const input = fixture();
+  assert.equal(createRhizomorphicMorphology({ ...input, maximumSecondaryHyphae: 0 }).hyphae.length, 0);
+  assert.throws(() => createRhizomorphicMorphology({ ...input, maximumSecondaryHyphae: 3001 }), /maximumSecondaryHyphae/);
+});

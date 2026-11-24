@@ -27,14 +27,14 @@ export function createAcademyAtlasV2({
   universeStartAngle = -Math.PI / 2,
   universeDirection = 1,
   universeAnchors = {
-    MIC: { x: -220, y: -470 },
-    BIO: { x: 260, y: -520 },
-    AGR: { x: 690, y: -210 },
-    BPR: { x: 570, y: 270 },
-    BMT: { x: 110, y: 610 },
-    PHY: { x: -410, y: 500 },
-    INF: { x: -760, y: 160 },
-    GEN: { x: -80, y: 40 }
+    MIC: { x: -300, y: -240 },
+    BIO: { x: 50, y: -310 },
+    AGR: { x: 330, y: -70 },
+    BPR: { x: 250, y: 210 },
+    BMT: { x: -40, y: 260 },
+    PHY: { x: -310, y: 160 },
+    INF: { x: -400, y: -20 },
+    GEN: { x: 80, y: -20 }
   },
   universeColors = {},
   morphologyOptions = {},
@@ -82,8 +82,8 @@ export function createAcademyAtlasV2({
       id: core.id,
       label: core.title,
       color: resolveColor(core, universeColors),
-      x: -520,
-      y: -80
+      x: -40,
+      y: 0
     },
     territories: universeRecords.map((territory) => ({
       ...territory,
@@ -135,10 +135,11 @@ export function createAcademyAtlasV2({
   }
 
   const anastomoses = createVisualAnastomoses(morphology, {
-    maxDistance: 420,
-    maxLinks: 84,
-    maxDegree: 3,
-    cellSize: 210,
+    maxDistance: 520,
+    maxLinks: 260,
+    maxDegree: 5,
+    cellSize: 260,
+    includeSameTerritory: true,
     ...anastomosisOptions
   });
   const scene = createAtlasScene({

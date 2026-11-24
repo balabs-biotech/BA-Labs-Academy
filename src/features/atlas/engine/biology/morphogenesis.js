@@ -143,7 +143,8 @@ export function createRhizomorphicMorphology({
   lengthVariation = 0.08,
   curveBend = 0.12,
   minimumBranchLength = 42,
-  minimumAngularGap = 0.08
+  minimumAngularGap = 0.08,
+  maximumSecondaryHyphae = 1200
 }) {
   if (!topology?.byId || !topology?.childrenByParent || !topology?.depthById) {
     throw new TypeError("Morphogenesis requires a validated Atlas topology");
@@ -160,6 +161,9 @@ export function createRhizomorphicMorphology({
   }
   if (branchLength <= 0 || coreBranchLength <= 0 || minimumBranchLength <= 0) throw new RangeError("Branch lengths must be positive");
   if (minimumAngularGap <= 0) throw new RangeError("minimumAngularGap must be positive");
+  if (!Number.isSafeInteger(maximumSecondaryHyphae) || maximumSecondaryHyphae < 0 || maximumSecondaryHyphae > 3000) {
+    throw new RangeError("maximumSecondaryHyphae must be an integer between 0 and 3000");
+  }
   if (lengthVariation > 0.5 || curveBend > 0.5 || universeSpread > TAU || branchSpread > TAU || minimumAngularGap > TAU) {
     throw new RangeError("Morphogenesis variation and spread exceed safe bounds");
   }
@@ -226,13 +230,25 @@ export function createRhizomorphicMorphology({
     });
   }
 
-  const centroid = roots.reduce((sum, node) => ({ x: sum.x + node.x / roots.length, y: sum.y + node.y / roots.length }), { x: 0, y: 0 });
+  // Orient each territory toward its nearest neighboring territory, not away from a
+  // global centroid. This prevents isolated radial bouquets and encourages interwoven growth.
   for (const root of roots) {
     const children = topology.childrenByParent.get(root.id) || [];
-    const outwardAngle = Math.atan2(root.y - centroid.y, root.x - centroid.x);
+    const neighbor = roots
+      .filter((candidate) => candidate.id !== root.id)
+      .map((candidate) => ({
+        node: candidate,
+        distance: Math.hypot(candidate.x - root.x, candidate.y - root.y)
+      }))
+      .sort((a, b) => a.distance - b.distance || a.node.id.localeCompare(b.node.id))[0]?.node;
+    const baseAngle = neighbor
+      ? Math.atan2(neighbor.y - root.y, neighbor.x - root.x)
+      : 0;
+    const orientationJitter = (stableUnit(seed + "|territory-axis|" + root.id) - 0.5) * 1.1;
+    const growthAngle = baseAngle + orientationJitter;
     queue.push({
       node: root,
-      angle: outwardAngle,
+      angle: growthAngle,
       generation: 1,
       territoryId: root.territoryId,
       spread: universeSpread
@@ -266,7 +282,7 @@ export function createRhizomorphicMorphology({
   }
 
   const nodes = [...positioned.values()];
-  const hyphae = createSecondaryHyphae(branches, territories, seed, 1200);
+  const hyphae = createSecondaryHyphae(branches, territories, seed, maximumSecondaryHyphae);
   return {
     nodes, branches, hyphae,
     byId: new Map(nodes.map((node) => [node.id, node])),

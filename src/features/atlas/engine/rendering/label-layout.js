@@ -12,6 +12,11 @@ function zoomThreshold(node) {
   return 0.78;
 }
 
+function angularDistance(a, b) {
+  const delta = Math.abs(a - b) % (Math.PI * 2);
+  return Math.min(delta, Math.PI * 2 - delta);
+}
+
 function overlapsRect(a, b, gap) {
   return a.left < b.right + gap && a.right + gap > b.left
     && a.top < b.bottom + gap && a.bottom + gap > b.top;
@@ -66,28 +71,33 @@ export function resolveAtlasLabelLayout({
     }
 
     const baseAngle = Number.isFinite(node.angle) ? node.angle : -Math.PI / 2;
-    const directions = [0, Math.PI / 4, -Math.PI / 4, Math.PI / 2, -Math.PI / 2, Math.PI * 3 / 4, -Math.PI * 3 / 4, Math.PI];
+    const directions = Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
+      .sort((a, b) => angularDistance(a, 0) - angularDistance(b, 0));
+    const distanceRings = [1, 1.4, 1.85, 2.35];
     let chosen = null;
 
-    for (const offset of directions) {
-      const angle = baseAngle + offset;
-      const dx = Math.cos(angle);
-      const dy = Math.sin(angle);
-      const radialExtent = Math.abs(dx) * width / 2 + Math.abs(dy) * height / 2;
-      const distance = node.radius + gap + radialExtent;
-      const x = node.x + dx * distance;
-      const y = node.y + dy * distance;
-      const rect = {
-        left: x - width / 2, right: x + width / 2,
-        top: y - height / 2, bottom: y + height / 2
-      };
-      if (accepted.some((entry) => overlapsRect(rect, entry.rect, gap))) continue;
-      const hitsOtherNode = nodes.some((other) =>
-        other.id !== node.id && intersectsCircle(rect, other, gap)
-      );
-      if (hitsOtherNode) continue;
-      chosen = { id: node.id, x, y, width, height, visible: true, reason: "placed", rect };
-      break;
+    for (const distanceFactor of distanceRings) {
+      for (const offset of directions) {
+        const angle = baseAngle + offset;
+        const dx = Math.cos(angle);
+        const dy = Math.sin(angle);
+        const radialExtent = Math.abs(dx) * width / 2 + Math.abs(dy) * height / 2;
+        const distance = (node.radius + gap + radialExtent) * distanceFactor;
+        const x = node.x + dx * distance;
+        const y = node.y + dy * distance;
+        const rect = {
+          left: x - width / 2, right: x + width / 2,
+          top: y - height / 2, bottom: y + height / 2
+        };
+        if (accepted.some((entry) => overlapsRect(rect, entry.rect, gap))) continue;
+        const hitsOtherNode = nodes.some((other) =>
+          other.id !== node.id && intersectsCircle(rect, other, gap)
+        );
+        if (hitsOtherNode) continue;
+        chosen = { id: node.id, x, y, width, height, visible: true, reason: "placed", rect };
+        break;
+      }
+      if (chosen) break;
     }
 
     if (!chosen) {
