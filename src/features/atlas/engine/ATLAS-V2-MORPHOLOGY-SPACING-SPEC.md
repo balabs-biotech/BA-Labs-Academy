@@ -1,6 +1,6 @@
 # Academy Atlas V2 — spécification morphologie et espacement
 
-**Statut :** proposition de conception à relire avant implémentation  
+**Statut :** implémentation V2 réalisée — validation CI desktop/mobile en cours  
 **Base :** `main` — `4af24ba4d89917f9a2b9bc3eaf310c5490c1ff09`  
 **Périmètre :** moteur V2 et page de prévisualisation autonome uniquement.  
 **Hors périmètre :** Atlas actuellement en production, moteur du site BA Labs, données pédagogiques canoniques et déploiement de production.
@@ -114,4 +114,4 @@ La garantie visée est l'absence de chevauchement entre libellés affichés et e
 
 La direction proposée est celle d'un **arbre rhizomorphique à secteurs contraints**, avec des cordons primaires, des hyphes secondaires, des intervalles angulaires explicites à chaque niveau et une résolution réelle des collisions de texte.
 
-Aucune implémentation ne commence avant validation de cette spécification. Les valeurs numériques finales des marges et de la densité seront réglées pendant les tests, sans changer ces invariants.
+La direction a été retenue et implémentée dans la branche `feat/atlas-v2-rhizomorphic-spacing`. Les paramètres initiaux sont `minimumAngularGap = 0.08` radian, courbure déterministe des cordons, plafond global de 1 200 hyphes secondaires, marge de collision de 12 unités monde et seuils LOD décrits ci-dessus. Les tests Node, le build et un premier smoke Chromium/WebGL desktop/mobile ont passé. La validation finale porte sur le dernier commit et les captures associées. La fusion et le remplacement de l'Atlas publié restent hors de ce chantier.
