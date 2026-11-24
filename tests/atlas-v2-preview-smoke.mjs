@@ -62,7 +62,11 @@ try {
       links: document.querySelector("#link-count")?.textContent,
       status: document.querySelector("#status")?.textContent,
       canvasWidth: document.querySelector("canvas")?.width,
-      canvasHeight: document.querySelector("canvas")?.height
+      canvasHeight: document.querySelector("canvas")?.height,
+      visibleLabels: Number(document.querySelector("canvas")?.dataset.visibleLabelCount || 0),
+      hiddenLabels: Number(document.querySelector("canvas")?.dataset.hiddenLabelCount || 0),
+      sceneNodes: Number(document.querySelector("canvas")?.dataset.sceneNodeCount || 0),
+      secondaryHyphae: Number(document.querySelector("canvas")?.dataset.secondaryHyphaCount || 0)
     }));
     assert.equal(result.renderer, "academy-atlas-v2-pixijs", viewport.name + ": V2 PixiJS renderer");
     assert.equal(result.nodes, "330", viewport.name + ": all canonical nodes");
@@ -70,6 +74,20 @@ try {
     assert.equal(result.pathways, "10", viewport.name + ": pathway orbit");
     assert.ok(Number(result.links) > 0, viewport.name + ": canonical relationships");
     assert.ok(result.canvasWidth > 0 && result.canvasHeight > 0, viewport.name + ": allocated canvas");
+    assert.equal(result.sceneNodes, 330, viewport.name + ": label LOD must not remove scene nodes");
+    assert.ok(result.visibleLabels > 0, viewport.name + ": structural labels must remain visible");
+    assert.ok(result.hiddenLabels > 0, viewport.name + ": overview LOD must hide some labels");
+    assert.ok(result.secondaryHyphae > 0, viewport.name + ": biological secondary hyphae must render");
+
+    const initialVisibleLabels = result.visibleLabels;
+    for (let step = 0; step < 7; step += 1) await page.locator("#zoom-in").click();
+    const detailed = await page.locator("canvas").evaluate((canvas) => ({
+      visible: Number(canvas.dataset.visibleLabelCount || 0),
+      nodes: Number(canvas.dataset.sceneNodeCount || 0)
+    }));
+    assert.equal(detailed.nodes, 330, viewport.name + ": zoom must preserve the full node set");
+    assert.ok(detailed.visible >= initialVisibleLabels, viewport.name + ": closer zoom must not reduce label visibility");
+    await page.locator("#fit").click();
     assert.deepEqual(errors, [], viewport.name + ": no browser errors");
     await page.screenshot({ path: `artifacts/atlas-v2-preview-${viewport.name}.png`, fullPage: true });
     await page.close();
