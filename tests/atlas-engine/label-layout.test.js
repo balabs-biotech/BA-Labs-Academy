@@ -113,3 +113,15 @@ test("central MYC label remains centered on the core axis", () => {
   assert.equal(placement.x, 0);
   assert.ok(placement.y < -24, "MYC label must sit immediately above the central hub");
 });
+
+
+test("department labels remain visible at mobile overview scale", () => {
+  const department = { id: "MIC", x: 0, y: -760, radius: 18, kind: "universe", generation: 1, angle: -Math.PI / 2 };
+  const result = resolveAtlasLabelLayout({
+    nodes: [department],
+    measurements: [{ id: "MIC", width: 32, height: 12 }],
+    scale: 0.08,
+    gap: 8
+  });
+  assert.equal(result.placements[0].visible, true);
+});
