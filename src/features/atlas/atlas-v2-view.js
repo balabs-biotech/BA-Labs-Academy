@@ -98,7 +98,7 @@ export async function mountAcademyAtlasV2View(container, graph) {
         seed: "ba-labs-academy-main-v2",
         universeRadius: 760,
         pathwayOrbitRadius: 1320,
-        morphologyOptions: { maximumSecondaryHyphae: 1200 }
+        morphologyOptions: { maximumSecondaryHyphae: 1200, universeSpread: 2.2, branchSpread: 1.18, curveBend: 0.18 }
       },
       cameraOptions: {
         minScale: 0.035,
