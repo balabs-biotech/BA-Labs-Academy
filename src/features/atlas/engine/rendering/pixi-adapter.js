@@ -1,3 +1,5 @@
+import { resolveAtlasLabelLayout } from "./label-layout.js";
+
 function positive(value, name) {
   if (!Number.isFinite(value) || value <= 0) throw new RangeError(name + " must be positive");
 }
@@ -89,11 +91,11 @@ export async function createPixiSceneAdapter(canvas, {
     }
 
     for (const path of scene.paths) {
-      const source = nodeById.get(path.sourceId);
-      const target = nodeById.get(path.targetId);
-      if (!source || !target) continue;
+      const source = path.sourceId ? nodeById.get(path.sourceId) : null;
+      const target = path.targetId ? nodeById.get(path.targetId) : null;
+      if ((path.sourceId && !source) || (path.targetId && !target)) continue;
       const curve = path.curve;
-      const decorative = path.type === "anastomosis";
+      const decorative = path.type === "anastomosis" || path.type === "hypha";
       paths.moveTo(curve.a.x, curve.a.y);
       paths.bezierCurveTo(
         curve.c1.x, curve.c1.y,
@@ -101,12 +103,13 @@ export async function createPixiSceneAdapter(canvas, {
         curve.b.x, curve.b.y
       );
       paths.stroke({
-        color: colorValue(target.color ?? source.color),
-        width: decorative ? 1.2 : 2,
-        alpha: decorative ? 0.34 : path.type === "universe-trunk" ? 0.72 : 0.9
+        color: colorValue(path.color ?? target?.color ?? source?.color),
+        width: path.width ?? (path.type === "universe-trunk" ? 5 : decorative ? 1.2 : 2),
+        alpha: path.type === "hypha" ? 0.5 : path.type === "anastomosis" ? 0.34 : path.type === "universe-trunk" ? 0.72 : 0.9
       });
     }
 
+    const labelObjects = [];
     for (const node of scene.nodes) {
       const fill = colorValue(node.color, node.kind === "core" ? 0xe5b85c : 0x718491);
       nodes.circle(node.x, node.y, node.radius).fill({ color: fill, alpha: node.kind === "core" ? 1 : 0.9 });
@@ -114,9 +117,30 @@ export async function createPixiSceneAdapter(canvas, {
         nodes.circle(node.x, node.y, node.radius + 5).stroke({ color: fill, width: 1.5, alpha: 0.72 });
       }
       const label = new Text({ text: node.label, style: labelStyle });
-      label.anchor.set(0.5, 0);
-      label.position.set(node.x, node.y + node.radius + 8);
+      label.anchor.set(0.5, 0.5);
       labels.addChild(label);
+      labelObjects.push({ node, label });
+    }
+
+    const labelLayout = resolveAtlasLabelLayout({
+      nodes: scene.nodes,
+      measurements: labelObjects.map(({ node, label }) => ({
+        id: node.id, width: label.width, height: label.height
+      })),
+      scale,
+      gap: 12
+    });
+    const placementById = new Map(labelLayout.placements.map((placement) => [placement.id, placement]));
+    for (const { node, label } of labelObjects) {
+      const placement = placementById.get(node.id);
+      label.visible = Boolean(placement?.visible);
+      if (placement) label.position.set(placement.x, placement.y);
+    }
+    if (canvas.dataset) {
+      canvas.dataset.visibleLabelCount = String(labelLayout.visibleCount);
+      canvas.dataset.hiddenLabelCount = String(labelLayout.hiddenCount);
+      canvas.dataset.sceneNodeCount = String(scene.nodes.length);
+      canvas.dataset.secondaryHyphaCount = String(scene.paths.filter((path) => path.type === "hypha").length);
     }
 
     world.position.set(x, y);

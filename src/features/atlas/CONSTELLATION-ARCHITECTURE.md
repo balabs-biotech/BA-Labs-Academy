@@ -1,6 +1,6 @@
 # Academy Atlas — architecture canonique du moteur 2D V2
 
-**Statut :** architecture de référence validée — 2026-11-23  
+**Statut :** architecture de référence validée — mise à jour 2026-11-24  
 **Périmètre :** moteur spatial 2D de l'Académie uniquement.  
 **Règle de gouvernance :** toute évolution majeure du moteur doit commencer par la mise à jour de ce document. Il constitue la référence avant toute nouvelle implémentation ou refonte.
 
@@ -255,16 +255,16 @@ Ce registre suit l'état réel de la branche `feat/academy-atlas-v2-foundation`.
 |---|---|---|
 | Topologie canonique et validation des identités | Implémenté | `engine/core/topology.js` |
 | Configuration radiale à nombre variable d'univers | Implémenté | `engine/spatial/radial-topology.js` |
-| Morphogenèse rhizomorphique déterministe | Implémenté | `engine/biology/morphogenesis.js` |
+| Morphogenèse rhizomorphique déterministe, secteurs angulaires récursifs et hyphes secondaires bornées | Implémenté dans la branche V2 en validation | `engine/biology/morphogenesis.js` |
 | Enveloppes conservatives et index spatial | Implémenté | `engine/spatial/collision-index.js` |
 | Anastomoses visuelles distinctes des relations pédagogiques | Implémenté | `engine/biology/visual-anastomoses.js` |
 | Transaction géométrique avec conservation du dernier état valide | Implémenté | `engine/spatial/geometry-transaction.js` |
 | Solveur de collisions nodales borné | Implémenté | `engine/spatial/node-collision-solver.js` |
 | Scène neutre indépendante du backend | Implémenté | `engine/rendering/scene-model.js` |
-| Adaptateur PixiJS | Implémenté, smoke navigateur en validation CI | `engine/rendering/pixi-adapter.js` |
+| Adaptateur PixiJS avec cordons hiérarchiques et hyphes secondaires | Implémenté dans la branche V2 en validation CI | `engine/rendering/pixi-adapter.js` |
 | Supervision des erreurs runtime du renderer | Implémenté | `engine/rendering/renderer-supervisor.js` |
 | Interaction, caméra, gestes tactiles et accessibilité intégrés à V2 | À construire | Aucun branchement de production |
-| LOD et rendu progressif à grande échelle | À construire | À définir après le contrat d'interaction |
+| LOD des libellés avec placement anti-collision déterministe | Implémenté dans la branche V2 en validation CI | `engine/rendering/label-layout.js` |
 | Baselines visuelles comparatives et QA sur appareils réels | À construire | Les captures de smoke ne constituent pas encore des baselines de référence |
 | Intégration dans l'Atlas de l'Académie | Non commencée | L'ancien Atlas reste actif |
 
@@ -323,3 +323,54 @@ Les tests unitaires utilisent une cible événementielle simulée pour vérifier
 L'adaptateur `adapters/academy-catalogue-graph.js` reconstruit la topologie éditoriale depuis le catalogue Academy en laissant volontairement les coordonnées à zéro. Il ne dépend ni de `atlas-organic-layout.js`, ni de `explorer-2d-network.js`, ni de PixiJS. La morphogenèse V2 est donc l'unique autorité spatiale dans la prévisualisation V2.
 
 Le générateur historique `atlas-graph.js` reste intact pour l'Atlas actuellement publié. Les deux adaptateurs partagent le même contenu canonique, mais pas leur moteur de disposition. Un test de non-régression vérifie explicitement l'absence de dépendance spatiale historique dans le nouvel adaptateur.
+
+
+## 13. Morphogenèse rhizomorphique et lisibilité — révision 2026-11-24
+
+Cette révision formalise les contraintes ajoutées à la prévisualisation autonome V2. Elle ne change pas la topologie pédagogique ni le moteur de production.
+
+### 13.1 Secteurs angulaires récursifs
+
+Chaque parent distribue un secteur à chacun de ses enfants en fonction du poids du sous-arbre. Les intervalles entre secteurs sont réservés avant la distribution des largeurs ; la variation déterministe d'angle reste à l'intérieur du secteur attribué.
+
+- Paramètre par défaut : `minimumAngularGap = 0.08` radian.
+- L'allocation circulaire du noyau réserve également un intervalle entre le dernier et le premier secteur.
+- Si le nombre d'enfants rend la marge demandée impossible, l'écart est réduit uniformément selon la largeur angulaire disponible. Les largeurs restent positives et les secteurs ne se chevauchent pas.
+- Un parent à enfant unique conserve l'axe parent-enfant sans dispersion.
+- Les métadonnées `sector.start`, `sector.end`, `sector.center` et `sector.gapAfter` sont dérivées et non canoniques.
+- Les ancres radiales des univers restent inchangées.
+
+### 13.2 Hiérarchie biologique des traits
+
+La morphogenèse produit des courbes de Bézier asymétriques, reproductibles à graine et identifiants constants. Le renderer distingue les cordons rhizomorphiques, les troncs d'univers et les hyphes secondaires.
+
+- Les cordons primaires portent une largeur dérivée de la génération.
+- Les hyphes secondaires sont des chemins décoratifs autonomes, courts et plus fins ; leur nombre est plafonné à 1 200 dans la prévisualisation.
+- Les hyphes ne créent aucun nœud, aucune arête canonique et aucune relation pédagogique.
+- La scène neutre les expose sous le type `hypha`, distinct des branches hiérarchiques, des anastomoses et des relations transversales.
+- Les paramètres de courbure et de densité sont déterministes et bornés.
+
+### 13.3 Placement des libellés
+
+Le renderer mesure les objets texte PixiJS puis appelle le solveur pur `engine/rendering/label-layout.js`. Le solveur teste huit positions radiales autour de chaque nœud, selon un ordre de priorité stable : noyau, univers, structures, feuilles.
+
+Les seuils LOD initiaux sont :
+- noyau : échelle 0.02 ;
+- univers : échelle 0.055 ;
+- structures et parcours : échelle 0.12 ;
+- feuilles : échelle 0.28.
+
+La marge de collision initiale est de 12 unités monde. Un libellé sans position sûre est masqué avec un motif de diagnostic ; le nœud, son identifiant, ses relations et sa sélection restent présents. Les placements sont recalculés lorsque l'échelle de caméra change.
+
+Ces seuils sont des paramètres de présentation, pas des propriétés du graphe. Ils pourront être ajustés à partir des captures desktop et mobile sans modifier les contrats canoniques.
+
+### 13.4 Vérification visuelle spécifique à V2
+
+Le smoke test `tests/atlas-v2-preview-smoke.mjs` ouvre directement `atlas-v2-preview.html` aux viewports 1440×900 et 390×844. Il vérifie :
+- 330 nœuds toujours présents ;
+- des libellés visibles et d'autres masqués au niveau de zoom initial ;
+- une visibilité des libellés qui ne diminue pas après zoom avant ;
+- la présence de chemins d'hyphes secondaires ;
+- le fonctionnement du cadrage et l'absence d'erreurs navigateur.
+
+Ce smoke test valide le comportement du renderer sur Chromium/WebGL simulé. Il ne remplace pas une inspection esthétique humaine ni des essais sur appareils physiques.

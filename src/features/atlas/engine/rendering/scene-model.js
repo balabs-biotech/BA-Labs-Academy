@@ -61,6 +61,7 @@ export function createAtlasScene({
       color: node.universeColor ?? node.color ?? null,
       territoryId: node.territoryId ?? null,
       generation: node.generation ?? 0,
+      angle: Number.isFinite(node.angle) ? node.angle : null,
       kind: node.id === coreId ? "core" : node.entity_type === "PATHWAY" ? "pathway" : node.id === node.territoryId ? "universe" : "knowledge"
     });
   });
@@ -82,12 +83,39 @@ export function createAtlasScene({
       visualOnly: Boolean(path.visualOnly) || type === "anastomosis",
       territoryId: path.territoryId ?? null,
       territoryIds: path.territoryIds ? Object.freeze([...path.territoryIds]) : null,
+      style: path.style ?? null,
+      width: path.width ?? null,
+      color: path.color ?? null,
       curve: copyCurve(path.curve, path.id)
     }));
   };
 
   for (const branch of morphology.branches) appendPath(branch, branch.visualOnly ? "universe-trunk" : "hierarchy");
   for (const link of anastomoses) appendPath(link, "anastomosis");
+
+  for (const hypha of morphology.hyphae || []) {
+    if (!hypha || typeof hypha.id !== "string" || !hypha.id.trim()) {
+      throw new TypeError("Secondary hyphae require stable IDs");
+    }
+    if (pathIds.has(hypha.id)) throw new Error("Scene contains duplicate path id: " + hypha.id);
+    pathIds.add(hypha.id);
+    if (!Number.isFinite(hypha.width) || hypha.width <= 0) {
+      throw new RangeError("Secondary hypha width must be positive: " + hypha.id);
+    }
+    paths.push(Object.freeze({
+      id: hypha.id,
+      sourceId: null,
+      targetId: null,
+      type: "hypha",
+      visualOnly: true,
+      territoryId: hypha.territoryId ?? null,
+      territoryIds: null,
+      style: hypha.style ?? "secondary-hypha",
+      width: hypha.width,
+      color: hypha.color ?? null,
+      curve: copyCurve(hypha.curve, hypha.id)
+    }));
+  }
 
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
   const relationships = topology.edges.map((edge) => {

@@ -7,6 +7,7 @@
     "test": "node --test",
     "build": "node scripts/build.mjs",
     "benchmark:atlas": "node scripts/benchmark-atlas.mjs",
+    "test:atlas-v2-browser": "npm run build && node tests/atlas-v2-browser-smoke.mjs && node tests/atlas-v2-preview-smoke.mjs",
     "sync:shared-engine": "node scripts/sync-shared-2d-engine.mjs"
   },
   "engines": {
