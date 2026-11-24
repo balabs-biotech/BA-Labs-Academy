@@ -55,7 +55,7 @@ test("cross-disciplinary visual paths are derived only from canonical cross edge
   const ids = new Set(result.scene.relationshipPaths.map((path) => path.id));
   assert.ok(expected.every((edge) => ids.has("relationship-path:" + edge.id)));
   assert.ok(result.scene.relationshipPaths.every((path) => path.visualOnly === false));
-  assert.ok(result.scene.paths.filter((path) => path.visualOnly).every((path) => path.type === "universe-trunk" || path.type === "anastomosis"));
+  assert.ok(result.scene.paths.filter((path) => path.visualOnly).every((path) => path.type === "universe-trunk" || path.type === "anastomosis" || path.type === "hypha"));
 });
 
 test("V2 composition rejects missing core and unsupported disconnected roots", () => {
