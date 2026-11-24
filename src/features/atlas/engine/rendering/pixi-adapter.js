@@ -56,7 +56,7 @@ export async function createPixiSceneAdapter(canvas, {
 
   const labelStyle = new TextStyle({
     fontFamily: "Arial, sans-serif",
-    fontSize: 14,
+    fontSize: (canvas.clientWidth || 800) < 680 ? 12 : 14,
     fill: 0xe8edf0,
     align: "center"
   });
