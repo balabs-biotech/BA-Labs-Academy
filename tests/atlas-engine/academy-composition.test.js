@@ -28,24 +28,28 @@ test("V2 composition maps all canonical Academy nodes without mutating the graph
   assert.deepEqual(graph.edges.map((edge) => edge.id), beforeEdges);
 });
 
-test("MYC remains central; eight territories occupy an irregular field and ten pathways the outer ring", () => {
+test("department territories and pathways occupy a non-radial mycelial field", () => {
   const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
-  const result = createAcademyAtlasV2({ graph, universeRadius: 700, pathwayOrbitRadius: 1400 });
+  const result = createAcademyAtlasV2({ graph });
   const core = result.scene.nodes.find((node) => node.id === "department:MYC");
-  assert.deepEqual([core.x, core.y], [0, 0]);
+  assert.notDeepEqual([core.x, core.y], [0, 0], "MYC must be a territory, not a central hub");
   const departments = result.scene.nodes.filter((node) =>
     node.kind === "universe" && node.id.startsWith("department:")
   );
   assert.equal(departments.length, 8);
-  const territoryRadii = departments.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(territoryRadii.every((radius) => radius >= 700 && radius <= 900));
-  assert.ok(Math.max(...territoryRadii) - Math.min(...territoryRadii) >= 150,
-    "department anchors must not collapse into a uniform radial ring");
+  const coordinates = [core, ...departments].map((node) => [node.x, node.y]);
+  const unique = new Set(coordinates.map(([x, y]) => x + ":" + y));
+  assert.equal(unique.size, 9, "all department anchors must occupy distinct field positions");
+  const radii = coordinates.map(([x, y]) => Math.hypot(x, y));
+  assert.ok(Math.max(...radii) - Math.min(...radii) > 250,
+    "department anchors must not form a uniform radial ring");
   const pathways = result.scene.nodes.filter((node) => node.id.startsWith("pathway:"));
   assert.equal(pathways.length, 10);
-  for (const node of pathways) {
-    assert.ok(Math.abs(Math.hypot(node.x, node.y) - 1400) < 1e-6);
-  }
+  const pathwayRadii = pathways.map((node) => Math.hypot(node.x, node.y));
+  assert.ok(Math.max(...pathwayRadii) - Math.min(...pathwayRadii) > 250,
+    "pathways must be distributed through the organic field, not an orbital ring");
+  const trunks = result.scene.paths.filter((path) => path.type === "universe-trunk");
+  assert.equal(trunks.length, 8, "territories connect as a spanning growth network, not radial spokes");
 });
 
 test("cross-disciplinary visual paths are derived only from canonical cross edges", () => {
