@@ -72,8 +72,12 @@ export function createAtlasScene({
   const appendPath = (path, type) => {
     if (!path || typeof path.id !== "string" || !path.id.trim()) throw new TypeError("Scene paths require stable IDs");
     if (pathIds.has(path.id)) throw new Error("Scene contains duplicate path id: " + path.id);
-    if (!seenNodes.has(path.sourceId) || !seenNodes.has(path.targetId)) {
+    if ((path.sourceId !== null && path.sourceId !== undefined && !seenNodes.has(path.sourceId)) ||
+        (path.targetId !== null && path.targetId !== undefined && !seenNodes.has(path.targetId))) {
       throw new Error("Scene path references a missing node: " + path.id);
+    }
+    if (!path.visualOnly && (!path.sourceId || !path.targetId)) {
+      throw new Error("Canonical scene paths require both endpoint nodes: " + path.id);
     }
     pathIds.add(path.id);
     paths.push(Object.freeze({
