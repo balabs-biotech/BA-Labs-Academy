@@ -274,7 +274,7 @@ export function createRhizomorphicMorphology({
       sourceId: core.id,
       targetId: null,
       width: 8,
-      curve: createCurve(core, point, seed + "|emblem-stem|" + index, curveBend * 0.65)
+      curve: createCurve(core, point, seed + "|emblem-stem|" + index, curveBend * 0.25)
     });
     return [angle, point];
   }));
