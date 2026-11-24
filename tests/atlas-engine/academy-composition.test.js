@@ -128,8 +128,10 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
       "each primary spoke must grow lateral hyphae along its length");
   }
 
-  assert.ok(result.anastomoses.links.length >= 120,
-    "the eight territories must develop a visible reticulate mesh, not isolated fans");
+  assert.ok(result.anastomoses.links.length >= 24,
+    "the eight territories must develop cross-universe hyphal bridges");
+  assert.ok(result.anastomoses.links.every((link) => link.territoryIds.length === 2),
+    "decorative anastomoses must connect distinct radial universes");
 
   const staggeredTerritories = departments.filter((department) => {
     const children = result.topology.childrenByParent.get(department.id) || [];
