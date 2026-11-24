@@ -182,7 +182,7 @@ git commit -m "feat(atlas): prevent label collisions across zoom levels"
 ### Task 4: V2 browser verification and architecture record
 
 **Files:**
-- Create: `tests/atlas-v2-preview-smoke.mjs`
+- Modify: `tests/atlas-v2-preview-smoke.mjs`
 - Modify: `package.json` to add `test:atlas-v2-browser`
 - Modify: `src/features/atlas/CONSTELLATION-ARCHITECTURE.md`
 - Modify: `src/features/atlas/engine/ATLAS-V2-MORPHOLOGY-SPACING-SPEC.md` to record final implemented parameters and behavior
