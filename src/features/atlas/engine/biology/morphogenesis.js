@@ -81,57 +81,6 @@ function createCurve(source, target, seed, bendRatio) {
   };
 }
 
-const Y_FOUNDING_AXES = [-Math.PI / 2, Math.PI / 6, Math.PI * 5 / 6];
-
-function nearestFoundingAxis(angle) {
-  return Y_FOUNDING_AXES.reduce((best, candidate) => {
-    const delta = Math.atan2(Math.sin(angle - candidate), Math.cos(angle - candidate));
-    const bestDelta = Math.atan2(Math.sin(angle - best), Math.cos(angle - best));
-    return Math.abs(delta) < Math.abs(bestDelta) ? candidate : best;
-  }, Y_FOUNDING_AXES[0]);
-}
-
-/**
- * Route each of the eight peripheral cords through one of three shared
- * founding axes. Their initial tangents form the BA Labs Y before splitting
- * toward their own universe; the canonical departments remain unchanged.
- */
-function createEmblemYCurve(source, target, seed, axisAngle, bendRatio) {
-  const dx = target.x - source.x;
-  const dy = target.y - source.y;
-  const distance = Math.hypot(dx, dy) || 1;
-  const axisX = Math.cos(axisAngle);
-  const axisY = Math.sin(axisAngle);
-  const normalX = -axisY;
-  const normalY = axisX;
-  const jitter = (stableUnit(seed + "|y-offset") - 0.5) * distance * bendRatio * 0.22;
-  const bend = (stableUnit(seed + "|y-bend") - 0.5) * distance * bendRatio * 0.7;
-  return {
-    a: { x: source.x, y: source.y },
-    c1: {
-      x: source.x + axisX * distance * 0.38 + normalX * jitter,
-      y: source.y + axisY * distance * 0.38 + normalY * jitter
-    },
-    c2: {
-      x: source.x + dx * 0.72 + normalX * bend,
-      y: source.y + dy * 0.72 + normalY * bend
-    },
-    b: { x: target.x, y: target.y }
-  };
-}
-
-
-function pointOnCurve(curve, t) {
-  const inverse = 1 - t;
-  const a = inverse ** 3;
-  const b = 3 * inverse ** 2 * t;
-  const c = 3 * inverse * t ** 2;
-  const d = t ** 3;
-  return {
-    x: a * curve.a.x + b * curve.c1.x + c * curve.c2.x + d * curve.b.x,
-    y: a * curve.a.y + b * curve.c1.y + c * curve.c2.y + d * curve.b.y
-  };
-}
 
 function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const hyphae = [];
@@ -251,54 +200,93 @@ export function createRhizomorphicMorphology({
     roots.push(node);
   }
 
-  // Emblem architecture: three shared Y stems leave the MYC nucleus, then
-  // divide into eight peripheral universe cords. Split points are derived
-  // geometry only; they never become pedagogical nodes.
-  const splitRadius = Math.min(universeSpread > 0 ? 420 : 380, coreBranchLength * 2.3);
-  const splitPoints = new Map(Y_FOUNDING_AXES.map((angle, index) => {
-    const point = {
-      id: "emblem-split:" + index,
-      canonicalId: null,
-      x: core.x + Math.cos(angle) * splitRadius,
-      y: core.y + Math.sin(angle) * splitRadius,
-      angle,
-      generation: 1,
-      territoryId: coreId
-    };
-    addBranch(core, point, {
-      id: "emblem-stem:" + index,
-      territoryId: coreId,
-      generation: 1,
-      visualOnly: true,
-      style: "emblem-stem",
-      sourceId: core.id,
-      targetId: null,
-      width: 8,
-      curve: createCurve(core, point, seed + "|emblem-stem|" + index, curveBend * 0.25)
-    });
-    return [angle, point];
-  }));
+  // Emblem architecture: one central trunk rises from MYC and divides into
+  // two continuous arms. Each arm follows a curved arc and emits four terminal
+  // cords toward the eight universes distributed around the radial wheel.
+  // All split points are derived geometry; none becomes a pedagogical node.
+  const splitAngle = -Math.PI / 2;
+  const splitRadius = Math.min(420, coreBranchLength * 2.3);
+  const splitPoint = {
+    id: "emblem-split",
+    canonicalId: null,
+    x: core.x + Math.cos(splitAngle) * splitRadius,
+    y: core.y + Math.sin(splitAngle) * splitRadius,
+    angle: splitAngle,
+    generation: 1,
+    territoryId: coreId
+  };
+  addBranch(core, splitPoint, {
+    id: "emblem-stem",
+    territoryId: coreId,
+    generation: 1,
+    visualOnly: true,
+    style: "emblem-stem",
+    sourceId: core.id,
+    targetId: null,
+    width: 10,
+    curve: createCurve(core, splitPoint, seed + "|emblem-stem", curveBend * 0.2)
+  });
 
-  for (const territory of spatialTopology.territories) {
-    const target = positioned.get(territory.nodeId || territory.id);
-    const angle = Math.atan2(target.y - core.y, target.x - core.x);
-    const axis = nearestFoundingAxis(angle);
-    const splitPoint = splitPoints.get(axis);
-    addBranch(splitPoint, target, {
-      id: "universe-spoke:" + target.id,
-      territoryId: target.territoryId,
-      generation: 1,
-      visualOnly: true,
-      style: "universe-spoke",
-      sourceId: null,
-      targetId: target.id,
-      width: 5.5,
-      curve: createCurve(splitPoint, target, seed + "|universe-spoke|" + target.id, curveBend * 1.15)
+  const signedDelta = (angle) => Math.atan2(
+    Math.sin(angle - splitAngle), Math.cos(angle - splitAngle)
+  );
+  const rightArm = spatialTopology.territories
+    .filter((territory) => signedDelta(territory.angle) > 0)
+    .sort((a, b) => signedDelta(a.angle) - signedDelta(b.angle));
+  const leftArm = spatialTopology.territories
+    .filter((territory) => signedDelta(territory.angle) < 0)
+    .sort((a, b) => Math.abs(signedDelta(a.angle)) - Math.abs(signedDelta(b.angle)));
+
+  const growEmblemArm = (territories, side) => {
+    let previousPoint = splitPoint;
+    territories.forEach((territory, index) => {
+      const target = positioned.get(territory.nodeId || territory.id);
+      const delta = signedDelta(territory.angle);
+      const branchAngle = splitAngle + delta * 0.66;
+      const targetRadius = Math.hypot(target.x - core.x, target.y - core.y);
+      const branchRadius = splitRadius + (targetRadius - splitRadius) * 0.56;
+      const branchPoint = {
+        id: "emblem-arm-point:" + side + ":" + index,
+        canonicalId: null,
+        x: core.x + Math.cos(branchAngle) * branchRadius,
+        y: core.y + Math.sin(branchAngle) * branchRadius,
+        angle: branchAngle,
+        generation: 1,
+        territoryId: target.territoryId
+      };
+      addBranch(previousPoint, branchPoint, {
+        id: "emblem-arm-" + side + ":" + index,
+        territoryId: target.territoryId,
+        generation: 1,
+        visualOnly: true,
+        style: "emblem-arm-" + side,
+        sourceId: null,
+        targetId: null,
+        width: 7.5,
+        curve: createCurve(previousPoint, branchPoint,
+          seed + "|emblem-arm|" + side + "|" + index, curveBend * 1.2)
+      });
+      addBranch(branchPoint, target, {
+        id: "universe-spoke:" + target.id,
+        territoryId: target.territoryId,
+        generation: 1,
+        visualOnly: true,
+        style: "universe-spoke",
+        sourceId: null,
+        targetId: target.id,
+        width: 5.5,
+        curve: createCurve(branchPoint, target,
+          seed + "|universe-spoke|" + target.id, curveBend * 1.15)
+      });
+      previousPoint = branchPoint;
     });
-  }
+  };
+
+  growEmblemArm(rightArm, "right");
+  growEmblemArm(leftArm, "left");
 
   // MYC's own taxonomy occupies a compact complete inner ring around the
-  // central nucleus; the eight outer universes use the three-stem Y scaffold.
+  // central nucleus; the outer Y arms carry four universes each.
 
   for (const root of roots) {
     const isCore = root.id === coreId;
