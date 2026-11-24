@@ -61,6 +61,7 @@ export function createAtlasScene({
       color: node.universeColor ?? node.color ?? null,
       territoryId: node.territoryId ?? null,
       generation: node.generation ?? 0,
+      angle: Number.isFinite(node.angle) ? node.angle : null,
       kind: node.id === coreId ? "core" : node.entity_type === "PATHWAY" ? "pathway" : node.id === node.territoryId ? "universe" : "knowledge"
     });
   });
