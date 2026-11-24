@@ -88,3 +88,4 @@ test("V2 catalogue adapter is spatially neutral and does not depend on the legac
   );
   assert.doesNotMatch(source, /atlas-organic-layout|explorer-2d-network|pixi-renderer/i);
 });
+
