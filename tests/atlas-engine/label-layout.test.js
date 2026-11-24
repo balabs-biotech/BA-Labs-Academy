@@ -82,7 +82,7 @@ test("invalid text measurements hide only the affected label", () => {
 });
 
 
-test("radial department labels prefer a tangential offset to preserve mobile viewport width", () => {
+test("radial department labels prefer an inward offset to preserve mobile viewport width", () => {
   const radialNode = { id: "bio", x: 760, y: 0, radius: 18, kind: "universe", generation: 1, angle: 0 };
   const result = resolveAtlasLabelLayout({
     nodes: [radialNode],
@@ -92,8 +92,8 @@ test("radial department labels prefer a tangential offset to preserve mobile vie
   });
   const placement = result.placements[0];
   assert.equal(placement.visible, true);
-  assert.ok(Math.abs(placement.x - radialNode.x) < 1e-6,
-    "a right-facing radial anchor should place its long label tangentially, not farther right");
-  assert.ok(Math.abs(placement.y - radialNode.y) > 20,
-    "the label should move above or below the radial axis");
+  assert.ok(placement.x < radialNode.x - 100,
+    "a right-facing radial anchor should place its long label inward, toward the core");
+  assert.ok(Math.abs(placement.y - radialNode.y) < 1e-6,
+    "the label should remain on the inward radial axis");
 });
