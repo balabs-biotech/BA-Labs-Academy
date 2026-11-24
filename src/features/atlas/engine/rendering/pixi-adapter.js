@@ -89,11 +89,11 @@ export async function createPixiSceneAdapter(canvas, {
     }
 
     for (const path of scene.paths) {
-      const source = nodeById.get(path.sourceId);
-      const target = nodeById.get(path.targetId);
-      if (!source || !target) continue;
+      const source = path.sourceId ? nodeById.get(path.sourceId) : null;
+      const target = path.targetId ? nodeById.get(path.targetId) : null;
+      if ((path.sourceId && !source) || (path.targetId && !target)) continue;
       const curve = path.curve;
-      const decorative = path.type === "anastomosis";
+      const decorative = path.type === "anastomosis" || path.type === "hypha";
       paths.moveTo(curve.a.x, curve.a.y);
       paths.bezierCurveTo(
         curve.c1.x, curve.c1.y,
@@ -101,9 +101,9 @@ export async function createPixiSceneAdapter(canvas, {
         curve.b.x, curve.b.y
       );
       paths.stroke({
-        color: colorValue(target.color ?? source.color),
-        width: decorative ? 1.2 : 2,
-        alpha: decorative ? 0.34 : path.type === "universe-trunk" ? 0.72 : 0.9
+        color: colorValue(path.color ?? target?.color ?? source?.color),
+        width: path.width ?? (path.type === "universe-trunk" ? 5 : decorative ? 1.2 : 2),
+        alpha: path.type === "hypha" ? 0.5 : path.type === "anastomosis" ? 0.34 : path.type === "universe-trunk" ? 0.72 : 0.9
       });
     }
 
