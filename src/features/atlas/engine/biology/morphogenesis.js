@@ -130,7 +130,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   return hyphae;
 }
 
-/** Generate deterministic rhizomorphic growth across an irregular, non-radial mycelial field. */
+/** Generate deterministic radial fractal growth from a central MYC core. */
 export function createRhizomorphicMorphology({
   topology,
   mycelialTopology,
@@ -239,6 +239,7 @@ export function createRhizomorphicMorphology({
     const children = topology.childrenByParent.get(current.node.id) || [];
     if (!children.length) continue;
     const sectors = allocateSectors(children, current.angle, current.spread, weights, {
+      fullRing: current.node.id === coreId,
       seed: seed + "|" + current.node.id + "|fan", minimumAngularGap
     });
     children.forEach((child, index) => {
