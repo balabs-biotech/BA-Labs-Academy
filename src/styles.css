@@ -788,3 +788,20 @@
   .atlas-topline-copy strong{font-size:10px;line-height:1.5}
   .atlas-engine-state{max-width:110px;text-align:right;white-space:normal;font-size:8px}
 }
+
+
+/* Production Atlas now uses the independent mycelial V2 renderer exclusively. */
+#academy-atlas-v2-canvas{position:absolute;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab;outline:none}
+#academy-atlas-v2-canvas:active{cursor:grabbing}
+.academy-atlas-v2 .atlas-stage{position:relative;overflow:hidden}
+.academy-atlas-v2 .atlas-controls{position:absolute;z-index:3}
+.academy-atlas-v2 .atlas-selection{display:block}
+.academy-atlas-v2 .atlas-root-navigation{margin-top:0}
+.academy-atlas-v2 .atlas-legend .legend-department{color:#c88773}
+.academy-atlas-v2 .atlas-legend .legend-section{color:#8bb7a2}
+.academy-atlas-v2 .atlas-legend .legend-pathway{color:#a9a0d4}
+.academy-atlas-v2 .atlas-legend .legend-link{color:#80aeb8}
+@media(max-width:700px){
+  .academy-atlas-v2 .atlas-stage{height:72vh;min-height:540px}
+  .academy-atlas-v2 .atlas-root-navigation{padding:10px;gap:8px}
+}
