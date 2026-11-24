@@ -68,6 +68,17 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
     const delta = Math.atan2(Math.sin(angle - axis), Math.cos(angle - axis));
     return Math.abs(delta) < 0.15;
   })), "the three primary stems must preserve the chosen Y orientation");
+
+  const spines = result.scene.paths.filter((path) => path.style === "primary-spine");
+  const lateralBranches = result.scene.paths.filter((path) => path.style === "lateral-hypha");
+  assert.ok(spines.length >= 8,
+    "each multi-child universe must continue as a primary hyphal spine");
+  assert.ok(lateralBranches.length >= 24,
+    "disciplinary descendants must branch laterally from the spine at staggered depths");
+  assert.ok(spines.every((path) => path.targetId === null),
+    "primary spines must use derived split geometry, not artificial canonical nodes");
+  assert.ok(lateralBranches.every((path) => path.sourceId === null && path.targetId),
+    "lateral hyphae must connect virtual branch origins to real learning nodes");
   const pathways = result.scene.nodes.filter((node) => node.id.startsWith("pathway:"));
   assert.equal(pathways.length, 10);
   const pathwayRadii = pathways.map((node) => Math.hypot(node.x, node.y));
