@@ -58,6 +58,7 @@ export function createAtlasScene({
       y: node.y,
       radius,
       label: String(node.label ?? node.title ?? node.name ?? node.id),
+      shortLabel: node.entity_key ? String(node.entity_key) : null,
       color: node.universeColor ?? node.color ?? null,
       territoryId: node.territoryId ?? null,
       generation: node.generation ?? 0,

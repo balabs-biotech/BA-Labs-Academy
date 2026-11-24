@@ -7,7 +7,7 @@ function priority(node) {
 
 function zoomThreshold(node) {
   if (node.kind === "core") return 0.04;
-  if (node.kind === "universe") return 0.12;
+  if (node.kind === "universe") return 0.07;
   if (node.kind === "pathway" || node.generation <= 2) return 0.48;
   return 0.78;
 }
@@ -71,12 +71,31 @@ export function resolveAtlasLabelLayout({
     }
 
     const baseAngle = Number.isFinite(node.angle) ? node.angle : -Math.PI / 2;
-    const directions = Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
-      .sort((a, b) => angularDistance(a, 0) - angularDistance(b, 0));
-    const distanceRings = [1, 1.4, 1.85, 2.35];
+    const radialLabel = node.kind === "universe" || node.kind === "pathway";
+    const collisionNodes = nodes.filter((other) => other.id !== node.id);
+    const radialFirst = [Math.PI, Math.PI / 2, Math.PI * 1.5, Math.PI / 4,
+      Math.PI * 1.75, Math.PI * 0.75, Math.PI * 1.25, 0];
+    const directions = radialLabel
+      ? [...radialFirst, ...Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
+        .filter((angle) => !radialFirst.includes(angle))]
+      : Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
+        .sort((a, b) => angularDistance(a, 0) - angularDistance(b, 0));
+    const distanceRings = radialLabel ? [2.35, 1.85, 1.4, 1] : [1, 1.4, 1.85, 2.35];
     let chosen = null;
 
-    for (const distanceFactor of distanceRings) {
+    if (node.kind === "core") {
+      const x = node.x;
+      const y = node.y - node.radius - gap - height / 2;
+      const rect = {
+        left: x - width / 2, right: x + width / 2,
+        top: y - height / 2, bottom: y + height / 2
+      };
+      // MYC is the visual anchor of the entire wheel. Keep its name on the
+      // central axis instead of displacing it around nearby decorative hyphae.
+      chosen = { id: node.id, x, y, width, height, visible: true, reason: "core-axis", rect };
+    }
+
+    for (const distanceFactor of (chosen ? [] : distanceRings)) {
       for (const offset of directions) {
         const angle = baseAngle + offset;
         const dx = Math.cos(angle);
@@ -90,9 +109,7 @@ export function resolveAtlasLabelLayout({
           top: y - height / 2, bottom: y + height / 2
         };
         if (accepted.some((entry) => overlapsRect(rect, entry.rect, gap))) continue;
-        const hitsOtherNode = nodes.some((other) =>
-          other.id !== node.id && intersectsCircle(rect, other, gap)
-        );
+        const hitsOtherNode = collisionNodes.some((other) => intersectsCircle(rect, other, gap));
         if (hitsOtherNode) continue;
         chosen = { id: node.id, x, y, width, height, visible: true, reason: "placed", rect };
         break;

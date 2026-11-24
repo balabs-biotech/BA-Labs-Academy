@@ -1,6 +1,6 @@
 import { PALETTE } from "../atlas-palette.js";
 import { createAtlasTopology } from "../engine/core/topology.js";
-import { createMycelialTopology } from "../engine/spatial/mycelial-topology.js";
+import { createRadialTopology } from "../engine/spatial/radial-topology.js";
 import { createRhizomorphicMorphology } from "../engine/biology/morphogenesis.js";
 import { createVisualAnastomoses } from "../engine/biology/visual-anastomoses.js";
 import { createAtlasScene } from "../engine/rendering/scene-model.js";
@@ -26,16 +26,6 @@ export function createAcademyAtlasV2({
   pathwayDirection = 1,
   universeStartAngle = -Math.PI / 2,
   universeDirection = 1,
-  universeAnchors = {
-    MIC: { x: -300, y: -240 },
-    BIO: { x: 50, y: -310 },
-    AGR: { x: 330, y: -70 },
-    BPR: { x: 250, y: 210 },
-    BMT: { x: -40, y: 260 },
-    PHY: { x: -310, y: 160 },
-    INF: { x: -400, y: -20 },
-    GEN: { x: 80, y: -20 }
-  },
   universeColors = {},
   morphologyOptions = {},
   anastomosisOptions = {}
@@ -73,28 +63,25 @@ export function createAcademyAtlasV2({
       nodeId: node.id,
       label: node.title,
       entity_key: node.entity_key,
-      color: resolveColor(node, universeColors),
-      ...(universeAnchors[node.entity_key] || {})
+      color: resolveColor(node, universeColors)
     }));
 
-  const mycelialTopology = createMycelialTopology({
+  const radialTopology = createRadialTopology({
     core: {
       id: core.id,
       label: core.title,
-      color: resolveColor(core, universeColors),
-      x: -40,
-      y: 0
+      color: resolveColor(core, universeColors)
     },
-    territories: universeRecords.map((territory) => ({
-      ...territory,
-      ...(universeAnchors[territory.entity_key] || { x: 0, y: 0 })
-    }))
+    universes: universeRecords,
+    startAngle: universeStartAngle,
+    direction: universeDirection,
+    radius: universeRadius
   });
 
   const morphology = createRhizomorphicMorphology({
     ...morphologyOptions,
     topology,
-    mycelialTopology,
+    radialTopology,
     seed
   });
 
@@ -112,8 +99,8 @@ export function createAcademyAtlasV2({
     const angle = pathwayStartAngle + pathwayDirection * TAU * index / Math.max(1, pathwayCount);
     return {
       ...node,
-      x: [-600, -250, 80, 600, 1000, 700, 100, -500, -900, -100][index % 10],
-      y: [-700, -400, -800, -450, -100, 400, 900, 850, 300, 100][index % 10],
+      x: Math.cos(angle) * pathwayOrbitRadius,
+      y: Math.sin(angle) * pathwayOrbitRadius,
       angle,
       generation: 1,
       territoryId: "pathways",
@@ -135,10 +122,10 @@ export function createAcademyAtlasV2({
   }
 
   const anastomoses = createVisualAnastomoses(morphology, {
-    maxDistance: 520,
-    maxLinks: 260,
-    maxDegree: 5,
-    cellSize: 260,
+    maxDistance: 300,
+    maxLinks: 80,
+    maxDegree: 2,
+    cellSize: 180,
     includeSameTerritory: true,
     ...anastomosisOptions
   });
@@ -151,7 +138,7 @@ export function createAcademyAtlasV2({
 
   return Object.freeze({
     topology,
-    mycelialTopology,
+    radialTopology,
     morphology,
     anastomoses,
     scene,
@@ -159,7 +146,7 @@ export function createAcademyAtlasV2({
       canonicalNodeCount: topology.nodes.length,
       canonicalRelationshipCount: topology.edges.length,
       departmentCount: departmentRoots.length,
-      peripheralUniverseCount: mycelialTopology.count,
+      peripheralUniverseCount: radialTopology.count,
       pathwayAnchorCount: pathwayNodes.length,
       renderedNodeCount: scene.metrics.nodeCount,
       hierarchyPathCount: scene.paths.filter((path) => path.type === "hierarchy").length,

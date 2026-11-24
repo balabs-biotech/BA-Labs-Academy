@@ -1,18 +1,29 @@
 # Academy Atlas V2 — spécification morphologie et espacement
 
-**Statut :** implémentation V2 réalisée — validation CI desktop/mobile en cours  
-**Base :** `main` — `4af24ba4d89917f9a2b9bc3eaf310c5490c1ff09`  
-**Périmètre :** moteur V2 et page de prévisualisation autonome uniquement.  
-**Hors périmètre :** Atlas actuellement en production, moteur du site BA Labs, données pédagogiques canoniques et déploiement de production.
+**Statut :** correction de composition radiale en validation — 2026-11-24  
+**Périmètre :** moteur 2D autonome de BA Labs Academy, y compris son intégration de production.  
+**Indépendance :** aucun partage de code, d’algorithme ou de cycle de déploiement avec le moteur du site web BA Labs.
 
 ## 1. Objectif utilisateur
 
-La prévisualisation V2 doit évoquer un véritable réseau mycélien, et non un arbre radial générique. En parallèle, chaque niveau de la hiérarchie doit disposer d'un espacement angulaire explicite. Les libellés ne doivent jamais se superposer.
+Le moteur Academy doit représenter une roue mycélienne fractale, avec la mycologie (MYC) au centre et huit univers disciplinaires disposés autour du noyau. Chaque univers développe des ramifications biologiques récursives vers l’extérieur. Les dix parcours transversaux occupent une orbite secondaire. Chaque niveau de la hiérarchie dispose d’un espacement angulaire explicite ; les libellés affichés ne doivent jamais se superposer ni sortir du viewport.
 
 Les trois exigences sont indissociables :
 1. **Identité biologique :** branches principales épaisses et organiques, hyphes secondaires plus fines, ramifications irrégulières mais cohérentes, anastomoses uniquement décoratives ou justifiées par une relation canonique.
 2. **Espacement hiérarchique :** chaque parent réserve des secteurs angulaires à ses enfants, à toutes les profondeurs.
 3. **Lisibilité :** les collisions de libellés sont détectées et résolues avant le rendu ; le zoom réduit progressivement la densité visuelle sans supprimer l'accès aux nœuds.
+
+## 2.1 Contrat de composition radiale
+
+1. MYC est le noyau spatial exact : coordonnées (0, 0), identité et libellé prioritaires.
+2. Les huit autres départements sont distribués sur un anneau radial commun, à intervalles angulaires réguliers, et reliés au noyau par huit cordons principaux.
+3. Les descendants de MYC se développent dans une couronne interne compacte ; ils ne remplacent pas les huit rayons disciplinaires.
+4. Chaque département périphérique développe ses branches depuis son axe radial vers l’extérieur, dans un secteur angulaire réservé.
+5. Les dix parcours sont positionnés sur une orbite extérieure distincte. Ils ne sont pas dispersés par coordonnées arbitraires.
+6. Les hyphes secondaires et anastomoses ajoutent une texture biologique contrôlée, sans brouiller la silhouette de la roue.
+7. Les relations pédagogiques transversales sont une couche secondaire : masquées ou très discrètes à faible zoom, puis révélées progressivement au zoom.
+
+La composition est recalculable pour un nombre variable d’univers. Les huit secteurs décrivent la configuration éditoriale actuelle, pas une limite du moteur.
 
 ## 2. Direction retenue : arbre rhizomorphique à secteurs contraints
 

@@ -56,7 +56,7 @@ export async function createPixiSceneAdapter(canvas, {
 
   const labelStyle = new TextStyle({
     fontFamily: "Arial, sans-serif",
-    fontSize: 14,
+    fontSize: (canvas.clientWidth || 800) < 680 ? 12 : 14,
     fill: 0xe8edf0,
     align: "center"
   });
@@ -79,15 +79,21 @@ export async function createPixiSceneAdapter(canvas, {
     nodes.clear();
     for (const label of labels.removeChildren()) label.destroy();
 
-    for (const relation of scene.relationshipPaths || []) {
-      const curve = relation.curve;
-      relations.moveTo(curve.a.x, curve.a.y);
-      relations.bezierCurveTo(
-        curve.c1.x, curve.c1.y,
-        curve.c2.x, curve.c2.y,
-        curve.b.x, curve.b.y
-      );
-      relations.stroke({ color: 0xa9a0d4, width: 1, alpha: 0.2 });
+    // Pedagogical cross-links are secondary information, not the organism's
+    // silhouette. Keep the overview biologically legible and reveal relations
+    // progressively as the learner zooms into a territory.
+    const relationAlpha = Math.max(0, Math.min(0.12, (scale - 0.22) * 0.16));
+    if (relationAlpha >= 0.012) {
+      for (const relation of scene.relationshipPaths || []) {
+        const curve = relation.curve;
+        relations.moveTo(curve.a.x, curve.a.y);
+        relations.bezierCurveTo(
+          curve.c1.x, curve.c1.y,
+          curve.c2.x, curve.c2.y,
+          curve.b.x, curve.b.y
+        );
+        relations.stroke({ color: 0xa9a0d4, width: 0.85, alpha: relationAlpha });
+      }
     }
 
     for (const path of scene.paths) {
@@ -116,7 +122,11 @@ export async function createPixiSceneAdapter(canvas, {
       if (node.kind === "core") {
         nodes.circle(node.x, node.y, node.radius + 5).stroke({ color: fill, width: 1.5, alpha: 0.72 });
       }
-      const label = new Text({ text: node.label, style: labelStyle });
+      const compactMobileOverview = (canvas.clientWidth || 800) < 680 && scale < 0.35;
+      const labelText = compactMobileOverview && node.kind === "universe"
+        ? (node.shortLabel || node.label)
+        : node.label;
+      const label = new Text({ text: labelText, style: labelStyle });
       label.anchor.set(0.5, 0.5);
       labels.addChild(label);
       labelObjects.push({ node, label });

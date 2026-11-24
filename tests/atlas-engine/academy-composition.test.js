@@ -37,6 +37,8 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
     node.kind === "universe" && node.id.startsWith("department:")
   );
   assert.equal(departments.length, 8);
+  assert.ok(departments.every((node) => node.shortLabel && node.shortLabel.length <= 3),
+    "department short codes must be available for compact mobile overview labels");
   const radii = departments.map((node) => Math.hypot(node.x, node.y));
   assert.ok(radii.every((radius) => Math.abs(radius - 760) < 1e-6),
     "all eight universes must occupy one controlled radial ring");
@@ -47,6 +49,11 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
   });
   assert.ok(gaps.every((gap) => Math.abs(gap - Math.PI / 4) < 1e-6),
     "universe anchors must have equal angular spacing");
+  assert.ok(departments.every((node) => {
+    const delta = node.angle - Math.atan2(node.y, node.x);
+    return Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) < 1e-6;
+  }), "each department must retain its radial axis for label placement");
+
   const trunks = result.scene.paths.filter((path) => path.type === "universe-trunk");
   assert.equal(trunks.length, 8);
   assert.ok(trunks.every((path) => path.sourceId === core.id),
@@ -88,3 +95,4 @@ test("V2 catalogue adapter is spatially neutral and does not depend on the legac
   );
   assert.doesNotMatch(source, /atlas-organic-layout|explorer-2d-network|pixi-renderer/i);
 });
+

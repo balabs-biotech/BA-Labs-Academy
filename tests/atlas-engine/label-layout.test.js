@@ -80,3 +80,48 @@ test("invalid text measurements hide only the affected label", () => {
   assert.equal(result.placements.find((item) => item.id === "core").reason, "invalid-measurement");
   assert.equal(result.placements.find((item) => item.id === "universe").visible, true);
 });
+
+
+test("radial department labels prefer an inward offset to preserve mobile viewport width", () => {
+  const radialNode = { id: "bio", x: 760, y: 0, radius: 18, kind: "universe", generation: 1, angle: 0 };
+  const innerDescendant = { id: "bio-section", x: 600, y: 0, radius: 20, kind: "knowledge", generation: 2, angle: 0 };
+  const result = resolveAtlasLabelLayout({
+    nodes: [radialNode, innerDescendant],
+    measurements: [{ id: "bio", width: 220, height: 14 }, { id: "bio-section", width: 70, height: 14 }],
+    scale: 0.2,
+    gap: 8
+  });
+  const placement = result.placements[0];
+  assert.equal(placement.visible, true);
+  assert.ok(placement.x < radialNode.x - 100,
+    "a right-facing radial anchor should place its long label inward, toward the core");
+  assert.ok(Math.abs(placement.y - radialNode.y) < 1e-6,
+    "the label should remain on the inward radial axis");
+});
+
+
+test("central MYC label remains centered on the core axis", () => {
+  const core = { id: "MYC", x: 0, y: 0, radius: 24, kind: "core", generation: 1 };
+  const result = resolveAtlasLabelLayout({
+    nodes: [core],
+    measurements: [{ id: "MYC", width: 84, height: 16 }],
+    scale: 0.2,
+    gap: 12
+  });
+  const placement = result.placements[0];
+  assert.equal(placement.visible, true);
+  assert.equal(placement.x, 0);
+  assert.ok(placement.y < -24, "MYC label must sit immediately above the central hub");
+});
+
+
+test("department labels remain visible at mobile overview scale", () => {
+  const department = { id: "MIC", x: 0, y: -760, radius: 18, kind: "universe", generation: 1, angle: -Math.PI / 2 };
+  const result = resolveAtlasLabelLayout({
+    nodes: [department],
+    measurements: [{ id: "MIC", width: 32, height: 12 }],
+    scale: 0.08,
+    gap: 8
+  });
+  assert.equal(result.placements[0].visible, true);
+});
