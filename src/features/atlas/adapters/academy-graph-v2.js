@@ -135,10 +135,11 @@ export function createAcademyAtlasV2({
   }
 
   const anastomoses = createVisualAnastomoses(morphology, {
-    maxDistance: 420,
-    maxLinks: 84,
-    maxDegree: 3,
-    cellSize: 210,
+    maxDistance: 520,
+    maxLinks: 260,
+    maxDegree: 5,
+    cellSize: 260,
+    includeSameTerritory: true,
     ...anastomosisOptions
   });
   const scene = createAtlasScene({
