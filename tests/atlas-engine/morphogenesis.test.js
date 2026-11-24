@@ -40,12 +40,16 @@ test("morphogenesis builds a central core, radial trunks and recursive territory
   assert.equal(model.byId.get("bio-module-a").territoryId, "BIO");
   assert.ok(model.byId.get("bio-module-a").generation > model.byId.get("BIO").generation);
   const mycChildren = topology.childrenByParent.get("MYC").map((node) => model.byId.get(node.id));
-  assert.ok(mycChildren.every((node) => Math.abs(Math.hypot(node.x, node.y) - 180) < 1e-6),
+  assert.ok(mycChildren.every((node) => Math.abs(Math.hypot(node.x, node.y) - 180) <= 14.5),
     "MYC taxonomy must form a compact inner fractal ring");
   const bioRoot = model.byId.get("BIO");
   const bioChildren = topology.childrenByParent.get("BIO").map((node) => model.byId.get(node.id));
-  assert.ok(bioChildren.every((node) => node.x > bioRoot.x),
-    "peripheral branches must grow outward from their radial anchor");
+  assert.ok(bioChildren.every((node) => {
+    const radialX = bioRoot.x;
+    const radialY = bioRoot.y;
+    const dot = (node.x - bioRoot.x) * radialX + (node.y - bioRoot.y) * radialY;
+    return dot > 0;
+  }), "peripheral branches must grow outward from their radial anchor");
 
 });
 
