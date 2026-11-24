@@ -24,7 +24,7 @@ export function createAcademyAtlasV2({
   pathwayOrbitRadius = 1650,
   pathwayStartAngle = -Math.PI / 2,
   pathwayDirection = 1,
-  universeStartAngle = -Math.PI / 2,
+  universeStartAngle = -Math.PI / 2 + Math.PI / 8,
   universeDirection = 1,
   universeColors = {},
   morphologyOptions = { branchLength: 280, universeSpread: 0.76, curveBend: 0.28, maximumSecondaryHyphae: 720 },
