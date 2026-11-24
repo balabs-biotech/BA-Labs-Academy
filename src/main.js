@@ -1,6 +1,6 @@
 import { loadAcademyData, enrollInPath, saveResourceProgress, savePathItemProgress, saveLearningPath, publishLearningPath, saveProgramDraft, publishProgram, publishDepartment, publishDomain, saveCompetency, saveCompetencyDomains, saveCompetencyPrerequisites, publishCompetency, saveContentEditorial, saveContentAssets, submitContentForReview, reviewContent, publishContent, manageAcademyMembership, enrollInTrainingSession, saveTrainingOffering, saveTrainingSession, setTrainingStatus, recordTrainingAttendance, setTrainingEnrollmentStatus, issueTrainingDocument, revokeTrainingDocument, verifyTrainingDocument, saveTrainingPartner, saveTrainingAgreement, setTrainingReferenceStatus, saveTrainingBillingRecord, startAssessment, submitAssessment, issuePathCertificate, verifyCertificate, saveAssessment, saveAssessmentCompetencies, publishAssessment, savePathAssessments } from "./data.js";
 import { escapeHtml } from "./core/dom.js";
-import { renderAcademyAtlasV2, mountAcademyAtlasV2View } from "./features/atlas/atlas-v2-view.js";
+import { renderAcademyAtlasV2, mountAcademyAtlasV2View } from "./features/atlas/atlas-v2-view.js?v=20261124-v2-entry";
 import { buildAcademyCatalogueGraph } from "./features/atlas/adapters/academy-catalogue-graph.js";
 import { buildPathProgress, resolvePathItems } from "./features/learning/progress.js";
 import { getSession, signInWithPassword, signOut } from "./core/auth.js";
