@@ -59,7 +59,7 @@ Principes morphologiques :
 3. **Morphologie différenciée :** deux univers ou deux sous-arbres de tailles et de natures différentes ne sont pas obligés d'avoir la même silhouette.
 4. **Croissance proportionnée :** la géométrie tient compte du volume, de la profondeur et de la distribution des contenus.
 5. **Stabilité :** l'ajout d'un contenu ne doit pas provoquer le déplacement arbitraire de l'ensemble de l'organisme.
-6. **Anastomoses contrôlées :** les connexions transversales sont représentées lorsqu'une relation canonique les justifie ; elles ne créent jamais de nouvelles relations pédagogiques.
+6. **Anastomoses visuelles contrôlées :** les ponts hyphaux peuvent relier les territoires selon la proximité géométrique. Un arbre couvrant minimal garantit que tous les univers périphériques appartiennent au même réseau, avec au moins N−1 ponts pour N univers. Ces ponts sont décoratifs, ne prouvent aucune relation scientifique et ne modifient jamais le graphe canonique. Les relations interdisciplinaires sémantiques restent exclusivement issues des arêtes canoniques explicitement déclarées.
 7. **Lisibilité prioritaire :** le réalisme organique ne justifie ni chevauchement critique, ni amas illisible, ni perte d'accès aux contenus.
 
 La géométrie doit rester déterministe pour un même jeu de données, une même configuration versionnée et une même graine.
@@ -206,6 +206,7 @@ L'ancien moteur reste consultable dans l'historique Git pendant la transition. I
 - Déterminisme à données et configuration identiques.
 - Stabilité des coordonnées existantes lors d'une révélation de profondeur.
 - Tests de collisions, enveloppes, courbes et anastomoses.
+- Connectivité du réseau périphérique : tous les univers reliés avec N−1 ponts minimum, sans mutation des relations pédagogiques.
 - Tests de calcul incrémental et de publication transactionnelle.
 
 ### Tests runtime et navigateur
