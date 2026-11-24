@@ -66,13 +66,63 @@ function createCurve(source, target, seed, bendRatio) {
   const distance = Math.hypot(dx, dy) || 1;
   const normalX = -dy / distance;
   const normalY = dx / distance;
-  const bend = (stableUnit(seed + "|bend") - 0.5) * 2 * distance * bendRatio;
+  const bend1 = (stableUnit(seed + "|bend-a") - 0.5) * 2 * distance * bendRatio;
+  const bend2 = (stableUnit(seed + "|bend-b") - 0.5) * 2 * distance * bendRatio;
   return {
     a: { x: source.x, y: source.y },
-    c1: { x: source.x + dx / 3 + normalX * bend, y: source.y + dy / 3 + normalY * bend },
-    c2: { x: source.x + 2 * dx / 3 + normalX * bend, y: source.y + 2 * dy / 3 + normalY * bend },
+    c1: { x: source.x + dx / 3 + normalX * bend1, y: source.y + dy / 3 + normalY * bend1 },
+    c2: { x: source.x + 2 * dx / 3 + normalX * bend2, y: source.y + 2 * dy / 3 + normalY * bend2 },
     b: { x: target.x, y: target.y }
   };
+}
+
+
+function pointOnCurve(curve, t) {
+  const inverse = 1 - t;
+  const a = inverse ** 3;
+  const b = 3 * inverse ** 2 * t;
+  const c = 3 * inverse * t ** 2;
+  const d = t ** 3;
+  return {
+    x: a * curve.a.x + b * curve.c1.x + c * curve.c2.x + d * curve.b.x,
+    y: a * curve.a.y + b * curve.c1.y + c * curve.c2.y + d * curve.b.y
+  };
+}
+
+function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
+  const hyphae = [];
+  for (const branch of branches) {
+    if (hyphae.length >= limit) break;
+    const dx = branch.target.x - branch.source.x;
+    const dy = branch.target.y - branch.source.y;
+    const length = Math.hypot(dx, dy);
+    if (length < 58) continue;
+    const desired = branch.generation <= 3 ? 2 : stableUnit(seed + "|density|" + branch.id) > 0.62 ? 1 : 0;
+    const normal = { x: -dy / length, y: dx / length };
+    const tangent = { x: dx / length, y: dy / length };
+    for (let index = 0; index < desired && hyphae.length < limit; index += 1) {
+      const id = "hypha:" + branch.id + ":" + index;
+      const localSeed = seed + "|" + id;
+      const t = 0.28 + stableUnit(localSeed + "|position") * 0.44;
+      const origin = pointOnCurve(branch.curve, t);
+      const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
+      const branchLength = length * (0.12 + stableUnit(localSeed + "|length") * 0.1);
+      const drift = branchLength * 0.28;
+      const endpoint = {
+        x: origin.x + normal.x * branchLength * side + tangent.x * drift,
+        y: origin.y + normal.y * branchLength * side + tangent.y * drift
+      };
+      const color = territories.get(branch.territoryId)?.color
+        ?? branch.target.universeColor ?? branch.target.color ?? branch.source.universeColor ?? null;
+      hyphae.push({
+        id, territoryId: branch.territoryId, color,
+        style: "secondary-hypha",
+        width: 0.65 + stableUnit(localSeed + "|width") * 0.35,
+        curve: createCurve(origin, endpoint, localSeed, 0.28)
+      });
+    }
+  }
+  return hyphae;
 }
 
 /** Generate deterministic rhizomorphic growth from validated pedagogy and radial anchors. */
@@ -111,6 +161,7 @@ export function createRhizomorphicMorphology({
   const positioned = new Map();
   const branches = [];
   const territories = new Map();
+  const hyphaesByTerritory = new Map();
   const queue = [];
   const core = { ...coreRecord, x: 0, y: 0, angle: null, generation: 0, territoryId: coreId };
   positioned.set(coreId, core);
@@ -119,6 +170,8 @@ export function createRhizomorphicMorphology({
     branches.push({
       id, sourceId: source.id, targetId: target.id, source, target,
       territoryId, generation, visualOnly,
+      style: visualOnly ? "universe-trunk" : generation <= 2 ? "rhizomorph" : "primary-hypha",
+      width: visualOnly ? 5 : Math.max(1.1, 4.2 / Math.sqrt(generation)),
       seed: hashString(seed + "|" + id),
       curve: createCurve(source, target, seed + "|" + id, curveBend)
     });
@@ -180,13 +233,15 @@ export function createRhizomorphicMorphology({
   }
 
   const nodes = [...positioned.values()];
+  const hyphae = createSecondaryHyphae(branches, territories, seed, 1200);
   return {
-    nodes, branches,
+    nodes, branches, hyphae,
     byId: new Map(nodes.map((node) => [node.id, node])),
     territories,
     metrics: {
       nodeCount: nodes.length,
       branchCount: branches.length,
+      hyphaCount: hyphae.length,
       territoryCount: territories.size,
       maxGeneration: nodes.reduce((maximum, node) => Math.max(maximum, node.generation), 0)
     }
