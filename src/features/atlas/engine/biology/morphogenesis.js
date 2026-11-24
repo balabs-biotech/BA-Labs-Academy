@@ -255,7 +255,7 @@ export function createRhizomorphicMorphology({
       // continue farther into the territory, like an exploring mycelium.
       const radialProgress = children.length <= 1 ? 0.82 : index / (children.length - 1);
       const radialJitter = (stableUnit(seed + "|radial-depth|" + child.id) - 0.5) * 0.12;
-      const radialFactor = Math.max(0.52, Math.min(1.08, 0.58 + radialProgress * 0.38 + radialJitter));
+      const radialFactor = current.node.id === coreId ? 1 : Math.max(0.52, Math.min(1.08, 0.58 + radialProgress * 0.38 + radialJitter));
       const distance = Math.max(minimumBranchLength, nominalLength * radialFactor * (1 - lengthVariation + 2 * lengthVariation * lengthUnit));
       const node = {
         ...child,
