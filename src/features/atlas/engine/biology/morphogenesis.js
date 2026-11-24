@@ -82,6 +82,18 @@ function createCurve(source, target, seed, bendRatio) {
 }
 
 
+function pointOnCurve(curve, t) {
+  const inverse = 1 - t;
+  const a = inverse ** 3;
+  const b = 3 * inverse ** 2 * t;
+  const c = 3 * inverse * t ** 2;
+  const d = t ** 3;
+  return {
+    x: a * curve.a.x + b * curve.c1.x + c * curve.c2.x + d * curve.b.x,
+    y: a * curve.a.y + b * curve.c1.y + c * curve.c2.y + d * curve.b.y
+  };
+}
+
 function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const hyphae = [];
   for (const branch of branches) {
