@@ -47,9 +47,10 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
   });
   assert.ok(gaps.every((gap) => Math.abs(gap - Math.PI / 4) < 1e-6),
     "universe anchors must have equal angular spacing");
-  assert.ok(departments.every((node) =>
-    Math.abs(node.angle - Math.atan2(node.y, node.x)) < 1e-6
-  ), "each department must retain its radial axis for label placement");
+  assert.ok(departments.every((node) => {
+    const delta = node.angle - Math.atan2(node.y, node.x);
+    return Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) < 1e-6;
+  }), "each department must retain its radial axis for label placement");
 
   const trunks = result.scene.paths.filter((path) => path.type === "universe-trunk");
   assert.equal(trunks.length, 8);
