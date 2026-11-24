@@ -254,7 +254,7 @@ export function createRhizomorphicMorphology({
   // Emblem architecture: three shared Y stems leave the MYC nucleus, then
   // divide into eight peripheral universe cords. Split points are derived
   // geometry only; they never become pedagogical nodes.
-  const splitRadius = Math.min(universeSpread > 0 ? 360 : 320, coreBranchLength * 2);
+  const splitRadius = Math.min(universeSpread > 0 ? 420 : 380, coreBranchLength * 2.3);
   const splitPoints = new Map(Y_FOUNDING_AXES.map((angle, index) => {
     const point = {
       id: "emblem-split:" + index,
