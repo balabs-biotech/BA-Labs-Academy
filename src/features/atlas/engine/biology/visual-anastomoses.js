@@ -43,9 +43,13 @@ export function createVisualAnastomoses(morphology, {
   validateOptions({ maxDistance, maxLinks, maxDegree, cellSize });
   if (maxLinks === 0) return { links: [], metrics: { candidateCount: 0, linkCount: 0 } };
 
+  const territorySet = morphology.territories instanceof Map
+    ? new Set(morphology.territories.keys())
+    : null;
   const candidates = morphology.nodes.filter((node) =>
     node && typeof node.id === "string" &&
     typeof node.territoryId === "string" &&
+    (!territorySet || territorySet.has(node.territoryId)) &&
     Number.isFinite(node.x) && Number.isFinite(node.y) &&
     (includeRoots || node.generation > 1)
   );
@@ -85,8 +89,8 @@ export function createVisualAnastomoses(morphology, {
   const ordered = [...pairs.values()].sort((a, b) =>
     a.distance - b.distance || a.id.localeCompare(b.id)
   );
-  const territoryIds = morphology.territories instanceof Map
-    ? [...morphology.territories.keys()]
+  const territoryIds = territorySet
+    ? [...territorySet]
     : [...new Set(candidates.map((node) => node.territoryId))];
   if (maxLinks > 0 && maxLinks < territoryIds.length - 1) {
     throw new RangeError("maxLinks must allow a bridge network across every territory");
