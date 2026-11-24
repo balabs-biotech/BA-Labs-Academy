@@ -152,8 +152,11 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
       "each primary spoke must grow lateral hyphae along its length");
   }
 
-  assert.equal(result.anastomoses.links.length, 4,
-    "the logo uses four deliberate secondary bridges, not a closed polygon ring");
+  assert.equal(result.anastomoses.links.length, 7,
+    "eight peripheral territories require seven bridges for one connected network");
+  assert.equal(result.anastomoses.metrics.connected, true,
+    "all eight peripheral territories must communicate through the bridge network");
+  assert.equal(result.anastomoses.metrics.bridgeCount, 7);
   assert.ok(result.anastomoses.links.every((link) => link.territoryIds.length === 2),
     "decorative anastomoses must connect distinct radial universes");
 
