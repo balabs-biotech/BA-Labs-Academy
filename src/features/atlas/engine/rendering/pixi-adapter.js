@@ -79,15 +79,21 @@ export async function createPixiSceneAdapter(canvas, {
     nodes.clear();
     for (const label of labels.removeChildren()) label.destroy();
 
-    for (const relation of scene.relationshipPaths || []) {
-      const curve = relation.curve;
-      relations.moveTo(curve.a.x, curve.a.y);
-      relations.bezierCurveTo(
-        curve.c1.x, curve.c1.y,
-        curve.c2.x, curve.c2.y,
-        curve.b.x, curve.b.y
-      );
-      relations.stroke({ color: 0xa9a0d4, width: 1, alpha: 0.2 });
+    // Pedagogical cross-links are secondary information, not the organism's
+    // silhouette. Keep the overview biologically legible and reveal relations
+    // progressively as the learner zooms into a territory.
+    const relationAlpha = Math.max(0, Math.min(0.12, (scale - 0.22) * 0.16));
+    if (relationAlpha >= 0.012) {
+      for (const relation of scene.relationshipPaths || []) {
+        const curve = relation.curve;
+        relations.moveTo(curve.a.x, curve.a.y);
+        relations.bezierCurveTo(
+          curve.c1.x, curve.c1.y,
+          curve.c2.x, curve.c2.y,
+          curve.b.x, curve.b.y
+        );
+        relations.stroke({ color: 0xa9a0d4, width: 0.85, alpha: relationAlpha });
+      }
     }
 
     for (const path of scene.paths) {
