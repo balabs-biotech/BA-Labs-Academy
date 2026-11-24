@@ -107,7 +107,7 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
   );
 
   assert.equal(departments.length, 8);
-  assert.ok(departments.every((node) => Math.abs(Math.hypot(node.x, node.y) - 620) < 1e-6),
+  assert.ok(departments.every((node) => Math.abs(Math.hypot(node.x, node.y) - 900) < 1e-6),
     "the eight radial universes must sit on the wider inner orbit");
 
   for (const department of departments) {
