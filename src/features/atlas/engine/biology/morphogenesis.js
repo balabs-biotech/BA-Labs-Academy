@@ -102,7 +102,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     const dy = branch.target.y - branch.source.y;
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
-    const desired = branch.generation <= 3 ? 2 : stableUnit(seed + "|density|" + branch.id) > 0.62 ? 1 : 0;
+    const desired = branch.visualOnly ? 5 : branch.generation <= 3 ? 3 : stableUnit(seed + "|density|" + branch.id) > 0.55 ? 2 : 1;
     const normal = { x: -dy / length, y: dx / length };
     const tangent = { x: dx / length, y: dy / length };
     for (let index = 0; index < desired && hyphae.length < limit; index += 1) {
@@ -122,7 +122,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       hyphae.push({
         id, territoryId: branch.territoryId, color,
         style: "secondary-hypha",
-        width: 0.65 + stableUnit(localSeed + "|width") * 0.35,
+        width: 1.05 + stableUnit(localSeed + "|width") * 0.65,
         curve: createCurve(origin, endpoint, localSeed, 0.28)
       });
     }
