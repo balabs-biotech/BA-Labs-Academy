@@ -242,11 +242,18 @@ export function createRhizomorphicMorphology({
   const signedDelta = (angle) => Math.atan2(
     Math.sin(angle - splitAngle), Math.cos(angle - splitAngle)
   );
+  const armBoundaryEpsilon = 1e-8;
   const rightArm = spatialTopology.territories
-    .filter((territory) => signedDelta(territory.angle) > 0)
+    .filter((territory) => {
+      const delta = signedDelta(territory.angle);
+      return delta >= -armBoundaryEpsilon && delta < Math.PI - armBoundaryEpsilon;
+    })
     .sort((a, b) => signedDelta(a.angle) - signedDelta(b.angle));
   const leftArm = spatialTopology.territories
-    .filter((territory) => signedDelta(territory.angle) < 0)
+    .filter((territory) => {
+      const delta = signedDelta(territory.angle);
+      return delta < -armBoundaryEpsilon || delta >= Math.PI - armBoundaryEpsilon;
+    })
     .sort((a, b) => Math.abs(signedDelta(a.angle)) - Math.abs(signedDelta(b.angle)));
 
   const growEmblemArm = (territories, side) => {
