@@ -96,3 +96,38 @@ test("V2 catalogue adapter is spatially neutral and does not depend on the legac
   assert.doesNotMatch(source, /atlas-organic-layout|explorer-2d-network|pixi-renderer/i);
 });
 
+
+
+test("the eight Academy spokes open into a reticulate mycelial silhouette", () => {
+  const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
+  const result = createAcademyAtlasV2({ graph, seed: "open-mycelial-logo" });
+  const coreId = result.topology.roots.find((node) => node.entity_key === "MYC").id;
+  const departments = result.scene.nodes.filter((node) =>
+    node.kind === "universe" && node.id.startsWith("department:")
+  );
+
+  assert.equal(departments.length, 8);
+  assert.ok(departments.every((node) => Math.abs(Math.hypot(node.x, node.y) - 640) < 1e-6),
+    "the eight radial universes must sit on the wider inner orbit");
+
+  for (const department of departments) {
+    const children = result.topology.childrenByParent.get(department.id) || [];
+    const angles = children.map((child) => result.morphology.byId.get(child.id).angle);
+    const offsets = angles.map((angle) => Math.atan2(
+      Math.sin(angle - department.angle), Math.cos(angle - department.angle)
+    ));
+    if (offsets.length > 1) {
+      assert.ok(Math.max(...offsets) - Math.min(...offsets) >= 0.68,
+        "each department must use a broad radial sector, not a narrow terminal fan");
+    }
+    const trunkId = "trunk:" + coreId + ":" + department.id;
+    const lateralHyphae = result.morphology.hyphae.filter((hypha) =>
+      hypha.id.startsWith("hypha:" + trunkId + ":")
+    );
+    assert.ok(lateralHyphae.length >= 4,
+      "each primary spoke must grow lateral hyphae along its length");
+  }
+
+  assert.ok(result.anastomoses.links.length >= 120,
+    "the eight territories must develop a visible reticulate mesh, not isolated fans");
+});
