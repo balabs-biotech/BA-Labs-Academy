@@ -90,7 +90,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     const dy = branch.target.y - branch.source.y;
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
-    const desired = branch.style === "emblem-stem" ? 5 : branch.style === "universe-spoke" ? 4 : branch.style === "primary-spine" ? 3 : branch.style === "lateral-hypha" ? 1 : branch.generation <= 3 ? 3 : stableUnit(seed + "|density|" + branch.id) > 0.55 ? 2 : 1;
+    const desired = branch.style === "emblem-stem" ? 5 : branch.style?.startsWith("emblem-arm-") ? 4 : branch.style === "universe-spoke" ? 4 : branch.style === "primary-spine" ? 3 : branch.style === "lateral-hypha" ? 1 : branch.generation <= 3 ? 3 : stableUnit(seed + "|density|" + branch.id) > 0.55 ? 2 : 1;
     const normal = { x: -dy / length, y: dx / length };
     const tangent = { x: dx / length, y: dy / length };
     for (let index = 0; index < desired && hyphae.length < limit; index += 1) {
