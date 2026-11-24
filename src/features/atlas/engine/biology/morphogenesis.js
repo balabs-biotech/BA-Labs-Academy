@@ -207,51 +207,30 @@ export function createRhizomorphicMorphology({
     roots.push(node);
   }
 
-  // Connect department territories with a minimum-spanning growth walk.
-  // The biological root is one territory in the field, not a central radial hub.
-  const connected = [core];
-  const remaining = roots.slice(1);
-  while (remaining.length) {
-    let best = null;
-    for (const source of connected) {
-      for (const target of remaining) {
-        const distance = Math.hypot(target.x - source.x, target.y - source.y);
-        if (!best || distance < best.distance) best = { source, target, distance };
-      }
-    }
-    const targetIndex = remaining.indexOf(best.target);
-    remaining.splice(targetIndex, 1);
-    connected.push(best.target);
-    addBranch(best.source, best.target, {
-      id: "trunk:" + best.source.id + ":" + best.target.id,
-      territoryId: best.target.territoryId,
+  // Radial architecture: MYC is the single biological core. Each peripheral
+  // department grows from its own spoke and expands outward along that spoke.
+  // MYC's own taxonomy occupies a complete inner ring around the central node.
+  for (const territory of spatialTopology.territories) {
+    const target = positioned.get(territory.nodeId || territory.id);
+    addBranch(core, target, {
+      id: "trunk:" + core.id + ":" + target.id,
+      territoryId: target.territoryId,
       generation: 1,
       visualOnly: true
     });
   }
 
-  // Orient each territory toward its nearest neighboring territory, not away from a
-  // global centroid. This prevents isolated radial bouquets and encourages interwoven growth.
   for (const root of roots) {
-    const children = topology.childrenByParent.get(root.id) || [];
-    const neighbor = roots
-      .filter((candidate) => candidate.id !== root.id)
-      .map((candidate) => ({
-        node: candidate,
-        distance: Math.hypot(candidate.x - root.x, candidate.y - root.y)
-      }))
-      .sort((a, b) => a.distance - b.distance || a.node.id.localeCompare(b.node.id))[0]?.node;
-    const baseAngle = neighbor
-      ? Math.atan2(neighbor.y - root.y, neighbor.x - root.x)
-      : 0;
-    const orientationJitter = (stableUnit(seed + "|territory-axis|" + root.id) - 0.5) * 1.1;
-    const growthAngle = baseAngle + orientationJitter;
+    const isCore = root.id === coreId;
+    const angle = isCore
+      ? -Math.PI / 2
+      : Math.atan2(root.y - core.y, root.x - core.x);
     queue.push({
       node: root,
-      angle: growthAngle,
+      angle,
       generation: 1,
       territoryId: root.territoryId,
-      spread: universeSpread
+      spread: isCore ? TAU : universeSpread
     });
   }
 
