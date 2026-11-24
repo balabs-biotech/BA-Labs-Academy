@@ -61,7 +61,7 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
   const pathways = result.scene.nodes.filter((node) => node.id.startsWith("pathway:"));
   assert.equal(pathways.length, 10);
   const pathwayRadii = pathways.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(pathwayRadii.every((radius) => Math.abs(radius - 1680 < 1e-6),
+  assert.ok(pathwayRadii.every((radius) => Math.abs(radius - 1680) < 1e-6,
     "pathways must occupy a separate controlled outer orbit");
   assert.equal(new Set(pathways.map((node) => node.angle)).size, 10,
     "pathway orbit positions must be unique");
