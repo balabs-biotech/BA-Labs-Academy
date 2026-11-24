@@ -12,8 +12,8 @@ test("V2 composition maps all canonical Academy nodes without mutating the graph
   const result = createAcademyAtlasV2({
     graph,
     seed: "academy-catalogue-test",
-    universeRadius: 720,
-    pathwayOrbitRadius: 1280
+    universeRadius: 1050,
+    pathwayOrbitRadius: 1650
   });
 
   assert.equal(result.metrics.canonicalNodeCount, 330);
@@ -128,7 +128,7 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
   );
 
   assert.equal(departments.length, 8);
-  assert.ok(departments.every((node) => Math.abs(Math.hypot(node.x, node.y) - 900) < 1e-6),
+  assert.ok(departments.every((node) => Math.abs(Math.hypot(node.x, node.y) - 1050) < 1e-6),
     "the eight radial universes must sit on the wider inner orbit");
 
   for (const department of departments) {
