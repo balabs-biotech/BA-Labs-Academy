@@ -61,7 +61,7 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
   const pathways = result.scene.nodes.filter((node) => node.id.startsWith("pathway:"));
   assert.equal(pathways.length, 10);
   const pathwayRadii = pathways.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(pathwayRadii.every((radius) => Math.abs(radius - 1680) < 1e-6),
+  assert.ok(pathwayRadii.every((radius) => Math.abs(radius - 1500) < 1e-6),
     "pathways must occupy a separate controlled outer orbit");
   assert.equal(new Set(pathways.map((node) => node.angle)).size, 10,
     "pathway orbit positions must be unique");
@@ -128,8 +128,8 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
       "each primary spoke must grow lateral hyphae along its length");
   }
 
-  assert.ok(result.anastomoses.links.length >= 24,
-    "the eight territories must develop cross-universe hyphal bridges");
+  assert.equal(result.anastomoses.links.length, 4,
+    "the logo uses four deliberate secondary bridges, not a closed polygon ring");
   assert.ok(result.anastomoses.links.every((link) => link.territoryIds.length === 2),
     "decorative anastomoses must connect distinct radial universes");
 
