@@ -1,3 +1,5 @@
+import { resolveAtlasLabelLayout } from "./label-layout.js";
+
 function positive(value, name) {
   if (!Number.isFinite(value) || value <= 0) throw new RangeError(name + " must be positive");
 }
@@ -107,6 +109,7 @@ export async function createPixiSceneAdapter(canvas, {
       });
     }
 
+    const labelObjects = [];
     for (const node of scene.nodes) {
       const fill = colorValue(node.color, node.kind === "core" ? 0xe5b85c : 0x718491);
       nodes.circle(node.x, node.y, node.radius).fill({ color: fill, alpha: node.kind === "core" ? 1 : 0.9 });
@@ -114,9 +117,30 @@ export async function createPixiSceneAdapter(canvas, {
         nodes.circle(node.x, node.y, node.radius + 5).stroke({ color: fill, width: 1.5, alpha: 0.72 });
       }
       const label = new Text({ text: node.label, style: labelStyle });
-      label.anchor.set(0.5, 0);
-      label.position.set(node.x, node.y + node.radius + 8);
+      label.anchor.set(0.5, 0.5);
       labels.addChild(label);
+      labelObjects.push({ node, label });
+    }
+
+    const labelLayout = resolveAtlasLabelLayout({
+      nodes: scene.nodes,
+      measurements: labelObjects.map(({ node, label }) => ({
+        id: node.id, width: label.width, height: label.height
+      })),
+      scale,
+      gap: 12
+    });
+    const placementById = new Map(labelLayout.placements.map((placement) => [placement.id, placement]));
+    for (const { node, label } of labelObjects) {
+      const placement = placementById.get(node.id);
+      label.visible = Boolean(placement?.visible);
+      if (placement) label.position.set(placement.x, placement.y);
+    }
+    if (canvas.dataset) {
+      canvas.dataset.visibleLabelCount = String(labelLayout.visibleCount);
+      canvas.dataset.hiddenLabelCount = String(labelLayout.hiddenCount);
+      canvas.dataset.sceneNodeCount = String(scene.nodes.length);
+      canvas.dataset.secondaryHyphaCount = String(scene.paths.filter((path) => path.type === "hypha").length);
     }
 
     world.position.set(x, y);
