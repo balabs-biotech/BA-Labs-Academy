@@ -54,22 +54,20 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
     return Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) < 1e-6;
   }), "each department must retain its radial axis for label placement");
 
-  const trunks = result.scene.paths.filter((path) => path.type === "universe-trunk");
-  assert.equal(trunks.length, 8);
-  assert.ok(trunks.every((path) => path.sourceId === core.id),
-    "each peripheral universe must grow from the central MYC hub");
+  const stems = result.scene.paths.filter((path) => path.style === "emblem-stem");
+  const spokes = result.scene.paths.filter((path) => path.style === "universe-spoke");
+  assert.equal(stems.length, 3, "the emblem must begin with three shared Y stems");
+  assert.equal(spokes.length, 8, "the three stems must divide into eight universe cords");
+  assert.ok(stems.every((path) => path.sourceId === core.id && path.targetId === null),
+    "the three founding stems must emerge from the central MYC nucleus");
+  assert.ok(spokes.every((path) => path.sourceId === null && path.targetId?.startsWith("department:")),
+    "eight secondary cords must connect the Y split points to the eight universe anchors");
   const foundingAxes = [-Math.PI / 2, Math.PI / 6, Math.PI * 5 / 6];
-  const trunkAxes = trunks.map((path) => Math.atan2(path.curve.c1.y, path.curve.c1.x));
-  const axisMembership = trunkAxes.map((angle) => foundingAxes.reduce((best, axis) => {
+  const stemAxes = stems.map((path) => Math.atan2(path.curve.c1.y, path.curve.c1.x));
+  assert.ok(stemAxes.every((angle) => foundingAxes.some((axis) => {
     const delta = Math.atan2(Math.sin(angle - axis), Math.cos(angle - axis));
-    return Math.abs(delta) < Math.abs(Math.atan2(Math.sin(angle - best), Math.cos(angle - best))) ? axis : best;
-  }, foundingAxes[0]));
-  assert.ok(trunkAxes.every((angle, index) => {
-    const delta = Math.atan2(Math.sin(angle - axisMembership[index]), Math.cos(angle - axisMembership[index]));
     return Math.abs(delta) < 0.15;
-  }), "the eight cords must emerge through the emblem's three shared Y axes");
-  assert.equal(new Set(axisMembership).size, 3,
-    "the Y foundation must split into three main arms before reaching eight universes");
+  })), "the three primary stems must preserve the chosen Y orientation");
   const pathways = result.scene.nodes.filter((node) => node.id.startsWith("pathway:"));
   assert.equal(pathways.length, 10);
   const pathwayRadii = pathways.map((node) => Math.hypot(node.x, node.y));
