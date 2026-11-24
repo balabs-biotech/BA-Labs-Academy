@@ -20,15 +20,15 @@ function resolveColor(node, colors) {
 export function createAcademyAtlasV2({
   graph,
   seed = "academy-atlas-v2",
-  universeRadius = 760,
-  pathwayOrbitRadius = 1320,
+  universeRadius = 620,
+  pathwayOrbitRadius = 1420,
   pathwayStartAngle = -Math.PI / 2,
   pathwayDirection = 1,
   universeStartAngle = -Math.PI / 2,
   universeDirection = 1,
   universeColors = {},
-  morphologyOptions = {},
-  anastomosisOptions = {}
+  morphologyOptions = { branchLength: 390, universeSpread: 0.76, curveBend: 0.24, maximumSecondaryHyphae: 720 },
+  anastomosisOptions = { maxDistance: 360, maxLinks: 160, maxDegree: 3, cellSize: 180, includeSameTerritory: true }
 } = {}) {
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
     throw new TypeError("Academy Atlas V2 requires a canonical Academy graph");
