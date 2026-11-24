@@ -20,8 +20,8 @@ function resolveColor(node, colors) {
 export function createAcademyAtlasV2({
   graph,
   seed = "academy-atlas-v2",
-  universeRadius = 620,
-  pathwayOrbitRadius = 1420,
+  universeRadius = 900,
+  pathwayOrbitRadius = 1680,
   pathwayStartAngle = -Math.PI / 2,
   pathwayDirection = 1,
   universeStartAngle = -Math.PI / 2,
