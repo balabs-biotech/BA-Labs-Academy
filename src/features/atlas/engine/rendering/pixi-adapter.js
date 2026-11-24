@@ -122,7 +122,11 @@ export async function createPixiSceneAdapter(canvas, {
       if (node.kind === "core") {
         nodes.circle(node.x, node.y, node.radius + 5).stroke({ color: fill, width: 1.5, alpha: 0.72 });
       }
-      const label = new Text({ text: node.label, style: labelStyle });
+      const compactMobileOverview = (canvas.clientWidth || 800) < 680 && scale < 0.35;
+      const labelText = compactMobileOverview && node.kind === "universe"
+        ? (node.shortLabel || node.label)
+        : node.label;
+      const label = new Text({ text: labelText, style: labelStyle });
       label.anchor.set(0.5, 0.5);
       labels.addChild(label);
       labelObjects.push({ node, label });
