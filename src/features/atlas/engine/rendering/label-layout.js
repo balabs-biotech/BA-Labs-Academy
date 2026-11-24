@@ -7,7 +7,7 @@ function priority(node) {
 
 function zoomThreshold(node) {
   if (node.kind === "core") return 0.04;
-  if (node.kind === "universe") return 0.12;
+  if (node.kind === "universe") return 0.07;
   if (node.kind === "pathway" || node.generation <= 2) return 0.48;
   return 0.78;
 }
