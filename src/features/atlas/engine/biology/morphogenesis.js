@@ -143,7 +143,8 @@ export function createRhizomorphicMorphology({
   lengthVariation = 0.08,
   curveBend = 0.12,
   minimumBranchLength = 42,
-  minimumAngularGap = 0.08
+  minimumAngularGap = 0.08,
+  maximumSecondaryHyphae = 1200
 }) {
   if (!topology?.byId || !topology?.childrenByParent || !topology?.depthById) {
     throw new TypeError("Morphogenesis requires a validated Atlas topology");
@@ -160,6 +161,9 @@ export function createRhizomorphicMorphology({
   }
   if (branchLength <= 0 || coreBranchLength <= 0 || minimumBranchLength <= 0) throw new RangeError("Branch lengths must be positive");
   if (minimumAngularGap <= 0) throw new RangeError("minimumAngularGap must be positive");
+  if (!Number.isSafeInteger(maximumSecondaryHyphae) || maximumSecondaryHyphae < 0 || maximumSecondaryHyphae > 3000) {
+    throw new RangeError("maximumSecondaryHyphae must be an integer between 0 and 3000");
+  }
   if (lengthVariation > 0.5 || curveBend > 0.5 || universeSpread > TAU || branchSpread > TAU || minimumAngularGap > TAU) {
     throw new RangeError("Morphogenesis variation and spread exceed safe bounds");
   }
@@ -278,7 +282,7 @@ export function createRhizomorphicMorphology({
   }
 
   const nodes = [...positioned.values()];
-  const hyphae = createSecondaryHyphae(branches, territories, seed, 1200);
+  const hyphae = createSecondaryHyphae(branches, territories, seed, maximumSecondaryHyphae);
   return {
     nodes, branches, hyphae,
     byId: new Map(nodes.map((node) => [node.id, node])),
