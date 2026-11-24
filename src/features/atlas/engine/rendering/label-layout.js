@@ -71,8 +71,14 @@ export function resolveAtlasLabelLayout({
     }
 
     const baseAngle = Number.isFinite(node.angle) ? node.angle : -Math.PI / 2;
-    const directions = Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
-      .sort((a, b) => angularDistance(a, 0) - angularDistance(b, 0));
+    const radialLabel = node.kind === "universe" || node.kind === "pathway";
+    const tangentFirst = [Math.PI / 2, Math.PI * 1.5, Math.PI / 4, Math.PI * 1.75,
+      Math.PI * 0.75, Math.PI * 1.25, 0, Math.PI];
+    const directions = radialLabel
+      ? [...tangentFirst, ...Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
+        .filter((angle) => !tangentFirst.includes(angle))]
+      : Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
+        .sort((a, b) => angularDistance(a, 0) - angularDistance(b, 0));
     const distanceRings = [1, 1.4, 1.85, 2.35];
     let chosen = null;
 
