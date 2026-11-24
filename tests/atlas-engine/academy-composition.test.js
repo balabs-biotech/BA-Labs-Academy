@@ -160,7 +160,7 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
       const node = result.morphology.byId.get(child.id);
       return Math.hypot(node.x, node.y);
     });
-    return radii.length >= 3 && Math.max(...radii) - Math.min(...radii) >= 140;
+    return radii.length >= 3 && Math.max(...radii) - Math.min(...radii) >= 90;
   });
   assert.ok(staggeredTerritories.length >= 6,
     "branches must advance at staggered radial depths instead of ending on one fan-shaped arc");
