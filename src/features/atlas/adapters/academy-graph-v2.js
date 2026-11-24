@@ -63,8 +63,7 @@ export function createAcademyAtlasV2({
       nodeId: node.id,
       label: node.title,
       entity_key: node.entity_key,
-      color: resolveColor(node, universeColors),
-      ...(universeAnchors[node.entity_key] || {})
+      color: resolveColor(node, universeColors)
     }));
 
   const radialTopology = createRadialTopology({
@@ -100,8 +99,8 @@ export function createAcademyAtlasV2({
     const angle = pathwayStartAngle + pathwayDirection * TAU * index / Math.max(1, pathwayCount);
     return {
       ...node,
-      x: [-600, -250, 80, 600, 1000, 700, 100, -500, -900, -100][index % 10],
-      y: [-700, -400, -800, -450, -100, 400, 900, 850, 300, 100][index % 10],
+      x: Math.cos(angle) * pathwayOrbitRadius,
+      y: Math.sin(angle) * pathwayOrbitRadius,
       angle,
       generation: 1,
       territoryId: "pathways",
@@ -123,10 +122,10 @@ export function createAcademyAtlasV2({
   }
 
   const anastomoses = createVisualAnastomoses(morphology, {
-    maxDistance: 520,
-    maxLinks: 260,
-    maxDegree: 5,
-    cellSize: 260,
+    maxDistance: 300,
+    maxLinks: 80,
+    maxDegree: 2,
+    cellSize: 180,
     includeSameTerritory: true,
     ...anastomosisOptions
   });
