@@ -80,3 +80,20 @@ test("invalid text measurements hide only the affected label", () => {
   assert.equal(result.placements.find((item) => item.id === "core").reason, "invalid-measurement");
   assert.equal(result.placements.find((item) => item.id === "universe").visible, true);
 });
+
+
+test("radial department labels prefer a tangential offset to preserve mobile viewport width", () => {
+  const radialNode = { id: "bio", x: 760, y: 0, radius: 18, kind: "universe", generation: 1, angle: 0 };
+  const result = resolveAtlasLabelLayout({
+    nodes: [radialNode],
+    measurements: [{ id: "bio", width: 220, height: 14 }],
+    scale: 0.2,
+    gap: 8
+  });
+  const placement = result.placements[0];
+  assert.equal(placement.visible, true);
+  assert.ok(Math.abs(placement.x - radialNode.x) < 1e-6,
+    "a right-facing radial anchor should place its long label tangentially, not farther right");
+  assert.ok(Math.abs(placement.y - radialNode.y) > 100,
+    "the label should move above or below the radial axis");
+});
