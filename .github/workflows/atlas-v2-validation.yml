@@ -10,6 +10,7 @@ on:
       - "src/main.js"
       - "src/styles.css"
       - "tests/atlas-browser-smoke.mjs"
+      - "tests/atlas-pixi.test.js"
       - "src/catalogue-*.js"
       - "atlas-v2-preview.html"
       - "scripts/build.mjs"
