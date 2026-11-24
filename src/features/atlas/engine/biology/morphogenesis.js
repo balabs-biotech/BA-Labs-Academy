@@ -226,13 +226,25 @@ export function createRhizomorphicMorphology({
     });
   }
 
-  const centroid = roots.reduce((sum, node) => ({ x: sum.x + node.x / roots.length, y: sum.y + node.y / roots.length }), { x: 0, y: 0 });
+  // Orient each territory toward its nearest neighboring territory, not away from a
+  // global centroid. This prevents isolated radial bouquets and encourages interwoven growth.
   for (const root of roots) {
     const children = topology.childrenByParent.get(root.id) || [];
-    const outwardAngle = Math.atan2(root.y - centroid.y, root.x - centroid.x);
+    const neighbor = roots
+      .filter((candidate) => candidate.id !== root.id)
+      .map((candidate) => ({
+        node: candidate,
+        distance: Math.hypot(candidate.x - root.x, candidate.y - root.y)
+      }))
+      .sort((a, b) => a.distance - b.distance || a.node.id.localeCompare(b.node.id))[0]?.node;
+    const baseAngle = neighbor
+      ? Math.atan2(neighbor.y - root.y, neighbor.x - root.x)
+      : 0;
+    const orientationJitter = (stableUnit(seed + "|territory-axis|" + root.id) - 0.5) * 1.1;
+    const growthAngle = baseAngle + orientationJitter;
     queue.push({
       node: root,
-      angle: outwardAngle,
+      angle: growthAngle,
       generation: 1,
       territoryId: root.territoryId,
       spread: universeSpread
