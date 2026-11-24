@@ -81,6 +81,45 @@ function createCurve(source, target, seed, bendRatio) {
   };
 }
 
+const Y_FOUNDING_AXES = [-Math.PI / 2, Math.PI / 6, Math.PI * 5 / 6];
+
+function nearestFoundingAxis(angle) {
+  return Y_FOUNDING_AXES.reduce((best, candidate) => {
+    const delta = Math.atan2(Math.sin(angle - candidate), Math.cos(angle - candidate));
+    const bestDelta = Math.atan2(Math.sin(angle - best), Math.cos(angle - best));
+    return Math.abs(delta) < Math.abs(bestDelta) ? candidate : best;
+  }, Y_FOUNDING_AXES[0]);
+}
+
+/**
+ * Route each of the eight peripheral cords through one of three shared
+ * founding axes. Their initial tangents form the BA Labs Y before splitting
+ * toward their own universe; the canonical departments remain unchanged.
+ */
+function createEmblemYCurve(source, target, seed, axisAngle, bendRatio) {
+  const dx = target.x - source.x;
+  const dy = target.y - source.y;
+  const distance = Math.hypot(dx, dy) || 1;
+  const axisX = Math.cos(axisAngle);
+  const axisY = Math.sin(axisAngle);
+  const normalX = -axisY;
+  const normalY = axisX;
+  const jitter = (stableUnit(seed + "|y-offset") - 0.5) * distance * bendRatio * 0.22;
+  const bend = (stableUnit(seed + "|y-bend") - 0.5) * distance * bendRatio * 0.7;
+  return {
+    a: { x: source.x, y: source.y },
+    c1: {
+      x: source.x + axisX * distance * 0.38 + normalX * jitter,
+      y: source.y + axisY * distance * 0.38 + normalY * jitter
+    },
+    c2: {
+      x: source.x + dx * 0.72 + normalX * bend,
+      y: source.y + dy * 0.72 + normalY * bend
+    },
+    b: { x: target.x, y: target.y }
+  };
+}
+
 
 function pointOnCurve(curve, t) {
   const inverse = 1 - t;
@@ -185,9 +224,15 @@ export function createRhizomorphicMorphology({
       id, sourceId: source.id, targetId: target.id, source, target,
       territoryId, generation, visualOnly,
       style: visualOnly ? "universe-trunk" : generation <= 2 ? "rhizomorph" : "primary-hypha",
-      width: visualOnly ? 5 : Math.max(1.1, 4.2 / Math.sqrt(generation)),
+      width: visualOnly ? 6.5 : Math.max(1.2, 4.4 / Math.sqrt(generation)),
       seed: hashString(seed + "|" + id),
-      curve: createCurve(source, target, seed + "|" + id, curveBend)
+      curve: visualOnly
+        ? createEmblemYCurve(
+          source, target, seed + "|" + id,
+          nearestFoundingAxis(Math.atan2(target.y - source.y, target.x - source.x)),
+          curveBend
+        )
+        : createCurve(source, target, seed + "|" + id, curveBend)
     });
   };
 
