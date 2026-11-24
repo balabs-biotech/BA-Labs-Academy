@@ -21,18 +21,42 @@ function buildSubtreeWeights(topology) {
   return weights;
 }
 
-function allocateAngles(children, centerAngle, spread, weights, fullRing = false, seed = "") {
+function allocateSectors(children, centerAngle, spread, weights, {
+  fullRing = false, seed = "", minimumAngularGap = 0.08
+} = {}) {
   if (!children.length) return [];
-  if (children.length === 1) return [centerAngle];
-  const total = children.reduce((sum, child) => sum + weights.get(child.id), 0);
+  if (children.length === 1) {
+    const width = fullRing ? TAU : spread;
+    const start = fullRing ? centerAngle - Math.PI : centerAngle - width / 2;
+    return [{
+      angle: centerAngle,
+      sector: { start, end: start + width, center: centerAngle, gapAfter: 0, effectiveGap: 0 }
+    }];
+  }
+
   const available = fullRing ? TAU : spread;
-  let cursor = fullRing ? 0 : -available / 2;
+  const gapCount = fullRing ? children.length : children.length - 1;
+  const gapCap = available / (children.length * 2);
+  const effectiveGap = Math.min(minimumAngularGap, gapCap);
+  const usable = Math.max(available - effectiveGap * gapCount, available * 0.5);
+  const total = children.reduce((sum, child) => sum + weights.get(child.id), 0);
+  const baseStart = fullRing ? centerAngle : centerAngle - available / 2;
+  let cursor = 0;
+
   return children.map((child) => {
-    const width = available * weights.get(child.id) / total;
-    const center = centerAngle + cursor + width / 2;
+    const width = usable * weights.get(child.id) / total;
+    const start = baseStart + cursor;
+    const end = start + width;
+    const center = start + width / 2;
     const jitter = (stableUnit(seed + "|" + child.id) - 0.5) * width * 0.22;
-    cursor += width;
-    return center + jitter;
+    const angle = Math.max(start + width * 0.1, Math.min(end - width * 0.1, center + jitter));
+    cursor += width + effectiveGap;
+    return {
+      angle,
+      sector: {
+        start, end, center, gapAfter: effectiveGap, effectiveGap
+      }
+    };
   });
 }
 
@@ -62,7 +86,8 @@ export function createRhizomorphicMorphology({
   branchSpread = 1.05,
   lengthVariation = 0.08,
   curveBend = 0.12,
-  minimumBranchLength = 42
+  minimumBranchLength = 42,
+  minimumAngularGap = 0.08
 }) {
   if (!topology?.byId || !topology?.childrenByParent || !topology?.depthById) {
     throw new TypeError("Morphogenesis requires a validated Atlas topology");
@@ -70,11 +95,11 @@ export function createRhizomorphicMorphology({
   if (!radialTopology?.core || !Array.isArray(radialTopology.universes)) {
     throw new TypeError("Morphogenesis requires a radial topology");
   }
-  for (const [name, value] of Object.entries({ coreBranchLength, branchLength, universeSpread, branchSpread, lengthVariation, curveBend, minimumBranchLength })) {
+  for (const [name, value] of Object.entries({ coreBranchLength, branchLength, universeSpread, branchSpread, lengthVariation, curveBend, minimumBranchLength, minimumAngularGap })) {
     if (!Number.isFinite(value) || value < 0) throw new RangeError(name + " must be finite and non-negative");
   }
   if (branchLength <= 0 || coreBranchLength <= 0 || minimumBranchLength <= 0) throw new RangeError("Branch lengths must be positive");
-  if (lengthVariation > 0.5 || curveBend > 0.5 || universeSpread > TAU || branchSpread > TAU) {
+  if (lengthVariation > 0.5 || curveBend > 0.5 || universeSpread > TAU || branchSpread > TAU || minimumAngularGap > TAU) {
     throw new RangeError("Morphogenesis variation and spread exceed safe bounds");
   }
 
@@ -100,11 +125,13 @@ export function createRhizomorphicMorphology({
   };
 
   const coreChildren = topology.childrenByParent.get(coreId) || [];
-  const coreAngles = allocateAngles(coreChildren, -Math.PI / 2, TAU, weights, true, seed + "|core");
+  const coreSectors = allocateSectors(coreChildren, -Math.PI / 2, TAU, weights, {
+    fullRing: true, seed: seed + "|core", minimumAngularGap
+  });
   coreChildren.forEach((child, index) => {
-    const angle = coreAngles[index];
+    const { angle, sector } = coreSectors[index];
     const distance = coreBranchLength * (0.96 + stableUnit(seed + "|core-length|" + child.id) * 0.08);
-    const node = { ...child, x: Math.cos(angle) * distance, y: Math.sin(angle) * distance, angle, generation: 1, territoryId: coreId };
+    const node = { ...child, x: Math.cos(angle) * distance, y: Math.sin(angle) * distance, angle, sector, generation: 1, territoryId: coreId };
     positioned.set(node.id, node);
     addBranch(core, node, { id: "branch:" + coreId + ":" + node.id, territoryId: coreId, generation: 1 });
     queue.push({ node, angle, generation: 1, territoryId: coreId, spread: branchSpread });
@@ -130,11 +157,13 @@ export function createRhizomorphicMorphology({
     const current = queue[cursor];
     const children = topology.childrenByParent.get(current.node.id) || [];
     if (!children.length) continue;
-    const angles = allocateAngles(children, current.angle, current.spread, weights, false, seed + "|" + current.node.id + "|fan");
+    const sectors = allocateSectors(children, current.angle, current.spread, weights, {
+      seed: seed + "|" + current.node.id + "|fan", minimumAngularGap
+    });
     children.forEach((child, index) => {
       if (positioned.has(child.id)) throw new Error("Morphogenesis encountered a node more than once: " + child.id);
       const generation = current.generation + 1;
-      const angle = angles[index];
+      const { angle, sector } = sectors[index];
       const nominalLength = branchLength / (GOLDEN_RATIO ** Math.max(0, generation - 2));
       const lengthUnit = stableUnit(seed + "|length|" + current.node.id + "|" + child.id);
       const distance = Math.max(minimumBranchLength, nominalLength * (1 - lengthVariation + 2 * lengthVariation * lengthUnit));
@@ -142,7 +171,7 @@ export function createRhizomorphicMorphology({
         ...child,
         x: current.node.x + Math.cos(angle) * distance,
         y: current.node.y + Math.sin(angle) * distance,
-        angle, generation, territoryId: current.territoryId
+        angle, sector, generation, territoryId: current.territoryId
       };
       positioned.set(node.id, node);
       addBranch(current.node, node, { id: "branch:" + current.node.id + ":" + node.id, territoryId: current.territoryId, generation });
