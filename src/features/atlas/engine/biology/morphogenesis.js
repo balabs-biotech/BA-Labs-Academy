@@ -51,7 +51,7 @@ function allocateSectors(children, centerAngle, spread, weights, {
     const start = baseStart + cursor;
     const end = start + width;
     const center = start + width / 2;
-    const jitter = (stableUnit(seed + "|" + child.id) - 0.5) * width * 0.22;
+    const jitter = (stableUnit(seed + "|" + child.id) - 0.5) * width * 0.72;
     const angle = Math.max(start + width * 0.1, Math.min(end - width * 0.1, center + jitter));
     cursor += width + effectiveGap;
     return {
@@ -357,7 +357,7 @@ export function createRhizomorphicMorphology({
       // emerge at staggered radial depths while the stronger subtrees can
       // continue farther into the territory, like an exploring mycelium.
       const radialProgress = children.length <= 1 ? 0.82 : index / (children.length - 1);
-      const radialJitter = (stableUnit(seed + "|radial-depth|" + child.id) - 0.5) * 0.12;
+      const radialJitter = (stableUnit(seed + "|radial-depth|" + child.id) - 0.5) * 0.22;
       const radialFactor = current.node.id === coreId ? 1 : Math.max(0.52, Math.min(1.08, 0.58 + radialProgress * 0.38 + radialJitter));
       const distance = Math.max(minimumBranchLength, nominalLength * radialFactor * (1 - lengthVariation + 2 * lengthVariation * lengthUnit));
       const node = {
