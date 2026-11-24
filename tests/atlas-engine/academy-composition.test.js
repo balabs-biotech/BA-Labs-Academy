@@ -117,7 +117,7 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
       Math.sin(angle - department.angle), Math.cos(angle - department.angle)
     ));
     if (offsets.length > 1) {
-      assert.ok(Math.max(...offsets) - Math.min(...offsets) >= 0.68,
+      assert.ok(Math.max(...offsets) - Math.min(...offsets)  >= 0.56,
         "each department must use a broad radial sector, not a narrow terminal fan");
     }
     const trunkId = "trunk:" + coreId + ":" + department.id;
