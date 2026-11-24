@@ -157,3 +157,16 @@ test("morphogenesis creates asymmetric primary cords and bounded secondary hypha
     + (curved.curve.c2.y - (curved.source.y + 2 * dy / 3)) * normal.y;
   assert.notEqual(bend1, bend2, "primary cord control bends must be asymmetric");
 });
+
+
+test("morphogenesis reports no trailing gap for a non-circular final sibling", () => {
+  const { topology, radialTopology } = fixture();
+  const model = createRhizomorphicMorphology({ topology, radialTopology });
+  const children = topology.childrenByParent.get("bio-section");
+  assert.equal(model.byId.get(children.at(-1).id).sector.gapAfter, 0);
+});
+
+test("morphogenesis rejects a disabled angular gap configuration", () => {
+  const input = fixture();
+  assert.throws(() => createRhizomorphicMorphology({ ...input, minimumAngularGap: 0 }), /must be positive/);
+});
