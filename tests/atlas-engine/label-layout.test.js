@@ -97,3 +97,18 @@ test("radial department labels prefer an inward offset to preserve mobile viewpo
   assert.ok(Math.abs(placement.y - radialNode.y) < 1e-6,
     "the label should remain on the inward radial axis");
 });
+
+
+test("central MYC label remains centered on the core axis", () => {
+  const core = { id: "MYC", x: 0, y: 0, radius: 24, kind: "core", generation: 1 };
+  const result = resolveAtlasLabelLayout({
+    nodes: [core],
+    measurements: [{ id: "MYC", width: 84, height: 16 }],
+    scale: 0.2,
+    gap: 12
+  });
+  const placement = result.placements[0];
+  assert.equal(placement.visible, true);
+  assert.equal(placement.x, 0);
+  assert.ok(placement.y < -24, "MYC label must sit immediately above the central hub");
+});
