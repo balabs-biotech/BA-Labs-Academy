@@ -161,7 +161,6 @@ export function createRhizomorphicMorphology({
   const positioned = new Map();
   const branches = [];
   const territories = new Map();
-  const hyphaesByTerritory = new Map();
   const queue = [];
   const core = { ...coreRecord, x: 0, y: 0, angle: null, generation: 0, territoryId: coreId };
   positioned.set(coreId, core);
