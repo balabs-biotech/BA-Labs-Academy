@@ -58,6 +58,18 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
   assert.equal(trunks.length, 8);
   assert.ok(trunks.every((path) => path.sourceId === core.id),
     "each peripheral universe must grow from the central MYC hub");
+  const foundingAxes = [-Math.PI / 2, Math.PI / 6, Math.PI * 5 / 6];
+  const trunkAxes = trunks.map((path) => Math.atan2(path.curve.c1.y, path.curve.c1.x));
+  const axisMembership = trunkAxes.map((angle) => foundingAxes.reduce((best, axis) => {
+    const delta = Math.atan2(Math.sin(angle - axis), Math.cos(angle - axis));
+    return Math.abs(delta) < Math.abs(Math.atan2(Math.sin(angle - best), Math.cos(angle - best))) ? axis : best;
+  }, foundingAxes[0]));
+  assert.ok(trunkAxes.every((angle, index) => {
+    const delta = Math.atan2(Math.sin(angle - axisMembership[index]), Math.cos(angle - axisMembership[index]));
+    return Math.abs(delta) < 0.15;
+  }), "the eight cords must emerge through the emblem's three shared Y axes");
+  assert.equal(new Set(axisMembership).size, 3,
+    "the Y foundation must split into three main arms before reaching eight universes");
   const pathways = result.scene.nodes.filter((node) => node.id.startsWith("pathway:"));
   assert.equal(pathways.length, 10);
   const pathwayRadii = pathways.map((node) => Math.hypot(node.x, node.y));
