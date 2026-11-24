@@ -40,7 +40,7 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
   assert.ok(departments.every((node) => node.shortLabel && node.shortLabel.length <= 3),
     "department short codes must be available for compact mobile overview labels");
   const radii = departments.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(radii.every((radius) => Math.abs(radius - 620) < 1e-6),
+  assert.ok(radii.every((radius) => Math.abs(radius - 900) < 1e-6),
     "all eight universes must occupy one controlled radial ring");
   const angles = departments.map((node) => Math.atan2(node.y, node.x)).sort((a, b) => a - b);
   const gaps = angles.map((angle, index) => {
@@ -61,7 +61,7 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
   const pathways = result.scene.nodes.filter((node) => node.id.startsWith("pathway:"));
   assert.equal(pathways.length, 10);
   const pathwayRadii = pathways.map((node) => Math.hypot(node.x, node.y));
-  assert.ok(pathwayRadii.every((radius) => Math.abs(radius - 1420) < 1e-6),
+  assert.ok(pathwayRadii.every((radius) => Math.abs(radius - 1680 < 1e-6),
     "pathways must occupy a separate controlled outer orbit");
   assert.equal(new Set(pathways.map((node) => node.angle)).size, 10,
     "pathway orbit positions must be unique");
