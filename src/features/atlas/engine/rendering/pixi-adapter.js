@@ -125,15 +125,16 @@ export async function createPixiSceneAdapter(canvas, {
     const labelLayout = resolveAtlasLabelLayout({
       nodes: scene.nodes,
       measurements: labelObjects.map(({ node, label }) => ({
-        id: node.id, width: label.width, height: label.height
+        id: node.id, width: label.width / scale, height: label.height / scale
       })),
       scale,
-      gap: 12
+      gap: 12 / scale
     });
     const placementById = new Map(labelLayout.placements.map((placement) => [placement.id, placement]));
     for (const { node, label } of labelObjects) {
       const placement = placementById.get(node.id);
       label.visible = Boolean(placement?.visible);
+      label.scale.set(1 / scale);
       if (placement) label.position.set(placement.x, placement.y);
     }
     if (canvas.dataset) {
