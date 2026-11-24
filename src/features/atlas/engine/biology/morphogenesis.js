@@ -134,6 +134,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
 export function createRhizomorphicMorphology({
   topology,
   mycelialTopology,
+  radialTopology,
   seed = "academy-atlas-v2",
   coreBranchLength = 180,
   branchLength = 280,
@@ -147,8 +148,12 @@ export function createRhizomorphicMorphology({
   if (!topology?.byId || !topology?.childrenByParent || !topology?.depthById) {
     throw new TypeError("Morphogenesis requires a validated Atlas topology");
   }
-  if (!mycelialTopology?.core || !Array.isArray(mycelialTopology.territories)) {
-    throw new TypeError("Morphogenesis requires a non-radial mycelial topology");
+  const spatialTopology = mycelialTopology ?? (radialTopology?.core && Array.isArray(radialTopology.universes) ? {
+    core: { ...radialTopology.core, x: radialTopology.core.x ?? 0, y: radialTopology.core.y ?? 0 },
+    territories: radialTopology.universes.map((universe) => ({ ...universe, x: universe.x, y: universe.y }))
+  } : null);
+  if (!spatialTopology?.core || !Array.isArray(spatialTopology.territories)) {
+    throw new TypeError("Morphogenesis requires a validated mycelial spatial topology");
   }
   for (const [name, value] of Object.entries({ coreBranchLength, branchLength, universeSpread, branchSpread, lengthVariation, curveBend, minimumBranchLength, minimumAngularGap })) {
     if (!Number.isFinite(value) || value < 0) throw new RangeError(name + " must be finite and non-negative");
@@ -159,7 +164,7 @@ export function createRhizomorphicMorphology({
     throw new RangeError("Morphogenesis variation and spread exceed safe bounds");
   }
 
-  const coreId = mycelialTopology.core.id;
+  const coreId = spatialTopology.core.id;
   const coreRecord = topology.byId.get(coreId);
   if (!coreRecord) throw new Error("Radial core is absent from Atlas topology: " + coreId);
 
@@ -168,7 +173,7 @@ export function createRhizomorphicMorphology({
   const branches = [];
   const territories = new Map();
   const queue = [];
-  const core = { ...coreRecord, x: mycelialTopology.core.x, y: mycelialTopology.core.y, angle: null, generation: 1, territoryId: coreId };
+  const core = { ...coreRecord, x: spatialTopology.core.x, y: spatialTopology.core.y, angle: null, generation: 1, territoryId: coreId };
   positioned.set(coreId, core);
 
   const addBranch = (source, target, { id, territoryId, generation, visualOnly = false }) => {
@@ -183,7 +188,7 @@ export function createRhizomorphicMorphology({
   };
 
   const roots = [core];
-  for (const territory of mycelialTopology.territories) {
+  for (const territory of spatialTopology.territories) {
     const nodeId = territory.nodeId || territory.id;
     const record = topology.byId.get(nodeId);
     if (!record) throw new Error("Mycelial territory has no matching topology node: " + nodeId);
