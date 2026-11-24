@@ -130,10 +130,10 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   return hyphae;
 }
 
-/** Generate deterministic rhizomorphic growth from validated pedagogy and radial anchors. */
+/** Generate deterministic rhizomorphic growth across an irregular, non-radial mycelial field. */
 export function createRhizomorphicMorphology({
   topology,
-  radialTopology,
+  mycelialTopology,
   seed = "academy-atlas-v2",
   coreBranchLength = 180,
   branchLength = 280,
@@ -147,8 +147,8 @@ export function createRhizomorphicMorphology({
   if (!topology?.byId || !topology?.childrenByParent || !topology?.depthById) {
     throw new TypeError("Morphogenesis requires a validated Atlas topology");
   }
-  if (!radialTopology?.core || !Array.isArray(radialTopology.universes)) {
-    throw new TypeError("Morphogenesis requires a radial topology");
+  if (!mycelialTopology?.core || !Array.isArray(mycelialTopology.territories)) {
+    throw new TypeError("Morphogenesis requires a non-radial mycelial topology");
   }
   for (const [name, value] of Object.entries({ coreBranchLength, branchLength, universeSpread, branchSpread, lengthVariation, curveBend, minimumBranchLength, minimumAngularGap })) {
     if (!Number.isFinite(value) || value < 0) throw new RangeError(name + " must be finite and non-negative");
@@ -159,7 +159,7 @@ export function createRhizomorphicMorphology({
     throw new RangeError("Morphogenesis variation and spread exceed safe bounds");
   }
 
-  const coreId = radialTopology.core.id;
+  const coreId = mycelialTopology.core.id;
   const coreRecord = topology.byId.get(coreId);
   if (!coreRecord) throw new Error("Radial core is absent from Atlas topology: " + coreId);
 
@@ -168,7 +168,7 @@ export function createRhizomorphicMorphology({
   const branches = [];
   const territories = new Map();
   const queue = [];
-  const core = { ...coreRecord, x: 0, y: 0, angle: null, generation: 0, territoryId: coreId };
+  const core = { ...coreRecord, x: mycelialTopology.core.x, y: mycelialTopology.core.y, angle: null, generation: 1, territoryId: coreId };
   positioned.set(coreId, core);
 
   const addBranch = (source, target, { id, territoryId, generation, visualOnly = false }) => {
@@ -182,33 +182,56 @@ export function createRhizomorphicMorphology({
     });
   };
 
-  const coreChildren = topology.childrenByParent.get(coreId) || [];
-  const coreSectors = allocateSectors(coreChildren, -Math.PI / 2, TAU, weights, {
-    fullRing: true, seed: seed + "|core", minimumAngularGap
-  });
-  coreChildren.forEach((child, index) => {
-    const { angle, sector } = coreSectors[index];
-    const distance = coreBranchLength * (0.96 + stableUnit(seed + "|core-length|" + child.id) * 0.08);
-    const node = { ...child, x: Math.cos(angle) * distance, y: Math.sin(angle) * distance, angle, sector, generation: 1, territoryId: coreId };
-    positioned.set(node.id, node);
-    addBranch(core, node, { id: "branch:" + coreId + ":" + node.id, territoryId: coreId, generation: 1 });
-    queue.push({ node, angle, generation: 1, territoryId: coreId, spread: branchSpread });
-  });
-
-  for (const universe of radialTopology.universes) {
-    const nodeId = universe.nodeId || universe.id;
+  const roots = [core];
+  for (const territory of mycelialTopology.territories) {
+    const nodeId = territory.nodeId || territory.id;
     const record = topology.byId.get(nodeId);
-    if (!record) throw new Error("Radial universe has no matching topology node: " + nodeId);
-    if (topology.parentById.has(nodeId)) throw new Error("Radial universe must map to a hierarchy root: " + nodeId);
+    if (!record) throw new Error("Mycelial territory has no matching topology node: " + nodeId);
+    if (topology.parentById.has(nodeId)) throw new Error("Mycelial territory must map to a hierarchy root: " + nodeId);
     if (positioned.has(nodeId)) throw new Error("Morphogenesis node belongs to multiple territories: " + nodeId);
     const node = {
-      ...record, x: universe.x, y: universe.y, angle: universe.angle,
-      generation: 1, territoryId: universe.id, universeColor: universe.color
+      ...record, x: territory.x, y: territory.y, angle: null,
+      generation: 1, territoryId: territory.id, universeColor: territory.color
     };
     positioned.set(node.id, node);
-    territories.set(universe.id, { id: universe.id, nodeId, color: universe.color, angle: universe.angle });
-    addBranch(core, node, { id: "trunk:" + coreId + ":" + universe.id, territoryId: universe.id, generation: 1, visualOnly: true });
-    queue.push({ node, angle: universe.angle, generation: 1, territoryId: universe.id, spread: universeSpread });
+    territories.set(territory.id, { id: territory.id, nodeId, color: territory.color });
+    roots.push(node);
+  }
+
+  // Connect department territories with a minimum-spanning growth walk.
+  // The biological root is one territory in the field, not a central radial hub.
+  const connected = [core];
+  const remaining = roots.slice(1);
+  while (remaining.length) {
+    let best = null;
+    for (const source of connected) {
+      for (const target of remaining) {
+        const distance = Math.hypot(target.x - source.x, target.y - source.y);
+        if (!best || distance < best.distance) best = { source, target, distance };
+      }
+    }
+    const targetIndex = remaining.indexOf(best.target);
+    remaining.splice(targetIndex, 1);
+    connected.push(best.target);
+    addBranch(best.source, best.target, {
+      id: "trunk:" + best.source.id + ":" + best.target.id,
+      territoryId: best.target.territoryId,
+      generation: 1,
+      visualOnly: true
+    });
+  }
+
+  const centroid = roots.reduce((sum, node) => ({ x: sum.x + node.x / roots.length, y: sum.y + node.y / roots.length }), { x: 0, y: 0 });
+  for (const root of roots) {
+    const children = topology.childrenByParent.get(root.id) || [];
+    const outwardAngle = Math.atan2(root.y - centroid.y, root.x - centroid.x);
+    queue.push({
+      node: root,
+      angle: outwardAngle,
+      generation: 1,
+      territoryId: root.territoryId,
+      spread: universeSpread
+    });
   }
 
   for (let cursor = 0; cursor < queue.length; cursor += 1) {
