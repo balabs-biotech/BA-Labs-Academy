@@ -75,8 +75,8 @@ export function resolveAtlasLabelLayout({
     const radialFirst = [Math.PI, Math.PI / 2, Math.PI * 1.5, Math.PI / 4,
       Math.PI * 1.75, Math.PI * 0.75, Math.PI * 1.25, 0];
     const directions = radialLabel
-      ? [...tangentFirst, ...Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
-        .filter((angle) => !tangentFirst.includes(angle))]
+      ? [...radialFirst, ...Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
+        .filter((angle) => !radialFirst.includes(angle))]
       : Array.from({ length: 16 }, (_, index) => index * Math.PI / 8)
         .sort((a, b) => angularDistance(a, 0) - angularDistance(b, 0));
     const distanceRings = [1, 1.4, 1.85, 2.35];
