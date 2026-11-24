@@ -89,13 +89,9 @@ export function resolveAtlasLabelLayout({
         left: x - width / 2, right: x + width / 2,
         top: y - height / 2, bottom: y + height / 2
       };
-      const overlapsLabel = accepted.some((entry) => overlapsRect(rect, entry.rect, gap));
-      const overlapsNode = nodes.some((other) =>
-        other.id !== node.id && intersectsCircle(rect, other, gap)
-      );
-      if (!overlapsLabel && !overlapsNode) {
-        chosen = { id: node.id, x, y, width, height, visible: true, reason: "core-axis", rect };
-      }
+      // MYC is the visual anchor of the entire wheel. Keep its name on the
+      // central axis instead of displacing it around nearby decorative hyphae.
+      chosen = { id: node.id, x, y, width, height, visible: true, reason: "core-axis", rect };
     }
 
     for (const distanceFactor of (chosen ? [] : distanceRings)) {
