@@ -250,7 +250,13 @@ export function createRhizomorphicMorphology({
         ? coreBranchLength
         : branchLength / (GOLDEN_RATIO ** Math.max(0, generation - 2));
       const lengthUnit = stableUnit(seed + "|length|" + current.node.id + "|" + child.id);
-      const distance = Math.max(minimumBranchLength, nominalLength * (1 - lengthVariation + 2 * lengthVariation * lengthUnit));
+      // Siblings do not terminate on one shared circular arc: side branches
+      // emerge at staggered radial depths while the stronger subtrees can
+      // continue farther into the territory, like an exploring mycelium.
+      const radialProgress = children.length <= 1 ? 0.82 : index / (children.length - 1);
+      const radialJitter = (stableUnit(seed + "|radial-depth|" + child.id) - 0.5) * 0.12;
+      const radialFactor = Math.max(0.52, Math.min(1.08, 0.58 + radialProgress * 0.38 + radialJitter));
+      const distance = Math.max(minimumBranchLength, nominalLength * radialFactor * (1 - lengthVariation + 2 * lengthVariation * lengthUnit));
       const node = {
         ...child,
         x: current.node.x + Math.cos(angle) * distance,
