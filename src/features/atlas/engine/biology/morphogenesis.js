@@ -109,7 +109,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const hyphae = [];
   const queue = [];
   // Reserve almost half the budget for daughter and granddaughter branches.
-  const primaryBudget = Math.floor(limit * 0.38);
+  const primaryBudget = Math.floor(limit * 0.22);
 
   // First generation: lateral explorers emerge from the main colony cords.
   for (const branch of branches) {
