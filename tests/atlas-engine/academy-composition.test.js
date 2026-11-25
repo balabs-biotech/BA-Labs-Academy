@@ -72,6 +72,16 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
     );
     assert.ok(lateralHyphae.length >= 3,
       department.id + " must have multiple lateral explorers in the shared colony");
+    const anchor = result.morphology.byId.get(department.id);
+    const nearestFront = fronts
+      .filter((path) => path.territoryId === department.id)
+      .map((path) => result.morphology.branches.find((branch) => branch.id === path.id))
+      .sort((a, b) =>
+        Math.hypot(a.target.x - anchor.x, a.target.y - anchor.y)
+        - Math.hypot(b.target.x - anchor.x, b.target.y - anchor.y)
+      )[0];
+    assert.ok(Math.hypot(nearestFront.target.x - anchor.x, nearestFront.target.y - anchor.y) < 100,
+      department.id + " must meet the shared colony frontier instead of floating beyond a gap");
   }
 
   const spines = result.scene.paths.filter((path) => path.style === "primary-spine");
