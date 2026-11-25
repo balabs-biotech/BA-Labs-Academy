@@ -112,7 +112,10 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const primaryBudget = Math.floor(limit * 0.22);
 
   // First generation: lateral explorers emerge from the main colony cords.
-  for (const branch of branches) {
+  const growthOrder = [...branches].sort((a, b) =>
+    Number(b.style === "mycelial-trunk") - Number(a.style === "mycelial-trunk")
+  );
+  for (const branch of growthOrder) {
     if (queue.length >= primaryBudget) break;
     const dx = branch.target.x - branch.source.x;
     const dy = branch.target.y - branch.source.y;
