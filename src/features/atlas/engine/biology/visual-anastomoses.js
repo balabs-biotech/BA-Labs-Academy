@@ -35,7 +35,8 @@ export function createVisualAnastomoses(morphology, {
   maxDegree = 2,
   cellSize = maxDistance,
   includeRoots = false,
-  includeSameTerritory = false
+  includeSameTerritory = false,
+  includeHyphae = false
 } = {}) {
   if (!morphology || !Array.isArray(morphology.nodes) || !Array.isArray(morphology.branches)) {
     throw new TypeError("Anastomoses require a morphology model");
@@ -46,13 +47,30 @@ export function createVisualAnastomoses(morphology, {
   const territorySet = morphology.territories instanceof Map
     ? new Set(morphology.territories.keys())
     : null;
-  const candidates = morphology.nodes.filter((node) =>
+  const nodeCandidates = morphology.nodes.filter((node) =>
     node && typeof node.id === "string" &&
     typeof node.territoryId === "string" &&
     (!territorySet || territorySet.has(node.territoryId)) &&
     Number.isFinite(node.x) && Number.isFinite(node.y) &&
     (includeRoots || node.generation > 1)
-  );
+  ).map((node) => ({ ...node, sourceKind: "node" }));
+  const hyphaCandidates = includeHyphae
+    ? (morphology.hyphae || []).filter((hypha) =>
+      hypha && typeof hypha.id === "string" &&
+      typeof hypha.territoryId === "string" &&
+      (!territorySet || territorySet.has(hypha.territoryId)) &&
+      Number.isFinite(hypha.curve?.b?.x) && Number.isFinite(hypha.curve?.b?.y)
+    ).map((hypha) => ({
+      id: hypha.id,
+      territoryId: hypha.territoryId,
+      generation: hypha.generation ?? 1,
+      parent: hypha.parentHyphaId ?? null,
+      sourceKind: "hypha",
+      x: hypha.curve.b.x,
+      y: hypha.curve.b.y
+    }))
+    : [];
+  const candidates = [...nodeCandidates, ...hyphaCandidates];
   const cells = new Map();
   for (const node of candidates) {
     const key = cellKey(node.x / cellSize, node.y / cellSize);
@@ -110,8 +128,10 @@ export function createVisualAnastomoses(morphology, {
     degree.set(pair.target.id, (degree.get(pair.target.id) || 0) + 1);
     links.push({
       id: pair.id,
-      sourceId: pair.source.id,
-      targetId: pair.target.id,
+      sourceId: pair.source.sourceKind === "hypha" ? null : pair.source.id,
+      targetId: pair.target.sourceKind === "hypha" ? null : pair.target.id,
+      sourceHyphaId: pair.source.sourceKind === "hypha" ? pair.source.id : null,
+      targetHyphaId: pair.target.sourceKind === "hypha" ? pair.target.id : null,
       territoryIds: pair.territoryIds,
       intraTerritory: pair.territoryIds.length === 1,
       distance: pair.distance,
