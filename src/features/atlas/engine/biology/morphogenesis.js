@@ -119,19 +119,19 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
     const density = stableUnit(seed + "|density|" + branch.id);
-    const count = branch.style === "mycelial-trunk" ? 4 + Math.floor(density * 4)
-      : branch.style === "primary-spine" ? 2 + Math.floor(density * 3)
-      : branch.generation <= 3 ? (density > 0.58 ? 2 : 1)
-      : density > 0.72 ? 2 : 1;
+    const count = branch.style === "mycelial-trunk" ? 10 + Math.floor(density * 6)
+      : branch.style === "primary-spine" ? 4 + Math.floor(density * 4)
+      : branch.generation <= 3 ? (density > 0.3 ? 3 : 2)
+      : density > 0.56 ? 3 : 2;
     for (let index = 0; index < count && queue.length < primaryBudget; index += 1) {
       const id = "hypha:" + branch.id + ":" + index;
       const localSeed = seed + "|" + id;
-      const t = 0.22 + stableUnit(localSeed + "|position") * 0.56;
+      const t = 0.12 + stableUnit(localSeed + "|position") * 0.76;
       const origin = pointOnCurve(branch.curve, t);
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
       const baseAngle = tangentOnCurve(branch.curve, t);
-      const angle = baseAngle + side * (0.38 + stableUnit(localSeed + "|angle") * 0.56);
-      const branchLength = length * (0.14 + stableUnit(localSeed + "|length") * 0.12);
+      const angle = baseAngle + side * (0.62 + stableUnit(localSeed + "|angle") * 0.7);
+      const branchLength = length * (0.18 + stableUnit(localSeed + "|length") * 0.16);
       const endpoint = {
         x: origin.x + Math.cos(angle) * branchLength,
         y: origin.y + Math.sin(angle) * branchLength
@@ -141,7 +141,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       const item = {
         id, parentBranchId: branch.id, territoryId: branch.territoryId, color,
         style: "secondary-hypha", generation: 1,
-        width: 0.95 + stableUnit(localSeed + "|width") * 0.45,
+        width: 1.35 + stableUnit(localSeed + "|width") * 0.75,
         curve: createCurve(origin, endpoint, localSeed, 0.2)
       };
       queue.push({ item, endpoint, angle, length: branchLength, color, territoryId: branch.territoryId, seed: localSeed });
@@ -156,15 +156,15 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     hyphae.push(parent.item);
     if (parent.item.generation >= 3 || parent.length < 28 || hyphae.length + queue.length - cursor >= limit) continue;
     const count = parent.item.generation === 1
-      ? (stableUnit(parent.seed + "|fork") > 0.34 ? 2 : 1)
+      ? (stableUnit(parent.seed + "|fork") > 0.18 ? 2 : 1)
       : 1;
     for (let index = 0; index < count && hyphae.length + queue.length - cursor < limit; index += 1) {
       const id = parent.item.id + ":fork:" + index;
       const localSeed = seed + "|" + id;
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
       const parentTangent = tangentOnCurve(parent.item.curve, 1);
-      const angle = parentTangent + side * (0.34 + stableUnit(localSeed + "|angle") * 0.54);
-      const length = parent.length * (0.42 + stableUnit(localSeed + "|length") * 0.16);
+      const angle = parentTangent + side * (0.5 + stableUnit(localSeed + "|angle") * 0.5);
+      const length = parent.length * (0.48 + stableUnit(localSeed + "|length") * 0.2);
       const endpoint = {
         x: parent.endpoint.x + Math.cos(angle) * length,
         y: parent.endpoint.y + Math.sin(angle) * length
@@ -173,7 +173,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
         item: {
           id, parentHyphaId: parent.item.id, territoryId: parent.territoryId, color: parent.color,
           style: "secondary-hypha", generation: parent.item.generation + 1,
-          width: Math.max(0.28, parent.item.width * 0.58),
+          width: Math.max(0.38, parent.item.width * 0.62),
           curve: createCurve(parent.endpoint, endpoint, localSeed, 0.24)
         },
         endpoint, angle, length, color: parent.color,
