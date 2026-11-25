@@ -94,29 +94,43 @@ function pointOnCurve(curve, t) {
   };
 }
 
+function tangentOnCurve(curve, t) {
+  const inverse = 1 - t;
+  const dx = 3 * inverse ** 2 * (curve.c1.x - curve.a.x)
+    + 6 * inverse * t * (curve.c2.x - curve.c1.x)
+    + 3 * t ** 2 * (curve.b.x - curve.c2.x);
+  const dy = 3 * inverse ** 2 * (curve.c1.y - curve.a.y)
+    + 6 * inverse * t * (curve.c2.y - curve.c1.y)
+    + 3 * t ** 2 * (curve.b.y - curve.c2.y);
+  return Math.atan2(dy, dx);
+}
+
 function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const hyphae = [];
   const queue = [];
+  // Reserve almost half the budget for daughter and granddaughter branches.
+  const primaryBudget = Math.floor(limit * 0.55);
 
   // First generation: lateral explorers emerge from the main colony cords.
   for (const branch of branches) {
-    if (hyphae.length + queue.length >= limit) break;
+    if (queue.length >= primaryBudget) break;
     const dx = branch.target.x - branch.source.x;
     const dy = branch.target.y - branch.source.y;
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
-    const count = branch.style === "mycelial-trunk" ? 5
-      : branch.style === "primary-spine" ? 3
-      : branch.generation <= 3 ? 2
-      : stableUnit(seed + "|density|" + branch.id) > 0.62 ? 2 : 1;
-    for (let index = 0; index < count && hyphae.length + queue.length < limit; index += 1) {
+    const density = stableUnit(seed + "|density|" + branch.id);
+    const count = branch.style === "mycelial-trunk" ? 4 + Math.floor(density * 4)
+      : branch.style === "primary-spine" ? 2 + Math.floor(density * 3)
+      : branch.generation <= 3 ? (density > 0.58 ? 2 : 1)
+      : density > 0.72 ? 2 : 1;
+    for (let index = 0; index < count && queue.length < primaryBudget; index += 1) {
       const id = "hypha:" + branch.id + ":" + index;
       const localSeed = seed + "|" + id;
       const t = 0.22 + stableUnit(localSeed + "|position") * 0.56;
       const origin = pointOnCurve(branch.curve, t);
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
-      const baseAngle = Math.atan2(dy, dx);
-      const angle = baseAngle + side * (0.42 + stableUnit(localSeed + "|angle") * 0.52);
+      const baseAngle = tangentOnCurve(branch.curve, t);
+      const angle = baseAngle + side * (0.38 + stableUnit(localSeed + "|angle") * 0.56);
       const branchLength = length * (0.14 + stableUnit(localSeed + "|length") * 0.12);
       const endpoint = {
         x: origin.x + Math.cos(angle) * branchLength,
@@ -125,7 +139,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       const color = territories.get(branch.territoryId)?.color
         ?? branch.target.universeColor ?? branch.target.color ?? branch.source.universeColor ?? null;
       const item = {
-        id, territoryId: branch.territoryId, color,
+        id, parentBranchId: branch.id, territoryId: branch.territoryId, color,
         style: "secondary-hypha", generation: 1,
         width: 0.95 + stableUnit(localSeed + "|width") * 0.45,
         curve: createCurve(origin, endpoint, localSeed, 0.2)
@@ -148,7 +162,8 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       const id = parent.item.id + ":fork:" + index;
       const localSeed = seed + "|" + id;
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
-      const angle = parent.angle + side * (0.38 + stableUnit(localSeed + "|angle") * 0.58);
+      const parentTangent = tangentOnCurve(parent.item.curve, 1);
+      const angle = parentTangent + side * (0.34 + stableUnit(localSeed + "|angle") * 0.54);
       const length = parent.length * (0.42 + stableUnit(localSeed + "|length") * 0.16);
       const endpoint = {
         x: parent.endpoint.x + Math.cos(angle) * length,
@@ -156,7 +171,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       };
       queue.push({
         item: {
-          id, territoryId: parent.territoryId, color: parent.color,
+          id, parentHyphaId: parent.item.id, territoryId: parent.territoryId, color: parent.color,
           style: "secondary-hypha", generation: parent.item.generation + 1,
           width: Math.max(0.28, parent.item.width * 0.58),
           curve: createCurve(parent.endpoint, endpoint, localSeed, 0.24)
