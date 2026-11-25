@@ -310,8 +310,8 @@ export function createRhizomorphicMorphology({
     // Keep the four trajectories attached to their canonical sector, but
     // spread them across its full angular span instead of making a tight fan.
     const baseAngle = territoryMatch.angle
-      + centeredSlot * (sectorWidth / frontsPerSector) * 1.2
-      + (stableUnit(localSeed + "|global-angle") - 0.5) * sectorWidth * 0.1;
+      + centeredSlot * (sectorWidth / frontsPerSector) * 0.82
+      + (stableUnit(localSeed + "|global-angle") - 0.5) * sectorWidth * 0.07;
     const startAngle = baseAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.42;
     const originRadius = 14 + stableUnit(localSeed + "|origin") * 34;
     const origin = {
@@ -320,8 +320,8 @@ export function createRhizomorphicMorphology({
       y: core.y + Math.sin(startAngle) * originRadius
     };
     const radialReach = 0.88 + stableUnit(localSeed + "|reach") * 0.1;
-    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 130;
-    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.14;
+    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 90;
+    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.08;
     const territory = territoryMatch.territory;
     const reach = Math.max(250, territoryMatch.distance * radialReach);
     const frontier = {
