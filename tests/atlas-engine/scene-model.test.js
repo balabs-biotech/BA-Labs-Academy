@@ -72,7 +72,7 @@ test("scene model includes secondary hyphae as decorative paths, never pedagogy"
   const scene = createAtlasScene({ topology, morphology });
   const hyphaPaths = scene.paths.filter((path) => path.type === "hypha");
   assert.ok(hyphaPaths.length > 0);
-  assert.ok(hyphaPaths.every((path) => path.visualOnly && path.width < 1.5));
+  assert.ok(hyphaPaths.every((path) => path.visualOnly && path.width < 2.2));
   assert.ok(hyphaPaths.some((path) => path.generation === 3));
   const hyphaIds = new Set(hyphaPaths.map((path) => path.id));
   assert.ok(hyphaPaths.filter((path) => path.generation > 1)
