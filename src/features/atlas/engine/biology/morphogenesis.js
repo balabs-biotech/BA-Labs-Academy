@@ -283,46 +283,56 @@ export function createRhizomorphicMorphology({
     roots.push(node);
   }
 
-  // Grow continuous, segmented hyphal paths through each angular territory.
-  // Each path wanders laterally while progressing outward; its four connected
-  // segments form one growth trajectory, not a straight spoke from MYC.
-  const frontsPerTerritory = 2;
+  // Seed multiple independent growth trajectories in every territory.
+  // Their tips explore different radial depths and angles; no trajectory is
+  // required to terminate at a universe anchor or form a dedicated spoke.
+  const frontsPerTerritory = 4;
   const segmentsPerFront = 4;
   for (const territory of spatialTopology.territories) {
     const anchor = positioned.get(territory.nodeId || territory.id);
     const anchorDx = anchor.x - core.x;
     const anchorDy = anchor.y - core.y;
     const anchorDistance = Math.hypot(anchorDx, anchorDy) || 1;
-    const normal = { x: -anchorDy / anchorDistance, y: anchorDx / anchorDistance };
     const axisAngle = Math.atan2(anchorDy, anchorDx);
 
     for (let frontIndex = 0; frontIndex < frontsPerTerritory; frontIndex += 1) {
       const frontId = "colony-front:" + territory.id + ":" + frontIndex;
       const localSeed = seed + "|" + frontId;
-      const startAngle = axisAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.42;
+      const startAngle = axisAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.68;
       const originRadius = 18 + stableUnit(localSeed + "|origin") * 42;
       const origin = {
         id: frontId + ":origin",
         x: core.x + Math.cos(startAngle) * originRadius,
         y: core.y + Math.sin(startAngle) * originRadius
       };
+      const reach = anchorDistance * (0.76 + stableUnit(localSeed + "|reach") * 0.18);
+      const endAngle = axisAngle + (stableUnit(localSeed + "|end-angle") - 0.5) * 0.44;
+      const frontier = {
+        id: frontId + ":tip",
+        x: core.x + Math.cos(endAngle) * reach,
+        y: core.y + Math.sin(endAngle) * reach
+      };
+      const pathDx = frontier.x - origin.x;
+      const pathDy = frontier.y - origin.y;
+      const pathLength = Math.hypot(pathDx, pathDy) || 1;
+      const normal = { x: -pathDy / pathLength, y: pathDx / pathLength };
       let previous = origin;
 
       for (let segmentIndex = 1; segmentIndex <= segmentsPerFront; segmentIndex += 1) {
         const t = segmentIndex / segmentsPerFront;
         const envelope = Math.sin(Math.PI * t);
         const lateralDrift = (stableUnit(localSeed + "|drift|" + segmentIndex) - 0.5)
-          * 260 * envelope;
+          * 340 * envelope;
         const radialDrift = (stableUnit(localSeed + "|radial|" + segmentIndex) - 0.5)
-          * 70 * envelope;
+          * 110 * envelope;
         const target = segmentIndex === segmentsPerFront
-          ? { id: frontId + ":tip", x: anchor.x, y: anchor.y }
+          ? frontier
           : {
               id: frontId + ":segment:" + segmentIndex,
-              x: origin.x + anchorDx * t + normal.x * lateralDrift
-                + Math.cos(axisAngle) * radialDrift,
-              y: origin.y + anchorDy * t + normal.y * lateralDrift
-                + Math.sin(axisAngle) * radialDrift
+              x: origin.x + pathDx * t + normal.x * lateralDrift
+                + Math.cos(endAngle) * radialDrift,
+              y: origin.y + pathDy * t + normal.y * lateralDrift
+                + Math.sin(endAngle) * radialDrift
             };
         const segmentSeed = localSeed + "|segment|" + segmentIndex;
         addBranch(previous, target, {
