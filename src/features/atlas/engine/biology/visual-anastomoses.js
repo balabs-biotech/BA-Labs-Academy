@@ -1,9 +1,10 @@
-function validateOptions({ maxDistance, maxLinks, maxDegree, cellSize }) {
+function validateOptions({ maxDistance, maxLinks, maxDegree, cellSize, frontierBias }) {
   if (!Number.isFinite(maxDistance) || maxDistance <= 0) throw new RangeError("maxDistance must be positive");
   if (!Number.isSafeInteger(maxLinks) || maxLinks < 0) throw new RangeError("maxLinks must be a non-negative safe integer");
   if (!Number.isSafeInteger(maxDegree) || maxDegree < 1) throw new RangeError("maxDegree must be a positive safe integer");
   if (!Number.isFinite(cellSize) || cellSize <= 0) throw new RangeError("cellSize must be positive");
   if (Math.ceil(maxDistance / cellSize) > 16) throw new RangeError("cellSize creates an excessive neighborhood search");
+  if (!Number.isFinite(frontierBias) || frontierBias < 0 || frontierBias > 1) throw new RangeError("frontierBias must be between 0 and 1");
 }
 
 function cellKey(x, y) {
@@ -36,12 +37,13 @@ export function createVisualAnastomoses(morphology, {
   cellSize = maxDistance,
   includeRoots = false,
   includeSameTerritory = false,
-  includeHyphae = false
+  includeHyphae = false,
+  frontierBias = 0.35
 } = {}) {
   if (!morphology || !Array.isArray(morphology.nodes) || !Array.isArray(morphology.branches)) {
     throw new TypeError("Anastomoses require a morphology model");
   }
-  validateOptions({ maxDistance, maxLinks, maxDegree, cellSize });
+  validateOptions({ maxDistance, maxLinks, maxDegree, cellSize, frontierBias });
   if (maxLinks === 0) return { links: [], metrics: { candidateCount: 0, linkCount: 0 } };
 
   const territorySet = morphology.territories instanceof Map
@@ -104,8 +106,13 @@ export function createVisualAnastomoses(morphology, {
     }
   }
 
+  const maxRadius = Math.max(1, ...candidates.map((node) => Math.hypot(node.x, node.y)));
+  const score = (pair) => {
+    const frontier = (Math.hypot(pair.source.x, pair.source.y) + Math.hypot(pair.target.x, pair.target.y)) / (2 * maxRadius);
+    return pair.distance - frontierBias * maxDistance * frontier;
+  };
   const ordered = [...pairs.values()].sort((a, b) =>
-    a.distance - b.distance || a.id.localeCompare(b.id)
+    score(a) - score(b) || a.distance - b.distance || a.id.localeCompare(b.id)
   );
   const territoryIds = territorySet
     ? [...territorySet]
