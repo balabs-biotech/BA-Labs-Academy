@@ -324,10 +324,26 @@ export function createRhizomorphicMorphology({
     const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.08;
     const territory = territoryMatch.territory;
     const reach = Math.max(250, territoryMatch.distance * radialReach);
-    const frontier = {
-      id: frontId + ":tip",
+    const rawFrontier = {
       x: core.x + Math.cos(axis) * reach - Math.sin(axis) * lateralTip,
       y: core.y + Math.sin(axis) * reach + Math.cos(axis) * lateralTip
+    };
+    // Keep each exploratory endpoint inside its territory's influence zone,
+    // while retaining its own direction and radial depth (never snapping it
+    // onto the canonical department anchor).
+    const anchor = positioned.get(territory.nodeId || territory.id);
+    const anchorDx = rawFrontier.x - anchor.x;
+    const anchorDy = rawFrontier.y - anchor.y;
+    const anchorDistance = Math.hypot(anchorDx, anchorDy);
+    const endpointLimit = 300;
+    const frontier = {
+      id: frontId + ":tip",
+      x: anchorDistance > endpointLimit
+        ? anchor.x + anchorDx / anchorDistance * endpointLimit
+        : rawFrontier.x,
+      y: anchorDistance > endpointLimit
+        ? anchor.y + anchorDy / anchorDistance * endpointLimit
+        : rawFrontier.y
     };
     const pathDx = frontier.x - origin.x;
     const pathDy = frontier.y - origin.y;
