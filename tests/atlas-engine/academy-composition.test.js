@@ -122,7 +122,7 @@ test("V2 catalogue adapter is spatially neutral and does not depend on the legac
 
 
 
-test("the eight Academy spokes open into a reticulate mycelial silhouette", () => {
+test("the eight radial Academy territories form a connected mycelial colony", () => {
   const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
   const result = createAcademyAtlasV2({ graph, seed: "open-mycelial-logo" });
   const coreId = result.topology.roots.find((node) => node.entity_key === "MYC").id;
@@ -144,9 +144,9 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
       assert.ok(Math.max(...offsets) - Math.min(...offsets)  >= 0.56,
         "each department must use a broad radial sector, not a narrow terminal fan");
     }
-    const trunkId = "universe-spoke:" + department.id;
+    const trunkId = "mycelial-trunk:" + department.id;
     const lateralHyphae = result.morphology.hyphae.filter((hypha) =>
-      hypha.id.startsWith("hypha:" + trunkId + ":")
+      hypha.parentBranchId === trunkId
     );
     assert.ok(lateralHyphae.length >= 4,
       "each primary spoke must grow lateral hyphae along its length");
