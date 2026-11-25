@@ -69,7 +69,7 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
       hypha.parentBranchId === trunkId
     );
     assert.ok(lateralHyphae.length >= 4,
-      "each primary radial hypha must grow lateral explorers along its length");
+      "each primary radial hypha must grow lateral explorers along its length: " + trunkId + " has " + lateralHyphae.length);
   }
 
   const spines = result.scene.paths.filter((path) => path.style === "primary-spine");
