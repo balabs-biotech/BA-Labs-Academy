@@ -117,8 +117,8 @@ export async function createPixiSceneAdapter(canvas, {
 
     const labelObjects = [];
     for (const node of scene.nodes) {
-      // Pathway anchors occupy a separate outer orbit. Keep the eight-universe
-      // emblem clean at overview scale and reveal pathways only on exploration.
+      // Pathway anchors occupy a separate outer orbit. Keep the radial colony
+      // legible at overview scale and reveal pathways only on exploration.
       if (node.kind === "pathway" && scale < 0.28) continue;
       const fill = colorValue(node.color, node.kind === "core" ? 0xe5b85c : 0x718491);
       nodes.circle(node.x, node.y, node.radius).fill({ color: fill, alpha: node.kind === "core" ? 1 : 0.9 });
