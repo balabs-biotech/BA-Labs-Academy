@@ -122,6 +122,9 @@ export function createAtlasScene({
       territoryId: hypha.territoryId ?? null,
       territoryIds: null,
       style: hypha.style ?? "secondary-hypha",
+      generation: hypha.generation ?? 1,
+      parentBranchId: hypha.parentBranchId ?? null,
+      parentHyphaId: hypha.parentHyphaId ?? null,
       width: hypha.width,
       color: hypha.color ?? null,
       curve: copyCurve(hypha.curve, hypha.id)
