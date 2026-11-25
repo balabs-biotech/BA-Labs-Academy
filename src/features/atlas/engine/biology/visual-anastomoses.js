@@ -68,6 +68,7 @@ export function createVisualAnastomoses(morphology, {
       generation: hypha.generation ?? 1,
       parent: hypha.parentHyphaId ?? null,
       sourceKind: "hypha",
+      color: hypha.color ?? null,
       x: hypha.curve.b.x,
       y: hypha.curve.b.y
     }))
@@ -106,7 +107,7 @@ export function createVisualAnastomoses(morphology, {
     }
   }
 
-  const maxRadius = Math.max(1, ...candidates.map((node) => Math.hypot(node.x, node.y)));
+  const maxRadius = Math.max(1, candidates.reduce((maximum, node) => Math.max(maximum, Math.hypot(node.x, node.y)), 0));
   const score = (pair) => {
     const frontier = (Math.hypot(pair.source.x, pair.source.y) + Math.hypot(pair.target.x, pair.target.y)) / (2 * maxRadius);
     return pair.distance - frontierBias * maxDistance * frontier;
@@ -144,6 +145,7 @@ export function createVisualAnastomoses(morphology, {
       distance: pair.distance,
       visualOnly: true,
       relationshipType: "anastomosis",
+      color: pair.source.color ?? pair.target.color ?? pair.source.universeColor ?? pair.target.universeColor ?? null,
       curve: makeCurve(pair.source, pair.target, pair.id)
     });
   };
@@ -160,10 +162,19 @@ export function createVisualAnastomoses(morphology, {
     addLink(pair);
   }
 
-  // Spend the remaining link budget on nearby hyphal loops and reinforcement.
+  // Reinforce cross-territory bridges before spending the budget on local loops.
+  // This makes the colony a shared mesh rather than eight isolated bouquets.
   for (const pair of ordered) {
     if (links.length >= maxLinks) break;
-    if (selected.has(pair.id)) continue;
+    if (selected.has(pair.id) || pair.territoryIds.length !== 2) continue;
+    if ((degree.get(pair.source.id) || 0) >= maxDegree || (degree.get(pair.target.id) || 0) >= maxDegree) continue;
+    addLink(pair);
+  }
+
+  // Use the remaining budget for local anastomoses within each territory.
+  for (const pair of ordered) {
+    if (links.length >= maxLinks) break;
+    if (selected.has(pair.id) || pair.territoryIds.length !== 1) continue;
     if ((degree.get(pair.source.id) || 0) >= maxDegree || (degree.get(pair.target.id) || 0) >= maxDegree) continue;
     addLink(pair);
   }
