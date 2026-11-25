@@ -111,7 +111,7 @@ export function createVisualAnastomoses(morphology, {
   const score = (pair) => {
     const frontier = (Math.hypot(pair.source.x, pair.source.y) + Math.hypot(pair.target.x, pair.target.y)) / (2 * maxRadius);
     const joinsHyphalTips = pair.source.sourceKind === "hypha" && pair.target.sourceKind === "hypha";
-    const frontierPairBonus = joinsHyphalTips ? maxDistance * 0.24 : 0;
+    const frontierPairBonus = joinsHyphalTips ? maxDistance * 0.55 : 0;
     return pair.distance - frontierBias * maxDistance * frontier - frontierPairBonus;
   };
   const ordered = [...pairs.values()].sort((a, b) =>
