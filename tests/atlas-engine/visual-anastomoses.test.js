@@ -116,3 +116,30 @@ test("anastomoses connect every peripheral territory into one mycelial network",
   assert.equal(result.links.length, 7, "eight zones need at least seven bridges");
   assert.equal(visited.size, 8, "all peripheral zones must belong to one connected network");
 });
+
+
+test("hyphal anastomoses join nearby filament tips without inventing node relationships", () => {
+  const territories = new Map([
+    ["BIO", { id: "BIO", nodeId: "BIO" }],
+    ["AGR", { id: "AGR", nodeId: "AGR" }]
+  ]);
+  const morphology = {
+    nodes: [],
+    branches: [],
+    territories,
+    hyphae: [
+      { id: "bio-tip", territoryId: "BIO", generation: 2, parentHyphaId: "bio-parent", curve: { b: { x: 0, y: 0 } } },
+      { id: "agr-tip", territoryId: "AGR", generation: 2, parentHyphaId: "agr-parent", curve: { b: { x: 24, y: 12 } } }
+    ]
+  };
+  const result = createVisualAnastomoses(morphology, {
+    includeHyphae: true, maxDistance: 100, maxLinks: 1
+  });
+  assert.equal(result.links.length, 1);
+  assert.equal(result.links[0].sourceId, null);
+  assert.equal(result.links[0].targetId, null);
+  assert.ok(result.links[0].sourceHyphaId);
+  assert.ok(result.links[0].targetHyphaId);
+  assert.equal(result.links[0].visualOnly, true);
+  assert.equal(result.links[0].relationshipType, "anastomosis");
+});
