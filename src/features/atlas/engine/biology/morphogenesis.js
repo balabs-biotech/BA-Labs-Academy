@@ -110,7 +110,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const queue = [];
   // Reserve enough first-generation capacity for every territory trunk when
   // the total budget allows it, while keeping tight test/runtime budgets recursive.
-  const primaryBudget = Math.floor(limit * 0.3);
+  const primaryBudget = Math.floor(limit * 0.5);
 
   // Allocate first-generation growth round-robin across territories. This
   // prevents early sectors from consuming the hypha budget before later ones
@@ -135,7 +135,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
     const density = stableUnit(seed + "|density|" + branch.id);
-    const count = branch.style === "colony-front" ? 2 + Math.floor(density * 2)
+    const count = branch.style === "colony-front" ? 4 + Math.floor(density * 3)
       : branch.style === "mycelial-trunk" ? 18 + Math.floor(density * 9)
       : branch.style === "primary-spine" ? 4 + Math.floor(density * 4)
       : branch.generation <= 3 ? (density > 0.3 ? 3 : 2)
@@ -148,7 +148,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
       const baseAngle = tangentOnCurve(branch.curve, t);
       const angle = baseAngle + side * (0.5 + stableUnit(localSeed + "|angle") * 0.55);
-      const branchLength = length * (0.16 + stableUnit(localSeed + "|length") * 0.12);
+      const branchLength = length * (0.24 + stableUnit(localSeed + "|length") * 0.14);
       const endpoint = {
         x: origin.x + Math.cos(angle) * branchLength,
         y: origin.y + Math.sin(angle) * branchLength
@@ -333,7 +333,7 @@ export function createRhizomorphicMorphology({
           style: "colony-front",
           sourceId: null,
           targetId: null,
-          width: 3.2 - segmentIndex * 0.24
+          width: 2.7 - segmentIndex * 0.12
             + stableUnit(segmentSeed + "|width") * 0.45,
           curve: createCurve(previous, target, segmentSeed,
             0.16 + stableUnit(segmentSeed + "|bend") * 0.2)
