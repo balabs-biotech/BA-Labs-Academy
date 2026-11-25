@@ -27,7 +27,7 @@ export function createAcademyAtlasV2({
   universeStartAngle = -Math.PI / 2 + Math.PI / 8,
   universeDirection = 1,
   universeColors = {},
-  morphologyOptions = { branchLength: 280, universeSpread: 0.76, curveBend: 0.28, maximumSecondaryHyphae: 720 },
+  morphologyOptions = { branchLength: 280, universeSpread: 1.45, curveBend: 0.28, maximumSecondaryHyphae: 720 },
   anastomosisOptions = { maxDistance: 1000, maxLinks: 7, maxDegree: 1, cellSize: 300, includeSameTerritory: false }
 } = {}) {
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
