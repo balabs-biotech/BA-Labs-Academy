@@ -306,7 +306,9 @@ export function createRhizomorphicMorphology({
   for (let frontIndex = 0; frontIndex < totalFronts; frontIndex += 1) {
     const frontId = "colony-front:global:" + frontIndex;
     const localSeed = seed + "|" + frontId;
-    const sectorIndex = Math.min(territoryAxes.length - 1, Math.floor(frontIndex / frontsPerSector));
+    // Interleave territory ownership around the entire colony instead of
+    // painting four adjacent fronts as one isolated radial bouquet.
+    const sectorIndex = frontIndex % territoryAxes.length;
     const territoryMatch = territoryAxes[sectorIndex];
     // Fronts occupy one continuous angular lattice. Sector ownership only
     // assigns biological identity and colour; it no longer creates a local fan.
@@ -320,7 +322,9 @@ export function createRhizomorphicMorphology({
       x: core.x + Math.cos(startAngle) * originRadius,
       y: core.y + Math.sin(startAngle) * originRadius
     };
-    const radialReach = 0.88 + stableUnit(localSeed + "|reach") * 0.22;
+    // Let the shared frontier advance at genuinely different radial depths;
+    // a narrow common radius makes the colony read as eight terminal fans.
+    const radialReach = 0.52 + stableUnit(localSeed + "|reach") * 0.76;
     const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 16;
     const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.008;
     const territory = territoryMatch.territory;
