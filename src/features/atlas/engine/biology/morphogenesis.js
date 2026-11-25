@@ -307,8 +307,8 @@ export function createRhizomorphicMorphology({
     const territoryMatch = territoryAxes[sectorIndex];
     const centeredSlot = sectorSlot - (frontsPerSector - 1) / 2;
     const baseAngle = territoryMatch.angle
-      + centeredSlot * Math.min(0.11, 0.36 / Math.max(1, frontsPerSector - 1))
-      + (stableUnit(localSeed + "|sector-angle") - 0.5) * 0.09;
+      + centeredSlot * Math.min(0.07, 0.24 / Math.max(1, frontsPerSector - 1))
+      + (stableUnit(localSeed + "|sector-angle") - 0.5) * 0.05;
     const startAngle = baseAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.42;
     const originRadius = 14 + stableUnit(localSeed + "|origin") * 34;
     const origin = {
@@ -316,9 +316,9 @@ export function createRhizomorphicMorphology({
       x: core.x + Math.cos(startAngle) * originRadius,
       y: core.y + Math.sin(startAngle) * originRadius
     };
-    const radialReach = 0.78 + stableUnit(localSeed + "|reach") * 0.16;
-    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 110;
-    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.18;
+    const radialReach = 0.88 + stableUnit(localSeed + "|reach") * 0.1;
+    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 90;
+    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.08;
     const territory = territoryMatch.territory;
     const reach = Math.max(250, territoryMatch.distance * radialReach);
     const frontier = {
