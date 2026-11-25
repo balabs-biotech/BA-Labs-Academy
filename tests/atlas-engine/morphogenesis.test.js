@@ -220,7 +220,7 @@ test("morphogenesis grows a distributed colony rather than eight spokes", () => 
   assert.equal(model.branches.some((branch) => branch.style.startsWith("emblem-")), false);
   assert.equal(model.branches.some((branch) => branch.style === "mycelial-trunk"), false);
   const fronts = model.branches.filter((branch) => branch.style === "colony-front");
-  assert.equal(fronts.length, radialTopology.universes.length * 16);
+  assert.equal(fronts.length, Math.max(16, radialTopology.universes.length * 4) * 4);
   assert.ok(fronts.every((branch) => branch.visualOnly && branch.sourceId === null && branch.targetId === null));
   assert.ok(new Set(fronts.map((branch) => branch.territoryId)).size >= radialTopology.universes.length);
   assert.ok(fronts.some((branch) => Math.hypot(branch.target.x, branch.target.y) > 500));
