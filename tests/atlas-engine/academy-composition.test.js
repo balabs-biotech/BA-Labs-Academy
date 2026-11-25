@@ -152,13 +152,14 @@ test("the eight radial Academy territories form a connected mycelial colony", ()
       "each primary spoke must grow lateral hyphae along its length");
   }
 
-  assert.equal(result.anastomoses.links.length, 7,
-    "eight peripheral territories require seven bridges for one connected network");
+  assert.ok(result.anastomoses.links.length > 7,
+    "the colony must contain local hyphal loops in addition to its spanning bridges");
   assert.equal(result.anastomoses.metrics.connected, true,
     "all eight peripheral territories must communicate through the bridge network");
-  assert.equal(result.anastomoses.metrics.bridgeCount, 7);
-  assert.ok(result.anastomoses.links.every((link) => link.territoryIds.length === 2),
-    "decorative anastomoses must connect distinct radial universes");
+  assert.equal(result.anastomoses.metrics.bridgeCount, 7,
+    "seven cross-territory bridges must connect the eight peripheral territories");
+  assert.ok(result.anastomoses.links.some((link) => link.intraTerritory),
+    "nearby filaments must form local anastomoses within territories");
 
   const staggeredTerritories = departments.filter((department) => {
     const children = result.topology.childrenByParent.get(department.id) || [];
