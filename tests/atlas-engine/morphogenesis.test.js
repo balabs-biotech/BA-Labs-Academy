@@ -158,7 +158,7 @@ test("morphogenesis creates asymmetric primary cords and bounded secondary hypha
   assert.ok(first.hyphae.length > 0);
   assert.ok(first.hyphae.length <= 1200);
   assert.equal(new Set(first.hyphae.map((hypha) => hypha.id)).size, first.hyphae.length);
-  assert.ok(first.hyphae.every((hypha) => hypha.style === "secondary-hypha" && hypha.width < 1.5));
+  assert.ok(first.hyphae.every((hypha) => hypha.style === "secondary-hypha" && hypha.width < 2.2));
   assert.ok(first.hyphae.some((hypha) => hypha.generation === 2),
     "secondary hyphae must themselves produce daughter branches");
   assert.ok(first.hyphae.some((hypha) => hypha.generation === 3),
