@@ -284,75 +284,82 @@ export function createRhizomorphicMorphology({
     roots.push(node);
   }
 
-  // Seed multiple independent growth trajectories in every territory.
-  // Their tips explore different radial depths and angles; no trajectory is
-  // required to terminate at a universe anchor or form a dedicated spoke.
+  // Seed a colony-wide set of exploratory fronts around the inoculation core.
+  // Territory ownership is assigned after angular placement; fronts are not
+  // aimed at eight sector anchors, which would recreate isolated radial fans.
   const frontsPerTerritory = 4;
   const segmentsPerFront = 4;
-  for (const territory of spatialTopology.territories) {
+  const territoryAxes = spatialTopology.territories.map((territory) => {
     const anchor = positioned.get(territory.nodeId || territory.id);
-    const anchorDx = anchor.x - core.x;
-    const anchorDy = anchor.y - core.y;
-    const anchorDistance = Math.hypot(anchorDx, anchorDy) || 1;
-    const axisAngle = Math.atan2(anchorDy, anchorDx);
+    return {
+      territory,
+      angle: Math.atan2(anchor.y - core.y, anchor.x - core.x),
+      distance: Math.hypot(anchor.x - core.x, anchor.y - core.y) || 1
+    };
+  });
+  const totalFronts = Math.max(16, territoryAxes.length * frontsPerTerritory);
+  for (let frontIndex = 0; frontIndex < totalFronts; frontIndex += 1) {
+    const frontId = "colony-front:global:" + frontIndex;
+    const localSeed = seed + "|" + frontId;
+    const baseAngle = -Math.PI / 2 + (TAU * frontIndex / totalFronts);
+    const startAngle = baseAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.42;
+    const originRadius = 14 + stableUnit(localSeed + "|origin") * 34;
+    const origin = {
+      id: frontId + ":origin",
+      x: core.x + Math.cos(startAngle) * originRadius,
+      y: core.y + Math.sin(startAngle) * originRadius
+    };
+    const radialReach = 0.52 + stableUnit(localSeed + "|reach") * 0.34;
+    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 190;
+    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.9;
+    const reach = Math.max(250, Math.min(territoryAxes[0]?.distance ?? 600,
+      (territoryAxes.reduce((sum, item) => sum + item.distance, 0) / Math.max(1, territoryAxes.length)) * radialReach));
+    const frontier = {
+      id: frontId + ":tip",
+      x: core.x + Math.cos(axis) * reach - Math.sin(axis) * lateralTip,
+      y: core.y + Math.sin(axis) * reach + Math.cos(axis) * lateralTip
+    };
+    const pathDx = frontier.x - origin.x;
+    const pathDy = frontier.y - origin.y;
+    const pathLength = Math.hypot(pathDx, pathDy) || 1;
+    const normal = { x: -pathDy / pathLength, y: pathDx / pathLength };
+    const territory = territoryAxes.reduce((nearest, item) => {
+      const delta = Math.abs(Math.atan2(Math.sin(axis - item.angle), Math.cos(axis - item.angle)));
+      return !nearest || delta < nearest.delta ? { item, delta } : nearest;
+    }, null)?.item.territory;
+    let previous = origin;
 
-    for (let frontIndex = 0; frontIndex < frontsPerTerritory; frontIndex += 1) {
-      const frontId = "colony-front:" + territory.id + ":" + frontIndex;
-      const localSeed = seed + "|" + frontId;
-      const startAngle = axisAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.68;
-      const originRadius = 12 + stableUnit(localSeed + "|origin") * 26;
-      const origin = {
-        id: frontId + ":origin",
-        x: core.x + Math.cos(startAngle) * originRadius,
-        y: core.y + Math.sin(startAngle) * originRadius
-      };
-      const radialDepth = 0.76 + frontIndex * 0.075;
-      const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 52;
-      const frontier = {
-        id: frontId + ":tip",
-        x: core.x + Math.cos(axisAngle) * anchorDistance * radialDepth
-          - Math.sin(axisAngle) * lateralTip,
-        y: core.y + Math.sin(axisAngle) * anchorDistance * radialDepth
-          + Math.cos(axisAngle) * lateralTip
-      };
-      const pathDx = frontier.x - origin.x;
-      const pathDy = frontier.y - origin.y;
-      const pathLength = Math.hypot(pathDx, pathDy) || 1;
-      const normal = { x: -pathDy / pathLength, y: pathDx / pathLength };
-      let previous = origin;
-
-      for (let segmentIndex = 1; segmentIndex <= segmentsPerFront; segmentIndex += 1) {
-        const t = segmentIndex / segmentsPerFront;
-        const envelope = Math.sin(Math.PI * t);
-        const lateralDrift = (stableUnit(localSeed + "|drift|" + segmentIndex) - 0.5)
-          * 240 * envelope;
-        const radialDrift = (stableUnit(localSeed + "|radial|" + segmentIndex) - 0.5)
-          * 72 * envelope;
-        const target = segmentIndex === segmentsPerFront
-          ? frontier
-          : {
-              id: frontId + ":segment:" + segmentIndex,
-              x: origin.x + pathDx * t + normal.x * lateralDrift
-                + Math.cos(axisAngle) * radialDrift,
-              y: origin.y + pathDy * t + normal.y * lateralDrift
-                + Math.sin(axisAngle) * radialDrift
-            };
-        const segmentSeed = localSeed + "|segment|" + segmentIndex;
-        addBranch(previous, target, {
-          id: frontId + ":segment:" + segmentIndex,
-          territoryId: territory.id,
-          generation: 1,
-          visualOnly: true,
-          style: "colony-front",
-          sourceId: null,
-          targetId: null,
-          width: 2.7 - segmentIndex * 0.12
-            + stableUnit(segmentSeed + "|width") * 0.45,
-          curve: createCurve(previous, target, segmentSeed,
-            0.16 + stableUnit(segmentSeed + "|bend") * 0.2)
-        });
-        previous = target;
-      }
+    for (let segmentIndex = 1; segmentIndex <= segmentsPerFront; segmentIndex += 1) {
+      const t = segmentIndex / segmentsPerFront;
+      const envelope = Math.sin(Math.PI * t);
+      const lateralDrift = (stableUnit(localSeed + "|drift|" + segmentIndex) - 0.5)
+        * 300 * envelope;
+      const radialDrift = (stableUnit(localSeed + "|radial|" + segmentIndex) - 0.5)
+        * 110 * envelope;
+      const target = segmentIndex === segmentsPerFront
+        ? frontier
+        : {
+            id: frontId + ":segment:" + segmentIndex,
+            x: origin.x + pathDx * t + normal.x * lateralDrift
+              + Math.cos(axis) * radialDrift,
+            y: origin.y + pathDy * t + normal.y * lateralDrift
+              + Math.sin(axis) * radialDrift
+          };
+      const segmentSeed = localSeed + "|segment|" + segmentIndex;
+      addBranch(previous, target, {
+        id: frontId + ":segment:" + segmentIndex,
+        territoryId: territory.id,
+        generation: 1,
+        visualOnly: true,
+        style: "colony-front",
+        sourceId: null,
+        targetId: null,
+        width: 2.7 - segmentIndex * 0.12
+          + stableUnit(segmentSeed + "|width") * 0.45,
+        curve: createCurve(previous, target, segmentSeed,
+          0.2 + stableUnit(segmentSeed + "|bend") * 0.24)
+      });
+      previous = target;
     }
   }
 
