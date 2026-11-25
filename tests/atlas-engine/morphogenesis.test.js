@@ -191,3 +191,16 @@ test("morphogenesis honors a validated secondary hypha budget", () => {
   assert.equal(createRhizomorphicMorphology({ ...input, maximumSecondaryHyphae: 0 }).hyphae.length, 0);
   assert.throws(() => createRhizomorphicMorphology({ ...input, maximumSecondaryHyphae: 3001 }), /maximumSecondaryHyphae/);
 });
+
+
+test("morphogenesis grows a distributed mycelial network instead of a fixed Y emblem", () => {
+  const { topology, radialTopology } = fixture();
+  const model = createRhizomorphicMorphology({ topology, radialTopology });
+  assert.equal(model.branches.some((branch) => branch.style.startsWith("emblem-")), false,
+    "the biological silhouette must not be hard-coded as a Y-shaped emblem");
+  const territoryTrunks = model.branches.filter((branch) => branch.style === "mycelial-trunk");
+  assert.equal(territoryTrunks.length, radialTopology.universes.length,
+    "each territory anchor must be reached by one organic primary hypha");
+  assert.ok(territoryTrunks.every((branch) => branch.sourceId === "MYC" && branch.visualOnly),
+    "primary hyphae are visual growth paths, not pedagogical edges");
+});
