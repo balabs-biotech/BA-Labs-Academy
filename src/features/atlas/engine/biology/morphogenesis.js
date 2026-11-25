@@ -273,56 +273,64 @@ export function createRhizomorphicMorphology({
     roots.push(node);
   }
 
-  // A colony is a shared growth field, not one trunk per knowledge universe.
-  // Many primary fronts emerge from a small inoculation zone, explore the
-  // substrate in different directions and are assigned to the nearest sector.
-  const territoriesByAngle = spatialTopology.territories.map((territory) => ({
-    territory,
-    angle: Number.isFinite(territory.angle)
-      ? territory.angle
-      : Math.atan2(territory.y - core.y, territory.x - core.x)
-  }));
-  const frontCount = Math.min(32, Math.max(24, territoriesByAngle.length * 3));
-  for (let index = 0; index < frontCount; index += 1) {
-    const localSeed = seed + "|colony-front|" + index;
-    const angle = TAU * index / frontCount
-      + (stableUnit(localSeed + "|angle") - 0.5) * (TAU / frontCount) * 0.42;
-    const territory = territoriesByAngle
-      .map((candidate) => ({
-        ...candidate,
-        delta: Math.abs(Math.atan2(
-          Math.sin(candidate.angle - angle),
-          Math.cos(candidate.angle - angle)
-        ))
-      }))
-      .sort((a, b) => a.delta - b.delta)[0]?.territory;
-    if (!territory) continue;
+  // Grow continuous, segmented hyphal paths through each angular territory.
+  // Each path wanders laterally while progressing outward; its four connected
+  // segments form one growth trajectory, not a straight spoke from MYC.
+  const frontsPerTerritory = 2;
+  const segmentsPerFront = 4;
+  for (const territory of spatialTopology.territories) {
     const anchor = positioned.get(territory.nodeId || territory.id);
-    const anchorDistance = Math.hypot(anchor.x - core.x, anchor.y - core.y);
-    const originRadius = 18 + stableUnit(localSeed + "|origin") * 42;
-    const reach = anchorDistance * (0.96 + stableUnit(localSeed + "|reach") * 0.04);
-    const source = {
-      id: "colony-origin:" + index,
-      x: core.x + Math.cos(angle) * originRadius,
-      y: core.y + Math.sin(angle) * originRadius
-    };
-    const endpointAngle = angle + (stableUnit(localSeed + "|drift") - 0.5) * 0.06;
-    const target = {
-      id: "colony-front-end:" + index,
-      x: core.x + Math.cos(endpointAngle) * reach,
-      y: core.y + Math.sin(endpointAngle) * reach
-    };
-    addBranch(source, target, {
-      id: "colony-front:" + index,
-      territoryId: territory.id,
-      generation: 1,
-      visualOnly: true,
-      style: "colony-front",
-      sourceId: null,
-      targetId: null,
-      width: 2.2 + stableUnit(localSeed + "|width") * 1.8,
-      curve: createCurve(source, target, localSeed, 0.3 + stableUnit(localSeed + "|bend") * 0.2)
-    });
+    const anchorDx = anchor.x - core.x;
+    const anchorDy = anchor.y - core.y;
+    const anchorDistance = Math.hypot(anchorDx, anchorDy) || 1;
+    const normal = { x: -anchorDy / anchorDistance, y: anchorDx / anchorDistance };
+    const axisAngle = Math.atan2(anchorDy, anchorDx);
+
+    for (let frontIndex = 0; frontIndex < frontsPerTerritory; frontIndex += 1) {
+      const frontId = "colony-front:" + territory.id + ":" + frontIndex;
+      const localSeed = seed + "|" + frontId;
+      const startAngle = axisAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.42;
+      const originRadius = 18 + stableUnit(localSeed + "|origin") * 42;
+      const origin = {
+        id: frontId + ":origin",
+        x: core.x + Math.cos(startAngle) * originRadius,
+        y: core.y + Math.sin(startAngle) * originRadius
+      };
+      let previous = origin;
+
+      for (let segmentIndex = 1; segmentIndex <= segmentsPerFront; segmentIndex += 1) {
+        const t = segmentIndex / segmentsPerFront;
+        const envelope = Math.sin(Math.PI * t);
+        const lateralDrift = (stableUnit(localSeed + "|drift|" + segmentIndex) - 0.5)
+          * 260 * envelope;
+        const radialDrift = (stableUnit(localSeed + "|radial|" + segmentIndex) - 0.5)
+          * 70 * envelope;
+        const target = segmentIndex === segmentsPerFront
+          ? { id: frontId + ":tip", x: anchor.x, y: anchor.y }
+          : {
+              id: frontId + ":segment:" + segmentIndex,
+              x: origin.x + anchorDx * t + normal.x * lateralDrift
+                + Math.cos(axisAngle) * radialDrift,
+              y: origin.y + anchorDy * t + normal.y * lateralDrift
+                + Math.sin(axisAngle) * radialDrift
+            };
+        const segmentSeed = localSeed + "|segment|" + segmentIndex;
+        addBranch(previous, target, {
+          id: frontId + ":segment:" + segmentIndex,
+          territoryId: territory.id,
+          generation: 1,
+          visualOnly: true,
+          style: "colony-front",
+          sourceId: null,
+          targetId: null,
+          width: 3.2 - segmentIndex * 0.24
+            + stableUnit(segmentSeed + "|width") * 0.45,
+          curve: createCurve(previous, target, segmentSeed,
+            0.16 + stableUnit(segmentSeed + "|bend") * 0.2)
+        });
+        previous = target;
+      }
+    }
   }
 
   // MYC's own taxonomy occupies a compact complete inner ring around the
