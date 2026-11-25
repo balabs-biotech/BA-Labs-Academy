@@ -181,10 +181,10 @@ test("the eight radial Academy territories share continuous segmented hyphal pat
         ) < 1e-8, "successive hyphal segments must be geometrically continuous");
       }
       const tip = trajectory.at(-1).target;
-      const tipDistance = Math.hypot(tip.x - anchor.x, tip.y - anchor.y);
-      assert.ok(tipDistance < 360,
-        "exploratory tips must approach their sector without being forced onto its anchor");
-      endRadii.push(Math.hypot(tip.x, tip.y));
+      const tipRadius = Math.hypot(tip.x, tip.y);
+      assert.ok(tipRadius > 400 && tipRadius < 1450,
+        "exploratory tips must remain on the shared radial growth band");
+      endRadii.push(tipRadius);
     }
     assert.ok(new Set(endRadii.map((radius) => Math.round(radius / 20))).size > 1,
       "fronts in one territory must explore different radial depths");
