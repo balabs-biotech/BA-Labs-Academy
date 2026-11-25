@@ -159,15 +159,18 @@ test("the eight radial Academy territories share continuous segmented hyphal pat
     const territoryFronts = result.morphology.branches.filter((branch) =>
       branch.style === "colony-front" && branch.territoryId === department.id
     );
-    assert.equal(territoryFronts.length, 16,
-      "each sector must contain four independent four-segment exploratory trajectories");
+    const trajectories = new Map();
+    for (const branch of territoryFronts) {
+      const prefix = branch.id.slice(0, branch.id.lastIndexOf(":segment:"));
+      if (!trajectories.has(prefix)) trajectories.set(prefix, []);
+      trajectories.get(prefix).push(branch);
+    }
+    assert.equal(trajectories.size, 4,
+      "each sector must receive four independent exploratory trajectories");
     const anchor = result.morphology.byId.get(department.id);
     const endRadii = [];
-    for (let frontIndex = 0; frontIndex < 4; frontIndex += 1) {
-      const prefix = "colony-front:" + department.id + ":" + frontIndex + ":segment:";
-      const trajectory = territoryFronts
-        .filter((branch) => branch.id.startsWith(prefix))
-        .sort((a, b) => Number(a.id.split(":").at(-1)) - Number(b.id.split(":").at(-1)));
+    for (const trajectory of trajectories.values()) {
+      trajectory.sort((a, b) => Number(a.id.split(":").at(-1)) - Number(b.id.split(":").at(-1)));
       assert.equal(trajectory.length, 4);
       assert.ok(Math.hypot(trajectory[0].source.x, trajectory[0].source.y) < 70,
         "each trajectory must begin in the MYC inoculation zone");
