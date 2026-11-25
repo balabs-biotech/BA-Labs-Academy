@@ -146,6 +146,18 @@ test("the eight radial Academy territories share continuous segmented hyphal pat
   assert.ok(departments.every((node) => Math.abs(Math.hypot(node.x, node.y) - 1050) < 1e-6),
     "the eight radial universes must sit on the wider inner orbit");
 
+  const frontTips = result.morphology.branches.filter((branch) =>
+    branch.style === "colony-front" && branch.id.endsWith(":segment:4")
+  );
+  const frontAngles = frontTips.map((branch) => Math.atan2(branch.target.y, branch.target.x)).sort((a, b) => a - b);
+  const frontGaps = frontAngles.map((angle, index) => {
+    const next = frontAngles[(index + 1) % frontAngles.length] + (index === frontAngles.length - 1 ? Math.PI * 2 : 0);
+    return next - angle;
+  });
+  assert.equal(frontTips.length, 32, "the colony must distribute 32 independent fronts around the full inoculation perimeter");
+  assert.ok(Math.max(...frontGaps) < 0.25,
+    "front tips must form a near-uniform colony-wide field, not eight separated bouquets");
+
   for (const department of departments) {
     const children = result.topology.childrenByParent.get(department.id) || [];
     const angles = children.map((child) => result.morphology.byId.get(child.id).angle);
