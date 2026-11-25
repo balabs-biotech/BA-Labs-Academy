@@ -28,7 +28,7 @@ function fixture() {
   return { topology, radialTopology };
 }
 
-test("morphogenesis builds a central core, radial trunks and recursive territory branches", () => {
+test("morphogenesis builds a central core, sector anchors and recursive territory branches", () => {
   const { topology, radialTopology } = fixture();
   const model = createRhizomorphicMorphology({ topology, radialTopology });
   assert.equal(model.byId.get("MYC").x, 0);
@@ -36,10 +36,10 @@ test("morphogenesis builds a central core, radial trunks and recursive territory
   assert.equal(model.byId.get("BIO").y, radialTopology.byId.get("BIO").y);
   assert.equal(model.territories.size, 2);
   assert.equal(model.metrics.nodeCount, 9);
-  const trunks = model.branches.filter((branch) => branch.style === "mycelial-trunk");
-  assert.equal(trunks.length, radialTopology.universes.length);
-  assert.ok(trunks.every((branch) => branch.sourceId === "MYC" && branch.visualOnly));
-  assert.ok(trunks.some((branch) => branch.target.id === "BIO"));
+  assert.equal(model.branches.some((branch) => branch.style === "mycelial-trunk"), false,
+    "universe anchors must not be connected by eight dominant radial trunks");
+  assert.ok(model.branches.filter((branch) => branch.style === "colony-front").length >= 16,
+    "the colony must expand through multiple distributed growth fronts");
   assert.equal(model.byId.get("bio-module-a").territoryId, "BIO");
   assert.ok(model.byId.get("bio-module-a").generation > model.byId.get("BIO").generation);
   const mycChildren = topology.childrenByParent.get("MYC").map((node) => model.byId.get(node.id));
@@ -214,67 +214,50 @@ test("morphogenesis honors a validated secondary hypha budget", () => {
 });
 
 
-test("morphogenesis grows a distributed mycelial network instead of a fixed Y emblem", () => {
+test("morphogenesis grows a distributed colony rather than eight spokes", () => {
   const { topology, radialTopology } = fixture();
   const model = createRhizomorphicMorphology({ topology, radialTopology });
-  assert.equal(model.branches.some((branch) => branch.style.startsWith("emblem-")), false,
-    "the biological silhouette must not be hard-coded as a Y-shaped emblem");
-  const territoryTrunks = model.branches.filter((branch) => branch.style === "mycelial-trunk");
-  assert.equal(territoryTrunks.length, radialTopology.universes.length,
-    "each territory anchor must be reached by one organic primary hypha");
-  assert.ok(territoryTrunks.every((branch) => branch.sourceId === "MYC" && branch.visualOnly),
-    "primary hyphae are visual growth paths, not pedagogical edges");
+  assert.equal(model.branches.some((branch) => branch.style.startsWith("emblem-")), false);
+  assert.equal(model.branches.some((branch) => branch.style === "mycelial-trunk"), false);
+  const fronts = model.branches.filter((branch) => branch.style === "colony-front");
+  assert.ok(fronts.length >= 16 && fronts.length <= 48);
+  assert.ok(fronts.every((branch) => branch.visualOnly && branch.sourceId === null && branch.targetId === null));
+  assert.ok(new Set(fronts.map((branch) => branch.territoryId)).size >= radialTopology.universes.length);
+  assert.ok(fronts.every((branch) => Math.hypot(branch.target.x, branch.target.y) > 500));
 });
 
 
-test("eight radial territories grow curved rhizomorphic trunks and attached daughter hyphae", () => {
+test("eight territories are embedded in a shared radial fractal colony", () => {
   const departments = Array.from({ length: 8 }, (_, index) => ({
-    id: "U" + index,
-    parent: null,
-    title: "Territory " + index
+    id: "U" + index, parent: null, title: "Territory " + index
   }));
   const nodes = [
     { id: "MYC", parent: null, title: "Mycology" },
     ...departments,
-    ...departments.map((department) => ({
-      id: department.id + "-section",
-      parent: department.id
-    }))
+    ...departments.map((department) => ({ id: department.id + "-section", parent: department.id }))
   ];
   const topology = createAtlasTopology({ nodes });
   const radialTopology = createRadialTopology({
     core: { id: "MYC" },
-    universes: departments.map((department) => ({
-      id: department.id, nodeId: department.id
-    })),
+    universes: departments.map((department) => ({ id: department.id, nodeId: department.id })),
     radius: 900
   });
   const model = createRhizomorphicMorphology({ topology, radialTopology });
-  const trunks = model.branches.filter((branch) => branch.style === "mycelial-trunk");
+  const fronts = model.branches.filter((branch) => branch.style === "colony-front");
 
-  assert.equal(trunks.length, 8);
-  assert.ok(trunks.every((branch) => branch.source.id === "MYC" && branch.visualOnly));
-  assert.ok(trunks.every((branch) =>
-    Math.abs(Math.hypot(branch.target.x, branch.target.y) - 900) < 1e-8));
-  assert.ok(trunks.every((branch) => {
+  assert.ok(fronts.length >= 16 && fronts.length <= 48);
+  assert.equal(model.branches.some((branch) => branch.style === "mycelial-trunk"), false);
+  assert.ok(new Set(fronts.map((branch) => branch.territoryId)).size === 8,
+    "all eight angular sectors must receive colony growth");
+  assert.ok(fronts.every((branch) => branch.width >= 2 && branch.width <= 4.5));
+  assert.ok(fronts.every((branch) => {
     const dx = branch.target.x - branch.source.x;
     const dy = branch.target.y - branch.source.y;
     const cross = dx * (branch.curve.c1.y - branch.source.y)
       - dy * (branch.curve.c1.x - branch.source.x);
     return Math.abs(cross) > 1;
-  }), "primary cords must curve away from perfectly straight spokes");
-
-  assert.ok(trunks.every((branch) => branch.width >= 3.4 && branch.width <= 4.6),
-    "primary trunks must not dominate the colony as thick spokes");
-  for (const department of departments) {
-    const lateral = model.hyphae.filter((hypha) =>
-      hypha.territoryId === department.id && hypha.generation === 1);
-    assert.ok(lateral.length >= 18,
-      department.id + " must distribute enough first-generation lateral explorers");
-    const positions = lateral.map((hypha) => hypha.originT);
-    assert.ok(Math.min(...positions) < 0.2 && Math.max(...positions) > 0.8,
-      department.id + " must branch along the trunk, not only at its outer tip");
-  }
+  }), "growth fronts must be curved, not straight radial spokes");
+  assert.ok(model.hyphae.some((hypha) => hypha.generation === 1));
   assert.ok(model.hyphae.some((hypha) => hypha.generation === 2));
   assert.ok(model.hyphae.some((hypha) => hypha.generation === 3));
 });
