@@ -334,10 +334,19 @@ export function createRhizomorphicMorphology({
     // while retaining its own direction and radial depth (never snapping it
     // onto the canonical department anchor).
     const anchor = positioned.get(territory.nodeId || territory.id);
+    const anchorDx = rawFrontier.x - anchor.x;
+    const anchorDy = rawFrontier.y - anchor.y;
+    const anchorDistance = Math.hypot(anchorDx, anchorDy) || 1;
+    // Bound the tip to a broad shared influence zone around its sector.
+    // This is deliberately wider than the former 300-unit endpoint clamp:
+    // it preserves cross-sector reach without letting a trajectory drift
+    // so far away that its own territory loses contact with the colony.
+    const influenceRadius = 350;
+    const influenceScale = Math.min(1, influenceRadius / anchorDistance);
     const frontier = {
       id: frontId + ":tip",
-      x: rawFrontier.x,
-      y: rawFrontier.y
+      x: anchor.x + anchorDx * influenceScale,
+      y: anchor.y + anchorDy * influenceScale
     };
     const pathDx = frontier.x - origin.x;
     const pathDy = frontier.y - origin.y;
