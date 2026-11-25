@@ -329,9 +329,9 @@ export function createRhizomorphicMorphology({
           : {
               id: frontId + ":segment:" + segmentIndex,
               x: origin.x + pathDx * t + normal.x * lateralDrift
-                + Math.cos(endAngle) * radialDrift,
+                + Math.cos(axisAngle) * radialDrift,
               y: origin.y + pathDy * t + normal.y * lateralDrift
-                + Math.sin(endAngle) * radialDrift
+                + Math.sin(axisAngle) * radialDrift
             };
         const segmentSeed = localSeed + "|segment|" + segmentIndex;
         addBranch(previous, target, {
