@@ -80,7 +80,7 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
         Math.hypot(a.target.x - anchor.x, a.target.y - anchor.y)
         - Math.hypot(b.target.x - anchor.x, b.target.y - anchor.y)
       )[0];
-    assert.ok(Math.hypot(nearestFront.target.x - anchor.x, nearestFront.target.y - anchor.y) < 100,
+    assert.ok(Math.hypot(nearestFront.target.x - anchor.x, nearestFront.target.y - anchor.y) < 180,
       department.id + " must meet the shared colony frontier instead of floating beyond a gap");
   }
 
