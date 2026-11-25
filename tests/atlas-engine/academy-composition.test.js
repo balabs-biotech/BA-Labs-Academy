@@ -54,23 +54,23 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
     return Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) < 1e-6;
   }), "each department must retain its radial axis for label placement");
 
-  const stems = result.scene.paths.filter((path) => path.style === "emblem-stem");
-  const armsRight = result.scene.paths.filter((path) => path.style === "emblem-arm-right");
-  const armsLeft = result.scene.paths.filter((path) => path.style === "emblem-arm-left");
-  const spokes = result.scene.paths.filter((path) => path.style === "universe-spoke");
-  assert.equal(stems.length, 1, "one central trunk must rise from the MYC nucleus");
-  assert.equal(armsRight.length, 4, "the right Y arm must carry four terminal universes");
-  assert.equal(armsLeft.length, 4, "the left Y arm must carry four terminal universes");
-  assert.equal(spokes.length, 8, "the two arms must divide into eight universe cords");
-  assert.ok(stems.every((path) => path.sourceId === core.id && path.targetId === null),
-    "the central trunk must emerge from the MYC nucleus");
-  assert.ok([...armsRight, ...armsLeft].every((path) => path.sourceId === null && path.targetId === null),
-    "the two continuous arms must use derived split geometry, not artificial pedagogical nodes");
-  assert.ok(spokes.every((path) => path.sourceId === null && path.targetId?.startsWith("department:")),
-    "eight terminal cords must connect the Y arms to the eight universe anchors");
-  const stemAxis = Math.atan2(stems[0].curve.c1.y, stems[0].curve.c1.x);
-  assert.ok(Math.abs(Math.atan2(Math.sin(stemAxis + Math.PI / 2), Math.cos(stemAxis + Math.PI / 2))) < 0.15,
-    "the central trunk must preserve the vertical Y orientation");
+  const trunks = result.scene.paths.filter((path) => path.style === "mycelial-trunk");
+  assert.equal(trunks.length, 8, "each peripheral territory must have one primary radial hypha");
+  assert.ok(trunks.every((path) => path.sourceId === core.id && path.targetId === null && path.visualOnly),
+    "primary trunks must originate from MYC as visual growth paths");
+  assert.equal(new Set(trunks.map((path) => path.territoryId)).size, 8,
+    "each primary trunk must belong to a distinct territory");
+  assert.equal(result.scene.paths.some((path) => path.style?.startsWith("emblem-")), false,
+    "the biological colony must not retain fixed Y-emblem geometry");
+
+  for (const department of departments) {
+    const trunkId = "mycelial-trunk:" + department.id;
+    const lateralHyphae = result.morphology.hyphae.filter((hypha) =>
+      hypha.parentBranchId === trunkId
+    );
+    assert.ok(lateralHyphae.length >= 4,
+      "each primary radial hypha must grow lateral explorers along its length");
+  }
 
   const spines = result.scene.paths.filter((path) => path.style === "primary-spine");
   const lateralBranches = result.scene.paths.filter((path) => path.style === "lateral-hypha");
