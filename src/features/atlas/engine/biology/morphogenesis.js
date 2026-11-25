@@ -298,17 +298,26 @@ export function createRhizomorphicMorphology({
     };
   });
   const totalFronts = Math.max(16, territoryAxes.length * frontsPerTerritory);
-  const frontsPerSector = totalFronts / territoryAxes.length;
   for (let frontIndex = 0; frontIndex < totalFronts; frontIndex += 1) {
     const frontId = "colony-front:global:" + frontIndex;
     const localSeed = seed + "|" + frontId;
-    const sectorIndex = Math.floor(frontIndex / frontsPerSector);
-    const sectorSlot = frontIndex % frontsPerSector;
-    const territoryMatch = territoryAxes[sectorIndex];
-    const centeredSlot = sectorSlot - (frontsPerSector - 1) / 2;
-    const baseAngle = territoryMatch.angle
-      + centeredSlot * Math.min(0.07, 0.24 / Math.max(1, frontsPerSector - 1))
-      + (stableUnit(localSeed + "|sector-angle") - 0.5) * 0.05;
+    // Distribute growth fronts around the whole colony circumference, then
+    // assign each front to its nearest biological territory. Grouping four
+    // fronts tightly around each anchor recreates isolated terminal fans.
+    const globalAngle = -Math.PI / 2 + TAU * frontIndex / totalFronts
+      + (stableUnit(localSeed + "|global-angle") - 0.5) * (TAU / totalFronts) * 0.22;
+    const territoryMatch = territoryAxes.reduce((nearest, candidate) => {
+      const delta = Math.atan2(
+        Math.sin(globalAngle - candidate.angle),
+        Math.cos(globalAngle - candidate.angle)
+      );
+      const nearestDelta = Math.atan2(
+        Math.sin(globalAngle - nearest.angle),
+        Math.cos(globalAngle - nearest.angle)
+      );
+      return Math.abs(delta) < Math.abs(nearestDelta) ? candidate : nearest;
+    }, territoryAxes[0]);
+    const baseAngle = globalAngle;
     const startAngle = baseAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.42;
     const originRadius = 14 + stableUnit(localSeed + "|origin") * 34;
     const origin = {
