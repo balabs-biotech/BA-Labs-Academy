@@ -155,8 +155,9 @@ test("the eight radial Academy territories share continuous segmented hyphal pat
     return next - angle;
   });
   assert.equal(frontTips.length, 32, "the colony must distribute 32 independent fronts around the full inoculation perimeter");
-  assert.ok(Math.max(...frontGaps) < 0.25,
-    "front tips must form a near-uniform colony-wide field, not eight separated bouquets");
+  const maximumFrontGap = Math.max(...frontGaps);
+  assert.ok(maximumFrontGap < 0.25,
+    "front tips must form a near-uniform colony-wide field, not eight separated bouquets; max gap: " + maximumFrontGap.toFixed(4) + " rad");
 
   for (const department of departments) {
     const children = result.topology.childrenByParent.get(department.id) || [];
