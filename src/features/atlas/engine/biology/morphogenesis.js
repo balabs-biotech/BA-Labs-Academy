@@ -212,97 +212,33 @@ export function createRhizomorphicMorphology({
     roots.push(node);
   }
 
-  // Emblem architecture: one central trunk rises from MYC and divides into
-  // two continuous arms. Each arm follows a curved arc and emits four terminal
-  // cords toward the eight universes distributed around the radial wheel.
-  // All split points are derived geometry; none becomes a pedagogical node.
-  const splitAngle = -Math.PI / 2;
-  const splitRadius = Math.min(420, coreBranchLength * 2.3);
-  const splitPoint = {
-    id: "emblem-split",
-    canonicalId: null,
-    x: core.x + Math.cos(splitAngle) * splitRadius,
-    y: core.y + Math.sin(splitAngle) * splitRadius,
-    angle: splitAngle,
-    generation: 1,
-    territoryId: coreId
-  };
-  addBranch(core, splitPoint, {
-    id: "emblem-stem",
-    territoryId: coreId,
-    generation: 1,
-    visualOnly: true,
-    style: "emblem-stem",
-    sourceId: core.id,
-    targetId: null,
-    width: 10,
-    curve: createCurve(core, splitPoint, seed + "|emblem-stem", curveBend * 0.2)
-  });
-
-  const signedDelta = (angle) => Math.atan2(
-    Math.sin(angle - splitAngle), Math.cos(angle - splitAngle)
-  );
-  const armBoundaryEpsilon = 1e-8;
-  const rightArm = spatialTopology.territories
-    .filter((territory) => {
-      const delta = signedDelta(territory.angle);
-      return delta >= -armBoundaryEpsilon && delta < Math.PI - armBoundaryEpsilon;
-    })
-    .sort((a, b) => signedDelta(a.angle) - signedDelta(b.angle));
-  const leftArm = spatialTopology.territories
-    .filter((territory) => {
-      const delta = signedDelta(territory.angle);
-      return delta < -armBoundaryEpsilon || delta >= Math.PI - armBoundaryEpsilon;
-    })
-    .sort((a, b) => Math.abs(signedDelta(a.angle)) - Math.abs(signedDelta(b.angle)));
-
-  const growEmblemArm = (territories, side) => {
-    let previousPoint = splitPoint;
-    territories.forEach((territory, index) => {
-      const target = positioned.get(territory.nodeId || territory.id);
-      const delta = signedDelta(territory.angle);
-      const branchAngle = splitAngle + delta * 0.66;
-      const targetRadius = Math.hypot(target.x - core.x, target.y - core.y);
-      const branchRadius = splitRadius + (targetRadius - splitRadius) * 0.56;
-      const branchPoint = {
-        id: "emblem-arm-point:" + side + ":" + index,
-        canonicalId: null,
-        x: core.x + Math.cos(branchAngle) * branchRadius,
-        y: core.y + Math.sin(branchAngle) * branchRadius,
-        angle: branchAngle,
-        generation: 1,
-        territoryId: target.territoryId
-      };
-      addBranch(previousPoint, branchPoint, {
-        id: "emblem-arm-" + side + ":" + index,
-        territoryId: target.territoryId,
-        generation: 1,
-        visualOnly: true,
-        style: "emblem-arm-" + side,
-        sourceId: null,
-        targetId: null,
-        width: 7.5,
-        curve: createCurve(previousPoint, branchPoint,
-          seed + "|emblem-arm|" + side + "|" + index, curveBend * 1.2)
-      });
-      addBranch(branchPoint, target, {
-        id: "universe-spoke:" + target.id,
-        territoryId: target.territoryId,
-        generation: 1,
-        visualOnly: true,
-        style: "universe-spoke",
-        sourceId: null,
-        targetId: target.id,
-        width: 5.5,
-        curve: createCurve(branchPoint, target,
-          seed + "|universe-spoke|" + target.id, curveBend * 1.15)
-      });
-      previousPoint = branchPoint;
+  // Radial colony architecture: each territory is reached from the MYC
+  // inoculation core by its own primary rhizomorphic trunk. The trunk is a
+  // visual growth path; pedagogical ownership remains in the canonical tree.
+  for (const territory of spatialTopology.territories) {
+    const target = positioned.get(territory.nodeId || territory.id);
+    const dx = target.x - core.x;
+    const dy = target.y - core.y;
+    const distance = Math.hypot(dx, dy) || 1;
+    const direction = Math.atan2(dy, dx);
+    const localBend = curveBend * (1.15 + stableUnit(seed + "|trunk-bend|" + territory.id) * 0.75);
+    const trunkWidth = Math.max(5.2, 8.4 - stableUnit(seed + "|trunk-width|" + territory.id) * 1.8);
+    addBranch(core, target, {
+      id: "mycelial-trunk:" + territory.id,
+      territoryId: territory.id,
+      generation: 1,
+      visualOnly: true,
+      style: "mycelial-trunk",
+      sourceId: core.id,
+      targetId: null,
+      width: trunkWidth,
+      curve: createCurve(core, target, seed + "|mycelial-trunk|" + territory.id, localBend)
     });
-  };
-
-  growEmblemArm(rightArm, "right");
-  growEmblemArm(leftArm, "left");
+    // A small, deterministic lateral drift prevents identical spokes while
+    // retaining the colony's outward radial growth direction.
+    target.angle = direction;
+    target.radialDistance = distance;
+  }
 
   // MYC's own taxonomy occupies a compact complete inner ring around the
   // central nucleus; the outer Y arms carry four universes each.
