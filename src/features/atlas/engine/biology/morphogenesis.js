@@ -108,8 +108,13 @@ function tangentOnCurve(curve, t) {
 function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const hyphae = [];
   const queue = [];
-  // Reserve almost half the budget for daughter and granddaughter branches.
-  const primaryBudget = Math.floor(limit * 0.22);
+  // Reserve enough first-generation capacity for every territory trunk when
+  // the total budget allows it, while keeping tight test/runtime budgets recursive.
+  const trunkReserve = branches.filter((branch) => branch.style === "mycelial-trunk").length * 26;
+  const basePrimaryBudget = Math.floor(limit * 0.22);
+  const primaryBudget = trunkReserve <= limit * 0.38
+    ? Math.max(basePrimaryBudget, trunkReserve)
+    : basePrimaryBudget;
 
   // First generation: lateral explorers emerge from the main colony cords.
   const growthOrder = [...branches].sort((a, b) =>
