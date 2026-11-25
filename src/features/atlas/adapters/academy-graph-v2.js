@@ -127,6 +127,7 @@ export function createAcademyAtlasV2({
     maxDegree: 2,
     cellSize: 180,
     includeSameTerritory: true,
+    includeHyphae: true,
     ...anastomosisOptions
   });
   const scene = createAtlasScene({
