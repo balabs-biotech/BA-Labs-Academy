@@ -149,7 +149,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
         id, parentBranchId: branch.id, originT: t, territoryId: branch.territoryId, color,
         style: "secondary-hypha", generation: 1,
         width: 1.35 + stableUnit(localSeed + "|width") * 0.75,
-        curve: createCurve(origin, endpoint, localSeed, 0.12)
+        curve: createCurve(origin, endpoint, localSeed, 0.18)
       };
       queue.push({ item, endpoint, angle, length: branchLength, color, territoryId: branch.territoryId, seed: localSeed });
     }
@@ -181,7 +181,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
           id, parentHyphaId: parent.item.id, territoryId: parent.territoryId, color: parent.color,
           style: "secondary-hypha", generation: parent.item.generation + 1,
           width: Math.max(0.38, parent.item.width * 0.62),
-          curve: createCurve(parent.endpoint, endpoint, localSeed, 0.15)
+          curve: createCurve(parent.endpoint, endpoint, localSeed, 0.18)
         },
         endpoint, angle, length, color: parent.color,
         territoryId: parent.territoryId, seed: localSeed
@@ -299,7 +299,7 @@ export function createRhizomorphicMorphology({
     if (!territory) continue;
     const anchor = positioned.get(territory.nodeId || territory.id);
     const anchorDistance = Math.hypot(anchor.x - core.x, anchor.y - core.y);
-    const originRadius = 8 + stableUnit(localSeed + "|origin") * 22;
+    const originRadius = 18 + stableUnit(localSeed + "|origin") * 42;
     const reach = anchorDistance * (0.96 + stableUnit(localSeed + "|reach") * 0.04);
     const source = {
       id: "colony-origin:" + index,
@@ -321,7 +321,7 @@ export function createRhizomorphicMorphology({
       sourceId: null,
       targetId: null,
       width: 2.2 + stableUnit(localSeed + "|width") * 1.8,
-      curve: createCurve(source, target, localSeed, 0.11 + stableUnit(localSeed + "|bend") * 0.12)
+      curve: createCurve(source, target, localSeed, 0.3 + stableUnit(localSeed + "|bend") * 0.2)
     });
   }
 
