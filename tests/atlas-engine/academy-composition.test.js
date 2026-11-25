@@ -54,22 +54,24 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
     return Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) < 1e-6;
   }), "each department must retain its radial axis for label placement");
 
-  const trunks = result.scene.paths.filter((path) => path.style === "mycelial-trunk");
-  assert.equal(trunks.length, 8, "each peripheral territory must have one primary radial hypha");
-  assert.ok(trunks.every((path) => path.sourceId === core.id && path.targetId === null && path.visualOnly),
-    "primary trunks must originate from MYC as visual growth paths");
-  assert.equal(new Set(trunks.map((path) => path.territoryId)).size, 8,
-    "each primary trunk must belong to a distinct territory");
+  const fronts = result.scene.paths.filter((path) => path.style === "colony-front");
+  assert.ok(fronts.length >= 24 && fronts.length <= 40,
+    "the shared colony must have many independent growth fronts, not eight spokes");
+  assert.equal(new Set(fronts.map((path) => path.territoryId)).size, 8,
+    "all eight sectors must be represented in the common growth field");
+  assert.ok(fronts.every((path) => path.sourceId === null && path.targetId === null && path.visualOnly),
+    "colony fronts are biological geometry, not pedagogical relationships");
+  assert.equal(result.scene.paths.some((path) => path.style === "mycelial-trunk"), false);
   assert.equal(result.scene.paths.some((path) => path.style?.startsWith("emblem-")), false,
     "the biological colony must not retain fixed Y-emblem geometry");
 
   for (const department of departments) {
-    const trunkId = "mycelial-trunk:" + department.id;
     const lateralHyphae = result.morphology.hyphae.filter((hypha) =>
-      hypha.parentBranchId === trunkId
+      hypha.territoryId === department.id && hypha.generation === 1 &&
+      hypha.parentBranchId?.startsWith("colony-front:")
     );
-    assert.ok(lateralHyphae.length >= 4,
-      "each primary radial hypha must grow lateral explorers along its length: " + trunkId + " has " + lateralHyphae.length);
+    assert.ok(lateralHyphae.length >= 3,
+      department.id + " must have multiple lateral explorers in the shared colony");
   }
 
   const spines = result.scene.paths.filter((path) => path.style === "primary-spine");
@@ -144,12 +146,11 @@ test("the eight radial Academy territories form a connected mycelial colony", ()
       assert.ok(Math.max(...offsets) - Math.min(...offsets)  >= 0.56,
         "each department must use a broad radial sector, not a narrow terminal fan");
     }
-    const trunkId = "mycelial-trunk:" + department.id;
-    const lateralHyphae = result.morphology.hyphae.filter((hypha) =>
-      hypha.parentBranchId === trunkId
+    const territoryFronts = result.morphology.branches.filter((branch) =>
+      branch.style === "colony-front" && branch.territoryId === department.id
     );
-    assert.ok(lateralHyphae.length >= 4,
-      "each primary spoke must grow lateral hyphae along its length");
+    assert.ok(territoryFronts.length >= 2,
+      "each angular sector must receive several independent growth fronts");
   }
 
   assert.ok(result.anastomoses.links.length > 7,
