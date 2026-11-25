@@ -111,7 +111,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   // Reserve enough first-generation capacity for every territory trunk when
   // the total budget allows it, while keeping tight test/runtime budgets recursive.
   const trunkReserve = branches.filter((branch) => branch.style === "mycelial-trunk").length * 26;
-  const basePrimaryBudget = Math.floor(limit * 0.45);
+  const basePrimaryBudget = Math.floor(limit * 0.3);
   const primaryBudget = Math.max(basePrimaryBudget, trunkReserve);
 
   // First generation: lateral explorers emerge from the main colony cords.
@@ -125,7 +125,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
     const density = stableUnit(seed + "|density|" + branch.id);
-    const count = branch.style === "colony-front" ? 8 + Math.floor(density * 7)
+    const count = branch.style === "colony-front" ? 3 + Math.floor(density * 3)
       : branch.style === "mycelial-trunk" ? 18 + Math.floor(density * 9)
       : branch.style === "primary-spine" ? 4 + Math.floor(density * 4)
       : branch.generation <= 3 ? (density > 0.3 ? 3 : 2)
