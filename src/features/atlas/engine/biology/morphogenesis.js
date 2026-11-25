@@ -119,19 +119,19 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
     const density = stableUnit(seed + "|density|" + branch.id);
-    const count = branch.style === "mycelial-trunk" ? 10 + Math.floor(density * 6)
+    const count = branch.style === "mycelial-trunk" ? 18 + Math.floor(density * 9)
       : branch.style === "primary-spine" ? 4 + Math.floor(density * 4)
       : branch.generation <= 3 ? (density > 0.3 ? 3 : 2)
       : density > 0.56 ? 3 : 2;
     for (let index = 0; index < count && queue.length < primaryBudget; index += 1) {
       const id = "hypha:" + branch.id + ":" + index;
       const localSeed = seed + "|" + id;
-      const t = 0.12 + stableUnit(localSeed + "|position") * 0.76;
+      const t = 0.06 + stableUnit(localSeed + "|position") * 0.88;
       const origin = pointOnCurve(branch.curve, t);
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
       const baseAngle = tangentOnCurve(branch.curve, t);
-      const angle = baseAngle + side * (0.62 + stableUnit(localSeed + "|angle") * 0.7);
-      const branchLength = length * (0.18 + stableUnit(localSeed + "|length") * 0.16);
+      const angle = baseAngle + side * (0.78 + stableUnit(localSeed + "|angle") * 0.72);
+      const branchLength = length * (0.2 + stableUnit(localSeed + "|length") * 0.2);
       const endpoint = {
         x: origin.x + Math.cos(angle) * branchLength,
         y: origin.y + Math.sin(angle) * branchLength
@@ -139,7 +139,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       const color = territories.get(branch.territoryId)?.color
         ?? branch.target.universeColor ?? branch.target.color ?? branch.source.universeColor ?? null;
       const item = {
-        id, parentBranchId: branch.id, territoryId: branch.territoryId, color,
+        id, parentBranchId: branch.id, originT: t, territoryId: branch.territoryId, color,
         style: "secondary-hypha", generation: 1,
         width: 1.35 + stableUnit(localSeed + "|width") * 0.75,
         curve: createCurve(origin, endpoint, localSeed, 0.2)
@@ -275,8 +275,8 @@ export function createRhizomorphicMorphology({
     const dy = target.y - core.y;
     const distance = Math.hypot(dx, dy) || 1;
     const direction = Math.atan2(dy, dx);
-    const localBend = curveBend * (1.15 + stableUnit(seed + "|trunk-bend|" + territory.id) * 0.75);
-    const trunkWidth = Math.max(5.2, 8.4 - stableUnit(seed + "|trunk-width|" + territory.id) * 1.8);
+    const localBend = Math.min(0.48, Math.max(0.28, curveBend * 2.4) + stableUnit(seed + "|trunk-bend|" + territory.id) * 0.1);
+    const trunkWidth = 3.4 + stableUnit(seed + "|trunk-width|" + territory.id) * 1.2;
     addBranch(core, target, {
       id: "mycelial-trunk:" + territory.id,
       territoryId: territory.id,
