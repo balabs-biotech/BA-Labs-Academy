@@ -298,44 +298,37 @@ export function createRhizomorphicMorphology({
       angle: Math.atan2(anchor.y - core.y, anchor.x - core.x),
       distance: Math.hypot(anchor.x - core.x, anchor.y - core.y) || 1
     };
-  });
+  }).sort((a, b) => a.angle - b.angle);
   const totalFronts = Math.max(16, territoryAxes.length * frontsPerTerritory);
   const frontsPerSector = totalFronts / territoryAxes.length;
   const sectorWidth = TAU / territoryAxes.length;
+  const firstSectorStart = territoryAxes[0].angle - sectorWidth / 2;
   for (let frontIndex = 0; frontIndex < totalFronts; frontIndex += 1) {
     const frontId = "colony-front:global:" + frontIndex;
     const localSeed = seed + "|" + frontId;
-    const sectorIndex = Math.floor(frontIndex / frontsPerSector);
-    const sectorSlot = frontIndex % frontsPerSector;
+    const sectorIndex = Math.min(territoryAxes.length - 1, Math.floor(frontIndex / frontsPerSector));
     const territoryMatch = territoryAxes[sectorIndex];
-    const centeredSlot = sectorSlot - (frontsPerSector - 1) / 2;
-    // Keep the four trajectories attached to their canonical sector, but
-    // spread them across its full angular span instead of making a tight fan.
-    const baseAngle = territoryMatch.angle
-      + centeredSlot * (sectorWidth / frontsPerSector) * 0.82
-      + (stableUnit(localSeed + "|global-angle") - 0.5) * sectorWidth * 0.07;
-    const startAngle = baseAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.42;
+    // Fronts occupy one continuous angular lattice. Sector ownership only
+    // assigns biological identity and colour; it no longer creates a local fan.
+    const baseAngle = firstSectorStart
+      + (frontIndex + 0.5) * TAU / totalFronts
+      + (stableUnit(localSeed + "|global-angle") - 0.5) * 0.035;
+    const startAngle = baseAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.12;
     const originRadius = 14 + stableUnit(localSeed + "|origin") * 34;
     const origin = {
       id: frontId + ":origin",
       x: core.x + Math.cos(startAngle) * originRadius,
       y: core.y + Math.sin(startAngle) * originRadius
     };
-    const radialReach = 0.72 + stableUnit(localSeed + "|reach") * 0.4;
-    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 360;
-    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * sectorWidth * 0.42;
+    const radialReach = 0.88 + stableUnit(localSeed + "|reach") * 0.22;
+    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 140;
+    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.07;
     const territory = territoryMatch.territory;
     const reach = Math.max(250, territoryMatch.distance * radialReach);
     const rawFrontier = {
       x: core.x + Math.cos(axis) * reach - Math.sin(axis) * lateralTip,
       y: core.y + Math.sin(axis) * reach + Math.cos(axis) * lateralTip
     };
-    // Keep each exploratory endpoint inside its territory's influence zone,
-    // while retaining its own direction and radial depth (never snapping it
-    // onto the canonical department anchor).
-    // Let fronts terminate on a shared radial growth band rather than
-    // converging on their territory anchors. The anchor assigns biological
-    // ownership only; it must not dictate the endpoint geometry.
     const frontier = {
       id: frontId + ":tip",
       x: rawFrontier.x,
