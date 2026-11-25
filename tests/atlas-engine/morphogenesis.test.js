@@ -163,6 +163,22 @@ test("morphogenesis creates asymmetric primary cords and bounded secondary hypha
     "secondary hyphae must themselves produce daughter branches");
   assert.ok(first.hyphae.some((hypha) => hypha.generation === 3),
     "the colony must retain a tertiary fractal generation");
+  const branchIds = new Set(first.branches.map((branch) => branch.id));
+  assert.ok(first.hyphae.filter((hypha) => hypha.generation === 1)
+    .every((hypha) => branchIds.has(hypha.parentBranchId)),
+  "first-generation hyphae must originate on a primary colony branch");
+  const hyphaIds = new Set(first.hyphae.map((hypha) => hypha.id));
+  assert.ok(first.hyphae.filter((hypha) => hypha.generation > 1)
+    .every((hypha) => hyphaIds.has(hypha.parentHyphaId)),
+  "daughter hyphae must retain their biological parent identity");
+  const constrained = createRhizomorphicMorphology({
+    ...input, maximumSecondaryHyphae: 120
+  });
+  assert.ok(constrained.hyphae.length <= 120);
+  assert.ok(constrained.hyphae.some((hypha) => hypha.generation === 2),
+    "a constrained hypha budget must still reserve space for daughter branches");
+  assert.ok(constrained.hyphae.some((hypha) => hypha.generation === 3),
+    "a constrained hypha budget must still reserve space for tertiary growth");
   assert.ok(first.hyphae.every((hypha) => Object.values(hypha.curve).every((point) =>
     Number.isFinite(point.x) && Number.isFinite(point.y))));
   assert.deepEqual(first.hyphae, second.hyphae);
