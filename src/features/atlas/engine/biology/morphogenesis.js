@@ -117,6 +117,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   // have a visible presence in the colony.
   const colonyGroups = new Map();
   for (const branch of branches) {
+    if (branch.style === "semantic-connector") continue;
     if (branch.style !== "colony-front") continue;
     if (!colonyGroups.has(branch.territoryId)) colonyGroups.set(branch.territoryId, []);
     colonyGroups.get(branch.territoryId).push(branch);
@@ -127,7 +128,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   for (let index = 0; index < maxGroupLength; index += 1) {
     for (const group of groups) if (group[index]) growthOrder.push(group[index]);
   }
-  growthOrder.push(...branches.filter((branch) => branch.style !== "colony-front"));
+  growthOrder.push(...branches.filter((branch) => branch.style !== "colony-front" && branch.style !== "semantic-connector"));
   for (const branch of growthOrder) {
     if (queue.length >= primaryBudget) break;
     const dx = branch.target.x - branch.source.x;
