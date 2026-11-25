@@ -206,7 +206,7 @@ export function createVisualAnastomoses(morphology, {
   for (const pair of ordered) {
     if (links.length >= maxLinks) break;
     if (selected.has(pair.id) || pair.territoryIds.length !== 1) continue;
-    if ((degree.get(pair.source.id) || 0) >= maxDegree || (degree.get(pair.target.id) || 0) >= maxDegree) continue;
+    if ((degree.get(pair.source.hyphaId ?? pair.source.id) || 0) >= maxDegree || (degree.get(pair.target.hyphaId ?? pair.target.id) || 0) >= maxDegree) continue;
     addLink(pair);
   }
 
