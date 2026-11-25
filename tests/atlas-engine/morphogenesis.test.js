@@ -159,6 +159,10 @@ test("morphogenesis creates asymmetric primary cords and bounded secondary hypha
   assert.ok(first.hyphae.length <= 1200);
   assert.equal(new Set(first.hyphae.map((hypha) => hypha.id)).size, first.hyphae.length);
   assert.ok(first.hyphae.every((hypha) => hypha.style === "secondary-hypha" && hypha.width < 1.5));
+  assert.ok(first.hyphae.some((hypha) => hypha.generation === 2),
+    "secondary hyphae must themselves produce daughter branches");
+  assert.ok(first.hyphae.some((hypha) => hypha.generation === 3),
+    "the colony must retain a tertiary fractal generation");
   assert.ok(first.hyphae.every((hypha) => Object.values(hypha.curve).every((point) =>
     Number.isFinite(point.x) && Number.isFinite(point.y))));
   assert.deepEqual(first.hyphae, second.hyphae);
