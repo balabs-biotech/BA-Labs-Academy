@@ -110,14 +110,24 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const queue = [];
   // Reserve enough first-generation capacity for every territory trunk when
   // the total budget allows it, while keeping tight test/runtime budgets recursive.
-  const trunkReserve = branches.filter((branch) => branch.style === "mycelial-trunk").length * 26;
-  const basePrimaryBudget = Math.floor(limit * 0.3);
-  const primaryBudget = Math.max(basePrimaryBudget, trunkReserve);
+  const primaryBudget = Math.floor(limit * 0.3);
 
-  // First generation: lateral explorers emerge from the main colony cords.
-  const growthOrder = [...branches].sort((a, b) =>
-    Number(b.style === "mycelial-trunk") - Number(a.style === "mycelial-trunk")
-  );
+  // Allocate first-generation growth round-robin across territories. This
+  // prevents early sectors from consuming the hypha budget before later ones
+  // have a visible presence in the colony.
+  const colonyGroups = new Map();
+  for (const branch of branches) {
+    if (branch.style !== "colony-front") continue;
+    if (!colonyGroups.has(branch.territoryId)) colonyGroups.set(branch.territoryId, []);
+    colonyGroups.get(branch.territoryId).push(branch);
+  }
+  const growthOrder = [];
+  const groups = [...colonyGroups.values()];
+  const maxGroupLength = Math.max(0, ...groups.map((group) => group.length));
+  for (let index = 0; index < maxGroupLength; index += 1) {
+    for (const group of groups) if (group[index]) growthOrder.push(group[index]);
+  }
+  growthOrder.push(...branches.filter((branch) => branch.style !== "colony-front"));
   for (const branch of growthOrder) {
     if (queue.length >= primaryBudget) break;
     const dx = branch.target.x - branch.source.x;
