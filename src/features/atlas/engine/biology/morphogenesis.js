@@ -309,11 +309,15 @@ export function createRhizomorphicMorphology({
       x: core.x + Math.cos(startAngle) * originRadius,
       y: core.y + Math.sin(startAngle) * originRadius
     };
-    const radialReach = 0.52 + stableUnit(localSeed + "|reach") * 0.34;
-    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 190;
-    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.9;
-    const reach = Math.max(250, Math.min(territoryAxes[0]?.distance ?? 600,
-      (territoryAxes.reduce((sum, item) => sum + item.distance, 0) / Math.max(1, territoryAxes.length)) * radialReach));
+    const radialReach = 0.68 + stableUnit(localSeed + "|reach") * 0.2;
+    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 110;
+    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.48;
+    const territoryMatch = territoryAxes.reduce((nearest, item) => {
+      const delta = Math.abs(Math.atan2(Math.sin(axis - item.angle), Math.cos(axis - item.angle)));
+      return !nearest || delta < nearest.delta ? { item, delta } : nearest;
+    }, null)?.item;
+    const territory = territoryMatch.territory;
+    const reach = Math.max(250, territoryMatch.distance * radialReach);
     const frontier = {
       id: frontId + ":tip",
       x: core.x + Math.cos(axis) * reach - Math.sin(axis) * lateralTip,
@@ -323,10 +327,6 @@ export function createRhizomorphicMorphology({
     const pathDy = frontier.y - origin.y;
     const pathLength = Math.hypot(pathDx, pathDy) || 1;
     const normal = { x: -pathDy / pathLength, y: pathDx / pathLength };
-    const territory = territoryAxes.reduce((nearest, item) => {
-      const delta = Math.abs(Math.atan2(Math.sin(axis - item.angle), Math.cos(axis - item.angle)));
-      return !nearest || delta < nearest.delta ? { item, delta } : nearest;
-    }, null)?.item.territory;
     let previous = origin;
 
     for (let segmentIndex = 1; segmentIndex <= segmentsPerFront; segmentIndex += 1) {
