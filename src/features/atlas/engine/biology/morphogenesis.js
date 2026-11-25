@@ -307,7 +307,7 @@ export function createRhizomorphicMorphology({
     const territoryMatch = territoryAxes[sectorIndex];
     const centeredSlot = sectorSlot - (frontsPerSector - 1) / 2;
     const baseAngle = territoryMatch.angle
-      + centeredSlot * Math.min(0.16, 0.56 / Math.max(1, frontsPerSector - 1))
+      + centeredSlot * Math.min(0.11, 0.36 / Math.max(1, frontsPerSector - 1))
       + (stableUnit(localSeed + "|sector-angle") - 0.5) * 0.09;
     const startAngle = baseAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.42;
     const originRadius = 14 + stableUnit(localSeed + "|origin") * 34;
@@ -316,7 +316,7 @@ export function createRhizomorphicMorphology({
       x: core.x + Math.cos(startAngle) * originRadius,
       y: core.y + Math.sin(startAngle) * originRadius
     };
-    const radialReach = 0.68 + stableUnit(localSeed + "|reach") * 0.2;
+    const radialReach = 0.78 + stableUnit(localSeed + "|reach") * 0.16;
     const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 110;
     const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.18;
     const territory = territoryMatch.territory;
