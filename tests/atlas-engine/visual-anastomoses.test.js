@@ -143,3 +143,29 @@ test("hyphal anastomoses join nearby filament tips without inventing node relati
   assert.equal(result.links[0].visualOnly, true);
   assert.equal(result.links[0].relationshipType, "anastomosis");
 });
+
+
+test("hyphal anastomoses can bridge nearby filament bodies, not only their tips", () => {
+  const territories = new Map([
+    ["BIO", { id: "BIO", nodeId: "BIO" }],
+    ["AGR", { id: "AGR", nodeId: "AGR" }]
+  ]);
+  const morphology = {
+    nodes: [], branches: [], territories,
+    hyphae: [
+      { id: "bio-filament", territoryId: "BIO", generation: 2, parentHyphaId: null, color: "#88aacc", curve: {
+        a: { x: 0, y: 0 }, c1: { x: 30, y: 0 }, c2: { x: 70, y: 0 }, b: { x: 100, y: 0 }
+      } },
+      { id: "agr-filament", territoryId: "AGR", generation: 2, parentHyphaId: null, color: "#aacc88", curve: {
+        a: { x: 50, y: -100 }, c1: { x: 50, y: -30 }, c2: { x: 50, y: 30 }, b: { x: 50, y: 100 }
+      } }
+    ]
+  };
+  const result = createVisualAnastomoses(morphology, {
+    includeHyphae: true, maxDistance: 25, maxLinks: 1, cellSize: 25
+  });
+  assert.equal(result.links.length, 1, "crossing filament bodies should connect even when their tips are distant");
+  assert.equal(result.links[0].sourceId, null);
+  assert.equal(result.links[0].targetId, null);
+  assert.deepEqual(new Set([result.links[0].sourceHyphaId, result.links[0].targetHyphaId]), new Set(["bio-filament", "agr-filament"]));
+});
