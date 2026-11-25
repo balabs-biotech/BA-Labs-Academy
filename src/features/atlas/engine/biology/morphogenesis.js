@@ -280,7 +280,7 @@ export function createRhizomorphicMorphology({
   }
 
   // MYC's own taxonomy occupies a compact complete inner ring around the
-  // central nucleus; the outer Y arms carry four universes each.
+  // central nucleus; peripheral territories form the outer radial colony.
 
   for (const root of roots) {
     const isCore = root.id === coreId;
