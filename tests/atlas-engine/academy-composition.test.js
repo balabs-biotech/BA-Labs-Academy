@@ -134,7 +134,7 @@ test("V2 catalogue adapter is spatially neutral and does not depend on the legac
 
 
 
-test("the eight radial Academy territories form a connected mycelial colony", () => {
+test("the eight radial Academy territories share continuous segmented hyphal paths", () => {
   const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
   const result = createAcademyAtlasV2({ graph, seed: "open-mycelial-logo" });
   const coreId = result.topology.roots.find((node) => node.entity_key === "MYC").id;
@@ -158,19 +158,30 @@ test("the eight radial Academy territories form a connected mycelial colony", ()
     }
     const territoryFronts = result.morphology.branches.filter((branch) =>
       branch.style === "colony-front" && branch.territoryId === department.id
-    );
-    assert.ok(territoryFronts.length >= 2,
-      "each angular sector must receive several independent growth fronts");
+    ).sort((a, b) => a.id.localeCompare(b.id));
+    assert.equal(territoryFronts.length, 8,
+      "each angular sector must contain two four-segment growth trajectories");
+    for (let index = 0; index < territoryFronts.length; index += 1) {
+      const branch = territoryFronts[index];
+      assert.ok(Math.hypot(branch.source.x, branch.source.y) < 70 || index % 4 !== 0,
+        "each trajectory must begin in the MYC inoculation zone");
+      if (index % 4 > 0) {
+        const previous = territoryFronts[index - 1];
+        assert.ok(Math.hypot(previous.target.x - branch.source.x, previous.target.y - branch.source.y) < 1e-8,
+          "successive hyphal segments must be geometrically continuous");
+      }
+    }
+    const anchor = result.morphology.byId.get(department.id);
+    assert.ok(Math.hypot(
+      territoryFronts[3].target.x - anchor.x,
+      territoryFronts[3].target.y - anchor.y
+    ) < 1e-8, "the outermost hyphal segment must meet its universe anchor");
   }
 
-  assert.ok(result.anastomoses.links.length > 7,
-    "the colony must contain local hyphal loops in addition to its spanning bridges");
-  assert.equal(result.anastomoses.metrics.connected, true,
-    "all eight peripheral territories must communicate through the bridge network");
-  assert.ok(result.anastomoses.metrics.bridgeCount >= 7,
-    "at least seven cross-territory bridges must connect the eight peripheral territories");
-  assert.ok(result.anastomoses.links.some((link) => link.intraTerritory),
-    "nearby filaments must form local anastomoses within territories");
+  assert.ok(result.anastomoses.links.length > 0,
+    "nearby filaments should form proximity-based anastomoses");
+  assert.ok(result.anastomoses.links.every((link) => link.visualOnly),
+    "anastomoses must remain decorative and never mutate pedagogy");
 
   const staggeredTerritories = departments.filter((department) => {
     const children = result.topology.childrenByParent.get(department.id) || [];
