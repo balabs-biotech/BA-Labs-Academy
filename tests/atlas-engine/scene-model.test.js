@@ -23,7 +23,7 @@ function fixture() {
     universes: [{ id: "BIO", nodeId: "BIO" }, { id: "AGR", nodeId: "AGR" }],
     radius: 100
   });
-  const morphology = createRhizomorphicMorphology({ topology, radialTopology, branchLength: 80 });
+  const morphology = createRhizomorphicMorphology({ topology, radialTopology, branchLength: 480 });
   const anastomoses = createVisualAnastomoses(morphology, { maxDistance: 500 }).links;
   return { topology, morphology, anastomoses };
 }
