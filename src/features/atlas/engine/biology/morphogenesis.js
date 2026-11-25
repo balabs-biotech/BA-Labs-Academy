@@ -306,7 +306,7 @@ export function createRhizomorphicMorphology({
       x: core.x + Math.cos(angle) * originRadius,
       y: core.y + Math.sin(angle) * originRadius
     };
-    const endpointAngle = angle + (stableUnit(localSeed + "|drift") - 0.5) * 0.1;
+    const endpointAngle = angle + (stableUnit(localSeed + "|drift") - 0.5) * 0.06;
     const target = {
       id: "colony-front-end:" + index,
       x: core.x + Math.cos(endpointAngle) * reach,
