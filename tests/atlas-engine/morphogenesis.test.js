@@ -225,3 +225,50 @@ test("morphogenesis grows a distributed mycelial network instead of a fixed Y em
   assert.ok(territoryTrunks.every((branch) => branch.sourceId === "MYC" && branch.visualOnly),
     "primary hyphae are visual growth paths, not pedagogical edges");
 });
+
+
+test("eight radial territories grow curved rhizomorphic trunks and attached daughter hyphae", () => {
+  const departments = Array.from({ length: 8 }, (_, index) => ({
+    id: "U" + index,
+    parent: null,
+    title: "Territory " + index
+  }));
+  const nodes = [
+    { id: "MYC", parent: null, title: "Mycology" },
+    ...departments,
+    ...departments.map((department) => ({
+      id: department.id + "-section",
+      parent: department.id
+    }))
+  ];
+  const topology = createAtlasTopology({ nodes });
+  const radialTopology = createRadialTopology({
+    core: { id: "MYC" },
+    universes: departments.map((department) => ({
+      id: department.id, nodeId: department.id
+    })),
+    radius: 900
+  });
+  const model = createRhizomorphicMorphology({ topology, radialTopology });
+  const trunks = model.branches.filter((branch) => branch.style === "mycelial-trunk");
+
+  assert.equal(trunks.length, 8);
+  assert.ok(trunks.every((branch) => branch.source.id === "MYC" && branch.visualOnly));
+  assert.ok(trunks.every((branch) =>
+    Math.abs(Math.hypot(branch.target.x, branch.target.y) - 900) < 1e-8));
+  assert.ok(trunks.every((branch) => {
+    const dx = branch.target.x - branch.source.x;
+    const dy = branch.target.y - branch.source.y;
+    const cross = dx * (branch.curve.c1.y - branch.source.y)
+      - dy * (branch.curve.c1.x - branch.source.x);
+    return Math.abs(cross) > 1;
+  }), "primary cords must curve away from perfectly straight spokes");
+
+  for (const department of departments) {
+    assert.ok(model.hyphae.some((hypha) =>
+      hypha.territoryId === department.id && hypha.generation === 1),
+    department.id + " must have first-generation lateral exploration");
+  }
+  assert.ok(model.hyphae.some((hypha) => hypha.generation === 2));
+  assert.ok(model.hyphae.some((hypha) => hypha.generation === 3));
+});
