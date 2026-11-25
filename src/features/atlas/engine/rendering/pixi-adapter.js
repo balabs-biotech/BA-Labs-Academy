@@ -111,7 +111,7 @@ export async function createPixiSceneAdapter(canvas, {
       paths.stroke({
         color: colorValue(path.color ?? target?.color ?? source?.color),
         width: path.width ?? (path.type === "universe-trunk" ? 5 : path.type === "anastomosis" ? 2.1 : path.type === "hypha" ? 0.8 : decorative ? 1.2 : 2),
-        alpha: path.type === "hypha" ? 0.58 : path.type === "anastomosis" ? 0.62 : path.type === "universe-trunk" ? 0.72 : 0.9
+        alpha: path.type === "hypha" ? 0.72 : path.type === "anastomosis" ? 0.82 : path.type === "universe-trunk" ? 0.72 : 0.9
       });
     }
 
