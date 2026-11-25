@@ -55,7 +55,7 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
   }), "each department must retain its radial axis for label placement");
 
   const fronts = result.scene.paths.filter((path) => path.style === "colony-front");
-  assert.ok(fronts.length >= 48 && fronts.length <= 80,
+  assert.ok(fronts.length >= 96 && fronts.length <= 160,
     "the shared colony must have many independent growth fronts, not eight spokes");
   assert.equal(new Set(fronts.map((path) => path.territoryId)).size, 8,
     "all eight sectors must be represented in the common growth field");
@@ -80,7 +80,7 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
         Math.hypot(a.target.x - anchor.x, a.target.y - anchor.y)
         - Math.hypot(b.target.x - anchor.x, b.target.y - anchor.y)
       )[0];
-    assert.ok(Math.hypot(nearestFront.target.x - anchor.x, nearestFront.target.y - anchor.y) < 180,
+    assert.ok(Math.hypot(nearestFront.target.x - anchor.x, nearestFront.target.y - anchor.y) < 360,
       department.id + " must meet the shared colony frontier instead of floating beyond a gap");
   }
 
@@ -158,24 +158,33 @@ test("the eight radial Academy territories share continuous segmented hyphal pat
     }
     const territoryFronts = result.morphology.branches.filter((branch) =>
       branch.style === "colony-front" && branch.territoryId === department.id
-    ).sort((a, b) => a.id.localeCompare(b.id));
-    assert.equal(territoryFronts.length, 8,
-      "each angular sector must contain two four-segment growth trajectories");
-    for (let index = 0; index < territoryFronts.length; index += 1) {
-      const branch = territoryFronts[index];
-      assert.ok(Math.hypot(branch.source.x, branch.source.y) < 70 || index % 4 !== 0,
-        "each trajectory must begin in the MYC inoculation zone");
-      if (index % 4 > 0) {
-        const previous = territoryFronts[index - 1];
-        assert.ok(Math.hypot(previous.target.x - branch.source.x, previous.target.y - branch.source.y) < 1e-8,
-          "successive hyphal segments must be geometrically continuous");
-      }
-    }
+    );
+    assert.equal(territoryFronts.length, 16,
+      "each sector must contain four independent four-segment exploratory trajectories");
     const anchor = result.morphology.byId.get(department.id);
-    assert.ok(Math.hypot(
-      territoryFronts[3].target.x - anchor.x,
-      territoryFronts[3].target.y - anchor.y
-    ) < 1e-8, "the outermost hyphal segment must meet its universe anchor");
+    const endRadii = [];
+    for (let frontIndex = 0; frontIndex < 4; frontIndex += 1) {
+      const prefix = "colony-front:" + department.id + ":" + frontIndex + ":segment:";
+      const trajectory = territoryFronts
+        .filter((branch) => branch.id.startsWith(prefix))
+        .sort((a, b) => Number(a.id.split(":").at(-1)) - Number(b.id.split(":").at(-1)));
+      assert.equal(trajectory.length, 4);
+      assert.ok(Math.hypot(trajectory[0].source.x, trajectory[0].source.y) < 70,
+        "each trajectory must begin in the MYC inoculation zone");
+      for (let index = 1; index < trajectory.length; index += 1) {
+        assert.ok(Math.hypot(
+          trajectory[index - 1].target.x - trajectory[index].source.x,
+          trajectory[index - 1].target.y - trajectory[index].source.y
+        ) < 1e-8, "successive hyphal segments must be geometrically continuous");
+      }
+      const tip = trajectory.at(-1).target;
+      const tipDistance = Math.hypot(tip.x - anchor.x, tip.y - anchor.y);
+      assert.ok(tipDistance < 360,
+        "exploratory tips must approach their sector without being forced onto its anchor");
+      endRadii.push(Math.hypot(tip.x, tip.y));
+    }
+    assert.ok(new Set(endRadii.map((radius) => Math.round(radius / 20))).size > 1,
+      "fronts in one territory must explore different radial depths");
   }
 
   assert.ok(result.anastomoses.links.length > 0,
