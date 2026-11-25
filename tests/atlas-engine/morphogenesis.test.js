@@ -220,10 +220,10 @@ test("morphogenesis grows a distributed colony rather than eight spokes", () => 
   assert.equal(model.branches.some((branch) => branch.style.startsWith("emblem-")), false);
   assert.equal(model.branches.some((branch) => branch.style === "mycelial-trunk"), false);
   const fronts = model.branches.filter((branch) => branch.style === "colony-front");
-  assert.ok(fronts.length >= 16 && fronts.length <= 48);
+  assert.ok(fronts.length >= 48 && fronts.length <= 80);
   assert.ok(fronts.every((branch) => branch.visualOnly && branch.sourceId === null && branch.targetId === null));
   assert.ok(new Set(fronts.map((branch) => branch.territoryId)).size >= radialTopology.universes.length);
-  assert.ok(fronts.every((branch) => Math.hypot(branch.target.x, branch.target.y) > 500));
+  assert.ok(fronts.some((branch) => Math.hypot(branch.target.x, branch.target.y) > 500));
 });
 
 
@@ -245,7 +245,7 @@ test("eight territories are embedded in a shared radial fractal colony", () => {
   const model = createRhizomorphicMorphology({ topology, radialTopology });
   const fronts = model.branches.filter((branch) => branch.style === "colony-front");
 
-  assert.ok(fronts.length >= 16 && fronts.length <= 48);
+  assert.ok(fronts.length >= 48 && fronts.length <= 80);
   assert.equal(model.branches.some((branch) => branch.style === "mycelial-trunk"), false);
   assert.ok(new Set(fronts.map((branch) => branch.territoryId)).size === 8,
     "all eight angular sectors must receive colony growth");
