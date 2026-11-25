@@ -73,7 +73,27 @@ export function createVisualAnastomoses(morphology, {
       y: hypha.curve.b.y
     }))
     : [];
-  const candidates = [...nodeCandidates, ...hyphaCandidates];
+  // The terminal segment of each exploratory front is the biological growth
+  // frontier. Include it explicitly so cross-sector bridges join the visible
+  // colony tips, rather than being spent only on nearby internal branches.
+  const frontierCandidates = (morphology.branches || []).filter((branch) =>
+    branch?.style === "colony-front" &&
+    typeof branch.id === "string" &&
+    branch.id.endsWith(":segment:4") &&
+    typeof branch.territoryId === "string" &&
+    (!territorySet || territorySet.has(branch.territoryId)) &&
+    Number.isFinite(branch.target?.x) && Number.isFinite(branch.target?.y)
+  ).map((branch) => ({
+    id: branch.id,
+    territoryId: branch.territoryId,
+    generation: branch.generation ?? 1,
+    parent: null,
+    sourceKind: "branch",
+    color: branch.target.universeColor ?? branch.target.color ?? null,
+    x: branch.target.x,
+    y: branch.target.y
+  }));
+  const candidates = [...nodeCandidates, ...hyphaCandidates, ...frontierCandidates];
   const cells = new Map();
   for (const node of candidates) {
     const key = cellKey(node.x / cellSize, node.y / cellSize);
@@ -110,7 +130,9 @@ export function createVisualAnastomoses(morphology, {
   const maxRadius = Math.max(1, candidates.reduce((maximum, node) => Math.max(maximum, Math.hypot(node.x, node.y)), 0));
   const score = (pair) => {
     const frontier = (Math.hypot(pair.source.x, pair.source.y) + Math.hypot(pair.target.x, pair.target.y)) / (2 * maxRadius);
-    return pair.distance - frontierBias * maxDistance * frontier;
+    const joinsFrontiers = pair.source.sourceKind === "branch" && pair.target.sourceKind === "branch";
+    const frontierPairBonus = joinsFrontiers ? maxDistance * 0.42 : 0;
+    return pair.distance - frontierBias * maxDistance * frontier - frontierPairBonus;
   };
   const ordered = [...pairs.values()].sort((a, b) =>
     score(a) - score(b) || a.distance - b.distance || a.id.localeCompare(b.id)
@@ -140,6 +162,8 @@ export function createVisualAnastomoses(morphology, {
       targetId: pair.target.sourceKind === "hypha" ? null : pair.target.id,
       sourceHyphaId: pair.source.sourceKind === "hypha" ? pair.source.id : null,
       targetHyphaId: pair.target.sourceKind === "hypha" ? pair.target.id : null,
+      sourceBranchId: pair.source.sourceKind === "branch" ? pair.source.id : null,
+      targetBranchId: pair.target.sourceKind === "branch" ? pair.target.id : null,
       territoryIds: pair.territoryIds,
       intraTerritory: pair.territoryIds.length === 1,
       distance: pair.distance,
