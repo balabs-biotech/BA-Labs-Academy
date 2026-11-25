@@ -312,7 +312,7 @@ export function createRhizomorphicMorphology({
     // assigns biological identity and colour; it no longer creates a local fan.
     const baseAngle = firstSectorStart
       + (frontIndex + 0.5) * TAU / totalFronts
-      + (stableUnit(localSeed + "|global-angle") - 0.5) * 0.035;
+      + (stableUnit(localSeed + "|global-angle") - 0.5) * 0.015;
     const startAngle = baseAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.12;
     const originRadius = 14 + stableUnit(localSeed + "|origin") * 34;
     const origin = {
@@ -321,8 +321,8 @@ export function createRhizomorphicMorphology({
       y: core.y + Math.sin(startAngle) * originRadius
     };
     const radialReach = 0.88 + stableUnit(localSeed + "|reach") * 0.22;
-    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 140;
-    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.07;
+    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 80;
+    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.02;
     const territory = territoryMatch.territory;
     const reach = Math.max(250, territoryMatch.distance * radialReach);
     const rawFrontier = {
