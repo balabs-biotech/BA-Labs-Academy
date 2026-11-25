@@ -28,7 +28,7 @@ export function createAcademyAtlasV2({
   universeDirection = 1,
   universeColors = {},
   morphologyOptions = { branchLength: 280, universeSpread: 1.45, curveBend: 0.28, maximumSecondaryHyphae: 720 },
-  anastomosisOptions = { maxDistance: 1000, maxLinks: 7, maxDegree: 1, cellSize: 300, includeSameTerritory: false }
+  anastomosisOptions = { maxDistance: 420, maxLinks: 28, maxDegree: 2, cellSize: 180, includeSameTerritory: true }
 } = {}) {
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
     throw new TypeError("Academy Atlas V2 requires a canonical Academy graph");
