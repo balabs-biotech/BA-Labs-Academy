@@ -334,9 +334,6 @@ export function createRhizomorphicMorphology({
     // while retaining its own direction and radial depth (never snapping it
     // onto the canonical department anchor).
     const anchor = positioned.get(territory.nodeId || territory.id);
-    const anchorDx = rawFrontier.x - anchor.x;
-    const anchorDy = rawFrontier.y - anchor.y;
-    const anchorDistance = Math.hypot(anchorDx, anchorDy);
     const frontier = {
       id: frontId + ":tip",
       x: rawFrontier.x,
