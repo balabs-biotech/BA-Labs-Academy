@@ -125,7 +125,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
     const density = stableUnit(seed + "|density|" + branch.id);
-    const count = branch.style === "colony-front" ? 3 + Math.floor(density * 3)
+    const count = branch.style === "colony-front" ? 2 + Math.floor(density * 2)
       : branch.style === "mycelial-trunk" ? 18 + Math.floor(density * 9)
       : branch.style === "primary-spine" ? 4 + Math.floor(density * 4)
       : branch.generation <= 3 ? (density > 0.3 ? 3 : 2)
@@ -137,8 +137,8 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       const origin = pointOnCurve(branch.curve, t);
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
       const baseAngle = tangentOnCurve(branch.curve, t);
-      const angle = baseAngle + side * (0.78 + stableUnit(localSeed + "|angle") * 0.72);
-      const branchLength = length * (0.2 + stableUnit(localSeed + "|length") * 0.2);
+      const angle = baseAngle + side * (0.5 + stableUnit(localSeed + "|angle") * 0.55);
+      const branchLength = length * (0.16 + stableUnit(localSeed + "|length") * 0.12);
       const endpoint = {
         x: origin.x + Math.cos(angle) * branchLength,
         y: origin.y + Math.sin(angle) * branchLength
@@ -149,7 +149,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
         id, parentBranchId: branch.id, originT: t, territoryId: branch.territoryId, color,
         style: "secondary-hypha", generation: 1,
         width: 1.35 + stableUnit(localSeed + "|width") * 0.75,
-        curve: createCurve(origin, endpoint, localSeed, 0.2)
+        curve: createCurve(origin, endpoint, localSeed, 0.12)
       };
       queue.push({ item, endpoint, angle, length: branchLength, color, territoryId: branch.territoryId, seed: localSeed });
     }
@@ -170,7 +170,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       const localSeed = seed + "|" + id;
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
       const parentTangent = tangentOnCurve(parent.item.curve, 1);
-      const angle = parentTangent + side * (0.5 + stableUnit(localSeed + "|angle") * 0.5);
+      const angle = parentTangent + side * (0.35 + stableUnit(localSeed + "|angle") * 0.45);
       const length = parent.length * (0.48 + stableUnit(localSeed + "|length") * 0.2);
       const endpoint = {
         x: parent.endpoint.x + Math.cos(angle) * length,
@@ -181,7 +181,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
           id, parentHyphaId: parent.item.id, territoryId: parent.territoryId, color: parent.color,
           style: "secondary-hypha", generation: parent.item.generation + 1,
           width: Math.max(0.38, parent.item.width * 0.62),
-          curve: createCurve(parent.endpoint, endpoint, localSeed, 0.24)
+          curve: createCurve(parent.endpoint, endpoint, localSeed, 0.15)
         },
         endpoint, angle, length, color: parent.color,
         territoryId: parent.territoryId, seed: localSeed
@@ -282,7 +282,7 @@ export function createRhizomorphicMorphology({
       ? territory.angle
       : Math.atan2(territory.y - core.y, territory.x - core.x)
   }));
-  const frontCount = Math.min(40, Math.max(24, territoriesByAngle.length * 4));
+  const frontCount = Math.min(32, Math.max(24, territoriesByAngle.length * 3));
   for (let index = 0; index < frontCount; index += 1) {
     const localSeed = seed + "|colony-front|" + index;
     const angle = TAU * index / frontCount
@@ -300,13 +300,13 @@ export function createRhizomorphicMorphology({
     const anchor = positioned.get(territory.nodeId || territory.id);
     const anchorDistance = Math.hypot(anchor.x - core.x, anchor.y - core.y);
     const originRadius = 8 + stableUnit(localSeed + "|origin") * 22;
-    const reach = anchorDistance * (0.72 + stableUnit(localSeed + "|reach") * 0.2);
+    const reach = anchorDistance * (0.96 + stableUnit(localSeed + "|reach") * 0.04);
     const source = {
       id: "colony-origin:" + index,
       x: core.x + Math.cos(angle) * originRadius,
       y: core.y + Math.sin(angle) * originRadius
     };
-    const endpointAngle = angle + (stableUnit(localSeed + "|drift") - 0.5) * 0.34;
+    const endpointAngle = angle + (stableUnit(localSeed + "|drift") - 0.5) * 0.1;
     const target = {
       id: "colony-front-end:" + index,
       x: core.x + Math.cos(endpointAngle) * reach,
