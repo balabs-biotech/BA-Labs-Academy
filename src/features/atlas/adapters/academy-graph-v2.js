@@ -126,7 +126,7 @@ export function createAcademyAtlasV2({
     maxLinks: 240,
     maxDegree: 6,
     cellSize: 320,
-    frontierBias: 0.56,
+    frontierBias: 0.88,
     includeSameTerritory: true,
     includeHyphae: true,
     ...anastomosisOptions
