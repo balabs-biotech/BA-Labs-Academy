@@ -298,10 +298,17 @@ export function createRhizomorphicMorphology({
     };
   });
   const totalFronts = Math.max(16, territoryAxes.length * frontsPerTerritory);
+  const frontsPerSector = totalFronts / territoryAxes.length;
   for (let frontIndex = 0; frontIndex < totalFronts; frontIndex += 1) {
     const frontId = "colony-front:global:" + frontIndex;
     const localSeed = seed + "|" + frontId;
-    const baseAngle = -Math.PI / 2 + (TAU * frontIndex / totalFronts);
+    const sectorIndex = Math.floor(frontIndex / frontsPerSector);
+    const sectorSlot = frontIndex % frontsPerSector;
+    const territoryMatch = territoryAxes[sectorIndex];
+    const centeredSlot = sectorSlot - (frontsPerSector - 1) / 2;
+    const baseAngle = territoryMatch.angle
+      + centeredSlot * Math.min(0.16, 0.56 / Math.max(1, frontsPerSector - 1))
+      + (stableUnit(localSeed + "|sector-angle") - 0.5) * 0.09;
     const startAngle = baseAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.42;
     const originRadius = 14 + stableUnit(localSeed + "|origin") * 34;
     const origin = {
@@ -311,11 +318,7 @@ export function createRhizomorphicMorphology({
     };
     const radialReach = 0.68 + stableUnit(localSeed + "|reach") * 0.2;
     const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 110;
-    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.48;
-    const territoryMatch = territoryAxes.reduce((nearest, item) => {
-      const delta = Math.abs(Math.atan2(Math.sin(axis - item.angle), Math.cos(axis - item.angle)));
-      return !nearest || delta < nearest.delta ? { item, delta } : nearest;
-    }, null)?.item;
+    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.18;
     const territory = territoryMatch.territory;
     const reach = Math.max(250, territoryMatch.distance * radialReach);
     const frontier = {
