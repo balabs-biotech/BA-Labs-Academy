@@ -96,34 +96,73 @@ function pointOnCurve(curve, t) {
 
 function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const hyphae = [];
+  const queue = [];
+
+  // First generation: lateral explorers emerge from the main colony cords.
   for (const branch of branches) {
-    if (hyphae.length >= limit) break;
+    if (hyphae.length + queue.length >= limit) break;
     const dx = branch.target.x - branch.source.x;
     const dy = branch.target.y - branch.source.y;
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
-    const desired = branch.style === "emblem-stem" ? 5 : branch.style?.startsWith("emblem-arm-") ? 4 : branch.style === "universe-spoke" ? 4 : branch.style === "primary-spine" ? 3 : branch.style === "lateral-hypha" ? 1 : branch.generation <= 3 ? 3 : stableUnit(seed + "|density|" + branch.id) > 0.55 ? 2 : 1;
-    const normal = { x: -dy / length, y: dx / length };
-    const tangent = { x: dx / length, y: dy / length };
-    for (let index = 0; index < desired && hyphae.length < limit; index += 1) {
+    const count = branch.style === "mycelial-trunk" ? 5
+      : branch.style === "primary-spine" ? 3
+      : branch.generation <= 3 ? 2
+      : stableUnit(seed + "|density|" + branch.id) > 0.62 ? 2 : 1;
+    for (let index = 0; index < count && hyphae.length + queue.length < limit; index += 1) {
       const id = "hypha:" + branch.id + ":" + index;
       const localSeed = seed + "|" + id;
-      const t = 0.28 + stableUnit(localSeed + "|position") * 0.44;
+      const t = 0.22 + stableUnit(localSeed + "|position") * 0.56;
       const origin = pointOnCurve(branch.curve, t);
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
-      const branchLength = length * (0.12 + stableUnit(localSeed + "|length") * 0.1);
-      const drift = branchLength * 0.28;
+      const baseAngle = Math.atan2(dy, dx);
+      const angle = baseAngle + side * (0.42 + stableUnit(localSeed + "|angle") * 0.52);
+      const branchLength = length * (0.14 + stableUnit(localSeed + "|length") * 0.12);
       const endpoint = {
-        x: origin.x + normal.x * branchLength * side + tangent.x * drift,
-        y: origin.y + normal.y * branchLength * side + tangent.y * drift
+        x: origin.x + Math.cos(angle) * branchLength,
+        y: origin.y + Math.sin(angle) * branchLength
       };
       const color = territories.get(branch.territoryId)?.color
         ?? branch.target.universeColor ?? branch.target.color ?? branch.source.universeColor ?? null;
-      hyphae.push({
+      const item = {
         id, territoryId: branch.territoryId, color,
-        style: "secondary-hypha",
-        width: 0.9 + stableUnit(localSeed + "|width") * 0.5,
-        curve: createCurve(origin, endpoint, localSeed, 0.28)
+        style: "secondary-hypha", generation: 1,
+        width: 0.95 + stableUnit(localSeed + "|width") * 0.45,
+        curve: createCurve(origin, endpoint, localSeed, 0.2)
+      };
+      queue.push({ item, endpoint, angle, length: branchLength, color, territoryId: branch.territoryId, seed: localSeed });
+    }
+  }
+
+  // Subsequent generations branch from the previous hyphae, with decreasing
+  // length and caliber. This produces a deterministic fractal exploration
+  // instead of isolated decorative hairs attached only to the main branches.
+  for (let cursor = 0; cursor < queue.length && hyphae.length < limit; cursor += 1) {
+    const parent = queue[cursor];
+    hyphae.push(parent.item);
+    if (parent.item.generation >= 3 || parent.length < 28 || hyphae.length + queue.length - cursor >= limit) continue;
+    const count = parent.item.generation === 1
+      ? (stableUnit(parent.seed + "|fork") > 0.34 ? 2 : 1)
+      : 1;
+    for (let index = 0; index < count && hyphae.length + queue.length - cursor < limit; index += 1) {
+      const id = parent.item.id + ":fork:" + index;
+      const localSeed = seed + "|" + id;
+      const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
+      const angle = parent.angle + side * (0.38 + stableUnit(localSeed + "|angle") * 0.58);
+      const length = parent.length * (0.42 + stableUnit(localSeed + "|length") * 0.16);
+      const endpoint = {
+        x: parent.endpoint.x + Math.cos(angle) * length,
+        y: parent.endpoint.y + Math.sin(angle) * length
+      };
+      queue.push({
+        item: {
+          id, territoryId: parent.territoryId, color: parent.color,
+          style: "secondary-hypha", generation: parent.item.generation + 1,
+          width: Math.max(0.28, parent.item.width * 0.58),
+          curve: createCurve(parent.endpoint, endpoint, localSeed, 0.24)
+        },
+        endpoint, angle, length, color: parent.color,
+        territoryId: parent.territoryId, seed: localSeed
       });
     }
   }
