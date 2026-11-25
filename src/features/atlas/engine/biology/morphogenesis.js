@@ -110,7 +110,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const queue = [];
   // Reserve enough first-generation capacity for every territory trunk when
   // the total budget allows it, while keeping tight test/runtime budgets recursive.
-  const primaryBudget = Math.floor(limit * 0.5);
+  const primaryBudget = Math.floor(limit * (limit <= 180 ? 0.25 : 0.5));
 
   // Allocate first-generation growth round-robin across territories. This
   // prevents early sectors from consuming the hypha budget before later ones
