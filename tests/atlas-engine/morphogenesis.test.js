@@ -264,10 +264,16 @@ test("eight radial territories grow curved rhizomorphic trunks and attached daug
     return Math.abs(cross) > 1;
   }), "primary cords must curve away from perfectly straight spokes");
 
+  assert.ok(trunks.every((branch) => branch.width >= 3.4 && branch.width <= 4.6),
+    "primary trunks must not dominate the colony as thick spokes");
   for (const department of departments) {
-    assert.ok(model.hyphae.some((hypha) =>
-      hypha.territoryId === department.id && hypha.generation === 1),
-    department.id + " must have first-generation lateral exploration");
+    const lateral = model.hyphae.filter((hypha) =>
+      hypha.territoryId === department.id && hypha.generation === 1);
+    assert.ok(lateral.length >= 18,
+      department.id + " must distribute enough first-generation lateral explorers");
+    const positions = lateral.map((hypha) => hypha.originT);
+    assert.ok(Math.min(...positions) < 0.2 && Math.max(...positions) > 0.8,
+      department.id + " must branch along the trunk, not only at its outer tip");
   }
   assert.ok(model.hyphae.some((hypha) => hypha.generation === 2));
   assert.ok(model.hyphae.some((hypha) => hypha.generation === 3));
