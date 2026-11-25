@@ -55,7 +55,7 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
   }), "each department must retain its radial axis for label placement");
 
   const fronts = result.scene.paths.filter((path) => path.style === "colony-front");
-  assert.ok(fronts.length >= 24 && fronts.length <= 40,
+  assert.ok(fronts.length >= 48 && fronts.length <= 80,
     "the shared colony must have many independent growth fronts, not eight spokes");
   assert.equal(new Set(fronts.map((path) => path.territoryId)).size, 8,
     "all eight sectors must be represented in the common growth field");
