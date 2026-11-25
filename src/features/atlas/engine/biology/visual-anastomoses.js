@@ -11,6 +11,16 @@ function cellKey(x, y) {
   return Math.floor(x) + ":" + Math.floor(y);
 }
 
+function sampleCurve(curve, t) {
+  const u = 1 - t;
+  const uu = u * u;
+  const tt = t * t;
+  return {
+    x: uu * u * curve.a.x + 3 * uu * t * curve.c1.x + 3 * u * tt * curve.c2.x + tt * t * curve.b.x,
+    y: uu * u * curve.a.y + 3 * uu * t * curve.c1.y + 3 * u * tt * curve.c2.y + tt * t * curve.b.y
+  };
+}
+
 function makeCurve(a, b, id) {
   const dx = b.x - a.x;
   const dy = b.y - a.y;
@@ -62,16 +72,28 @@ export function createVisualAnastomoses(morphology, {
       typeof hypha.territoryId === "string" &&
       (!territorySet || territorySet.has(hypha.territoryId)) &&
       Number.isFinite(hypha.curve?.b?.x) && Number.isFinite(hypha.curve?.b?.y)
-    ).map((hypha) => ({
-      id: hypha.id,
-      territoryId: hypha.territoryId,
-      generation: hypha.generation ?? 1,
-      parent: hypha.parentHyphaId ?? null,
-      sourceKind: "hypha",
-      color: hypha.color ?? null,
-      x: hypha.curve.b.x,
-      y: hypha.curve.b.y
-    }))
+    ).flatMap((hypha) => {
+      const base = {
+        territoryId: hypha.territoryId,
+        generation: hypha.generation ?? 1,
+        parent: hypha.parentHyphaId ?? null,
+        hyphaId: hypha.id,
+        sourceKind: "hypha",
+        color: hypha.color ?? null
+      };
+      const tip = { ...base, id: hypha.id, x: hypha.curve.b.x, y: hypha.curve.b.y };
+      const curve = hypha.curve;
+      const hasFullCurve = ["a", "c1", "c2", "b"].every((key) =>
+        Number.isFinite(curve[key]?.x) && Number.isFinite(curve[key]?.y)
+      );
+      if (!hasFullCurve) return [tip];
+      const body = [0.2, 0.4, 0.5, 0.6, 0.8].map((t, index) => ({
+        ...base,
+        id: hypha.id + ":body:" + index,
+        ...sampleCurve(curve, t)
+      }));
+      return [tip, ...body];
+    })
     : [];
   const candidates = [...nodeCandidates, ...hyphaCandidates];
   const cells = new Map();
@@ -89,16 +111,21 @@ export function createVisualAnastomoses(morphology, {
     for (let ox = -radius; ox <= radius; ox += 1) {
       for (let oy = -radius; oy <= radius; oy += 1) {
         for (const other of cells.get(cellKey(cx + ox, cy + oy)) || []) {
-          if (node.id === other.id) continue;
+          if (node.id === other.id || (node.hyphaId && node.hyphaId === other.hyphaId)) continue;
           const sameTerritory = node.territoryId === other.territoryId;
           if (sameTerritory && !includeSameTerritory) continue;
           // Anastomoses connect separate hyphal branches, never a parent directly to its child.
-          if (node.parent === other.id || other.parent === node.id) continue;
+          if (node.parent === (other.hyphaId ?? other.id) || other.parent === (node.hyphaId ?? node.id)) continue;
           const distance = Math.hypot(node.x - other.x, node.y - other.y);
           if (distance > maxDistance) continue;
-          const [first, second] = node.id < other.id ? [node, other] : [other, node];
-          const id = "anastomosis:" + first.id + ":" + second.id;
-          if (!pairs.has(id)) pairs.set(id, {
+          const nodeKey = node.hyphaId ?? node.id;
+          const otherKey = other.hyphaId ?? other.id;
+          const [first, second] = nodeKey < otherKey ? [node, other] : [other, node];
+          const firstKey = first.hyphaId ?? first.id;
+          const secondKey = second.hyphaId ?? second.id;
+          const id = "anastomosis:" + firstKey + ":" + secondKey;
+          const existing = pairs.get(id);
+          if (!existing || distance < existing.distance) pairs.set(id, {
             id, source: first, target: second, distance,
             territoryIds: [...new Set([first.territoryId, second.territoryId])].sort()
           });
@@ -134,14 +161,16 @@ export function createVisualAnastomoses(morphology, {
   const links = [];
   const addLink = (pair) => {
     selected.add(pair.id);
-    degree.set(pair.source.id, (degree.get(pair.source.id) || 0) + 1);
-    degree.set(pair.target.id, (degree.get(pair.target.id) || 0) + 1);
+    const sourceDegreeId = pair.source.hyphaId ?? pair.source.id;
+    const targetDegreeId = pair.target.hyphaId ?? pair.target.id;
+    degree.set(sourceDegreeId, (degree.get(sourceDegreeId) || 0) + 1);
+    degree.set(targetDegreeId, (degree.get(targetDegreeId) || 0) + 1);
     links.push({
       id: pair.id,
       sourceId: pair.source.sourceKind === "hypha" ? null : pair.source.id,
       targetId: pair.target.sourceKind === "hypha" ? null : pair.target.id,
-      sourceHyphaId: pair.source.sourceKind === "hypha" ? pair.source.id : null,
-      targetHyphaId: pair.target.sourceKind === "hypha" ? pair.target.id : null,
+      sourceHyphaId: pair.source.hyphaId ?? null,
+      targetHyphaId: pair.target.hyphaId ?? null,
       territoryIds: pair.territoryIds,
       intraTerritory: pair.territoryIds.length === 1,
       distance: pair.distance,
@@ -169,7 +198,7 @@ export function createVisualAnastomoses(morphology, {
   for (const pair of ordered) {
     if (links.length >= maxLinks) break;
     if (selected.has(pair.id) || pair.territoryIds.length !== 2) continue;
-    if ((degree.get(pair.source.id) || 0) >= maxDegree || (degree.get(pair.target.id) || 0) >= maxDegree) continue;
+    if ((degree.get(pair.source.hyphaId ?? pair.source.id) || 0) >= maxDegree || (degree.get(pair.target.hyphaId ?? pair.target.id) || 0) >= maxDegree) continue;
     addLink(pair);
   }
 
