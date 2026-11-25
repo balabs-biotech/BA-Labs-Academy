@@ -84,6 +84,8 @@ export function createAtlasScene({
       id: path.id,
       sourceId: path.sourceId,
       targetId: path.targetId,
+      sourceHyphaId: path.sourceHyphaId ?? null,
+      targetHyphaId: path.targetHyphaId ?? null,
       type,
       visualOnly: Boolean(path.visualOnly) || type === "anastomosis",
       territoryId: path.territoryId ?? null,
