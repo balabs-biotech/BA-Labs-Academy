@@ -306,10 +306,14 @@ export function createRhizomorphicMorphology({
         x: core.x + Math.cos(startAngle) * originRadius,
         y: core.y + Math.sin(startAngle) * originRadius
       };
+      const radialDepth = 0.76 + frontIndex * 0.075;
+      const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 52;
       const frontier = {
         id: frontId + ":tip",
-        x: anchor.x + (stableUnit(localSeed + "|tip-x") - 0.5) * 54,
-        y: anchor.y + (stableUnit(localSeed + "|tip-y") - 0.5) * 54
+        x: core.x + Math.cos(axisAngle) * anchorDistance * radialDepth
+          - Math.sin(axisAngle) * lateralTip,
+        y: core.y + Math.sin(axisAngle) * anchorDistance * radialDepth
+          + Math.cos(axisAngle) * lateralTip
       };
       const pathDx = frontier.x - origin.x;
       const pathDy = frontier.y - origin.y;
