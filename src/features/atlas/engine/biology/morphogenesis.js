@@ -111,10 +111,8 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   // Reserve enough first-generation capacity for every territory trunk when
   // the total budget allows it, while keeping tight test/runtime budgets recursive.
   const trunkReserve = branches.filter((branch) => branch.style === "mycelial-trunk").length * 26;
-  const basePrimaryBudget = Math.floor(limit * 0.22);
-  const primaryBudget = trunkReserve <= limit * 0.38
-    ? Math.max(basePrimaryBudget, trunkReserve)
-    : basePrimaryBudget;
+  const basePrimaryBudget = Math.floor(limit * 0.45);
+  const primaryBudget = Math.max(basePrimaryBudget, trunkReserve);
 
   // First generation: lateral explorers emerge from the main colony cords.
   const growthOrder = [...branches].sort((a, b) =>
@@ -127,7 +125,8 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
     const density = stableUnit(seed + "|density|" + branch.id);
-    const count = branch.style === "mycelial-trunk" ? 18 + Math.floor(density * 9)
+    const count = branch.style === "colony-front" ? 8 + Math.floor(density * 7)
+      : branch.style === "mycelial-trunk" ? 18 + Math.floor(density * 9)
       : branch.style === "primary-spine" ? 4 + Math.floor(density * 4)
       : branch.generation <= 3 ? (density > 0.3 ? 3 : 2)
       : density > 0.56 ? 3 : 2;
@@ -274,32 +273,56 @@ export function createRhizomorphicMorphology({
     roots.push(node);
   }
 
-  // Radial colony architecture: each territory is reached from the MYC
-  // inoculation core by its own primary rhizomorphic trunk. The trunk is a
-  // visual growth path; pedagogical ownership remains in the canonical tree.
-  for (const territory of spatialTopology.territories) {
-    const target = positioned.get(territory.nodeId || territory.id);
-    const dx = target.x - core.x;
-    const dy = target.y - core.y;
-    const distance = Math.hypot(dx, dy) || 1;
-    const direction = Math.atan2(dy, dx);
-    const localBend = Math.min(0.48, Math.max(0.28, curveBend * 2.4) + stableUnit(seed + "|trunk-bend|" + territory.id) * 0.1);
-    const trunkWidth = 3.4 + stableUnit(seed + "|trunk-width|" + territory.id) * 1.2;
-    addBranch(core, target, {
-      id: "mycelial-trunk:" + territory.id,
+  // A colony is a shared growth field, not one trunk per knowledge universe.
+  // Many primary fronts emerge from a small inoculation zone, explore the
+  // substrate in different directions and are assigned to the nearest sector.
+  const territoriesByAngle = spatialTopology.territories.map((territory) => ({
+    territory,
+    angle: Number.isFinite(territory.angle)
+      ? territory.angle
+      : Math.atan2(territory.y - core.y, territory.x - core.x)
+  }));
+  const frontCount = Math.min(40, Math.max(24, territoriesByAngle.length * 4));
+  for (let index = 0; index < frontCount; index += 1) {
+    const localSeed = seed + "|colony-front|" + index;
+    const angle = TAU * index / frontCount
+      + (stableUnit(localSeed + "|angle") - 0.5) * (TAU / frontCount) * 0.42;
+    const territory = territoriesByAngle
+      .map((candidate) => ({
+        ...candidate,
+        delta: Math.abs(Math.atan2(
+          Math.sin(candidate.angle - angle),
+          Math.cos(candidate.angle - angle)
+        ))
+      }))
+      .sort((a, b) => a.delta - b.delta)[0]?.territory;
+    if (!territory) continue;
+    const anchor = positioned.get(territory.nodeId || territory.id);
+    const anchorDistance = Math.hypot(anchor.x - core.x, anchor.y - core.y);
+    const originRadius = 8 + stableUnit(localSeed + "|origin") * 22;
+    const reach = anchorDistance * (0.72 + stableUnit(localSeed + "|reach") * 0.2);
+    const source = {
+      id: "colony-origin:" + index,
+      x: core.x + Math.cos(angle) * originRadius,
+      y: core.y + Math.sin(angle) * originRadius
+    };
+    const endpointAngle = angle + (stableUnit(localSeed + "|drift") - 0.5) * 0.34;
+    const target = {
+      id: "colony-front-end:" + index,
+      x: core.x + Math.cos(endpointAngle) * reach,
+      y: core.y + Math.sin(endpointAngle) * reach
+    };
+    addBranch(source, target, {
+      id: "colony-front:" + index,
       territoryId: territory.id,
       generation: 1,
       visualOnly: true,
-      style: "mycelial-trunk",
-      sourceId: core.id,
+      style: "colony-front",
+      sourceId: null,
       targetId: null,
-      width: trunkWidth,
-      curve: createCurve(core, target, seed + "|mycelial-trunk|" + territory.id, localBend)
+      width: 2.2 + stableUnit(localSeed + "|width") * 1.8,
+      curve: createCurve(source, target, localSeed, 0.11 + stableUnit(localSeed + "|bend") * 0.12)
     });
-    // A small, deterministic lateral drift prevents identical spokes while
-    // retaining the colony's outward radial growth direction.
-    target.angle = direction;
-    target.radialDistance = distance;
   }
 
   // MYC's own taxonomy occupies a compact complete inner ring around the
