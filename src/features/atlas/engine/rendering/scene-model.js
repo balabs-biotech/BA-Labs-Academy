@@ -98,6 +98,7 @@ export function createAtlasScene({
   };
 
   for (const branch of morphology.branches) {
+    if (branch.style === "semantic-connector") continue;
     const type = ["emblem-stem", "universe-spoke", "primary-spine", "mycelial-trunk"].includes(branch.style) || branch.style?.startsWith("emblem-arm-")
       ? "universe-trunk"
       : branch.style === "lateral-hypha" ? "hypha"
