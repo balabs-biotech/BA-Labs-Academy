@@ -174,7 +174,7 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
     hyphae.push(parent.item);
     if (parent.item.generation >= 3 || parent.length < 4 || hyphae.length + queue.length - cursor >= limit) continue;
     const count = parent.item.generation === 1
-      ? (stableUnit(parent.seed + "|fork") > 0.18 ? 2 : 1)
+      ? (stableUnit(parent.seed + "|fork") > 0.65 ? 2 : 1)
       : 1;
     for (let index = 0; index < count && hyphae.length + queue.length - cursor < limit; index += 1) {
       const id = parent.item.id + ":fork:" + index;
