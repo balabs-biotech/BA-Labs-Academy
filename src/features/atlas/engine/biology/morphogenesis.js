@@ -300,18 +300,16 @@ export function createRhizomorphicMorphology({
       const frontId = "colony-front:" + territory.id + ":" + frontIndex;
       const localSeed = seed + "|" + frontId;
       const startAngle = axisAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.68;
-      const originRadius = 18 + stableUnit(localSeed + "|origin") * 42;
+      const originRadius = 12 + stableUnit(localSeed + "|origin") * 26;
       const origin = {
         id: frontId + ":origin",
         x: core.x + Math.cos(startAngle) * originRadius,
         y: core.y + Math.sin(startAngle) * originRadius
       };
-      const reach = anchorDistance * (0.76 + stableUnit(localSeed + "|reach") * 0.18);
-      const endAngle = axisAngle + (stableUnit(localSeed + "|end-angle") - 0.5) * 0.44;
       const frontier = {
         id: frontId + ":tip",
-        x: core.x + Math.cos(endAngle) * reach,
-        y: core.y + Math.sin(endAngle) * reach
+        x: anchor.x + (stableUnit(localSeed + "|tip-x") - 0.5) * 54,
+        y: anchor.y + (stableUnit(localSeed + "|tip-y") - 0.5) * 54
       };
       const pathDx = frontier.x - origin.x;
       const pathDy = frontier.y - origin.y;
@@ -323,9 +321,9 @@ export function createRhizomorphicMorphology({
         const t = segmentIndex / segmentsPerFront;
         const envelope = Math.sin(Math.PI * t);
         const lateralDrift = (stableUnit(localSeed + "|drift|" + segmentIndex) - 0.5)
-          * 340 * envelope;
+          * 240 * envelope;
         const radialDrift = (stableUnit(localSeed + "|radial|" + segmentIndex) - 0.5)
-          * 110 * envelope;
+          * 72 * envelope;
         const target = segmentIndex === segmentsPerFront
           ? frontier
           : {
