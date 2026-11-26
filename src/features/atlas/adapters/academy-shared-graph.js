@@ -2,8 +2,8 @@ import { createVernpixiNetwork } from "../shared/explorer-2d-network.js";
 
 const ORDER = ["MIC", "BIO", "AGR", "BPR", "BMT", "GEN", "INF", "PHY"];
 const LAYOUT = {
-  MIC: "microbiology", BIO: "plants", AGR: "ecology", BPR: "bioprocesses",
-  BMT: "biomaterials", GEN: "instrumentation", INF: "digital", PHY: "physical"
+   MIC: "lab", BIO: "bio", AGR: "soil", BPR: "products",
+  BMT: "myco", GEN: "iot", INF: "work", PHY: "evidence"
 };
 const ANCHORS = [
   [0, 0],
@@ -81,7 +81,7 @@ export function createAcademySharedAtlas({ graph, seed = "ba-labs-academy-shared
   const roots = [coreTree];
   for (const department of universes) {
     const root = makeRoot(department, LAYOUT[department.entity_key]);
-    const attachedPathways = pathwayRoots.filter((pathway) => pathwayTargets.get(pathway.id)?.[0] === department.rootId);
+    const attachedPathways = pathwayRoots.filter((pathway) => (pathwayTargets.get(pathway.id)?.[0] || core.rootId) === department.rootId);
     for (const pathway of attachedPathways) root.children.push(toTreeNode(pathway, department.id));
     roots.push(root);
   }
