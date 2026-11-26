@@ -27,6 +27,7 @@ export async function mountAcademySharedAtlas({
   let destroyed = false;
   let interactions;
   let observer;
+  let frameId = null;
   const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
   const render = () => {
     if (destroyed) return false;
@@ -59,6 +60,14 @@ export async function mountAcademySharedAtlas({
     renderer.resize(size.width, size.height);
     render();
     interactions = attachAtlasPointerInteractions(canvas, camera, { onSelect: selectAt, onChange: render });
+    if (!reduced) {
+      const animate = () => {
+        if (destroyed) return;
+        render();
+        frameId = requestAnimationFrame(animate);
+      };
+      frameId = requestAnimationFrame(animate);
+    }
     observer = resizeObserverFactory(() => {
       if (destroyed) return;
       const next = measure(canvas);
@@ -91,6 +100,7 @@ export async function mountAcademySharedAtlas({
       destroyed = true;
       interactions?.destroy();
       observer?.disconnect?.();
+      if (frameId !== null) cancelAnimationFrame(frameId);
       renderer.destroy();
       return true;
     }
