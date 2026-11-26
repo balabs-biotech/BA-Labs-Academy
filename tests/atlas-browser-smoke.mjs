@@ -34,7 +34,7 @@ try {
     await page.goto(siteBase + "#/atlas", { waitUntil: "domcontentloaded" });
     await page.waitForSelector("#academy-atlas-v2-canvas", { state: "visible", timeout: 30000 });
     await page.waitForFunction(
-      () => document.querySelector("#atlas-v2-state")?.textContent.includes("Moteur mycélien V2 actif"),
+      () => document.querySelector("#atlas-v2-state")?.textContent.includes("Moteur biologique partagé actif"),
       undefined,
       { timeout: 30000 }
     );
@@ -51,7 +51,7 @@ try {
       visibleLabels: Number(element.dataset.visibleLabelCount || 0),
       hiddenLabels: Number(element.dataset.hiddenLabelCount || 0)
     }));
-    assert.equal(surface.renderer, "academy-atlas-v2-pixijs");
+    assert.equal(surface.renderer, "pixijs-webgl");
     assert.ok(surface.width > 0 && surface.height > 0, "V2 must create a real WebGL drawing surface");
     assert.ok(surface.rect.width >= surface.stage.width * 0.98, "Canvas must fill the stage width");
     assert.ok(surface.rect.height >= surface.stage.height * 0.98, "Canvas must fill the stage height");
@@ -70,7 +70,7 @@ try {
     await page.locator('[data-v2-action="in"]').click();
     await page.locator('[data-v2-action="out"]').click();
     await page.locator('[data-v2-action="fit"]').click();
-    assert.equal(await canvas.getAttribute("data-renderer"), "academy-atlas-v2-pixijs");
+    assert.equal(await canvas.getAttribute("data-renderer"), "pixijs-webgl");
 
     assert.deepEqual(errors, [], "No uncaught browser errors");
     assert.deepEqual(consoleErrors, [], "No browser console errors");
@@ -87,7 +87,7 @@ try {
     });
     await page.close();
   }
-  console.log(JSON.stringify({ academyAtlasV2: "PASS", results }, null, 2));
+  console.log(JSON.stringify({ academySharedAtlas: "PASS", results }, null, 2));
 } finally {
   await browser.close();
 }
