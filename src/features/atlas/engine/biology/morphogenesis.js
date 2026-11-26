@@ -148,9 +148,9 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       const origin = pointOnCurve(branch.curve, t);
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
       const baseAngle = tangentOnCurve(branch.curve, t);
-      const angle = baseAngle + side * (0.5 + stableUnit(localSeed + "|angle") * 0.55);
+      const angle = baseAngle + side * (0.42 + stableUnit(localSeed + "|angle") * 0.92);
       const branchLength = length * (branch.style === "colony-front"
-        ? 0.42 + stableUnit(localSeed + "|length") * 0.16
+        ? 0.58 + stableUnit(localSeed + "|length") * 0.28
         : 0.24 + stableUnit(localSeed + "|length") * 0.14);
       const endpoint = {
         x: origin.x + Math.cos(angle) * branchLength,
