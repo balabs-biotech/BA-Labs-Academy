@@ -1,10 +1,6 @@
 import { createVernpixiNetwork } from "../shared/explorer-2d-network.js";
+import { resolveAcademyUniverseSources } from "./academy-universe-sources.js";
 
-const ORDER = ["MIC", "BIO", "AGR", "BPR", "BMT", "GEN", "INF", "PHY"];
-const LAYOUT = {
-   MIC: "lab", BIO: "bio", AGR: "soil", BPR: "products",
-  BMT: "myco", GEN: "iot", INF: "work", PHY: "evidence"
-};
 const ANCHORS = [
   [0, 0],
   [-0.62, -0.34], [-0.17, -0.62], [0.39, -0.48], [0.68, 0.08],
@@ -35,7 +31,8 @@ export function createAcademySharedAtlas({ graph, seed = "ba-labs-academy-shared
   }
   const departments = graph.nodes.filter((node) => node.level === 0 && node.entity_type === "DEPARTMENT");
   const core = departments.find((node) => node.isAcademyCore || node.entity_key === "MYC");
-  const universes = ORDER.map((code) => departments.find((node) => node.entity_key === code)).filter(Boolean);
+  const universeSources = resolveAcademyUniverseSources(departments.filter((node) => node.id !== core?.id));
+  const universes = universeSources.map((source) => source.record);
   if (!core || universes.length !== 8) {
     throw new Error("Academy Atlas requires the MYC core and exactly eight disciplinary universes");
   }
@@ -80,7 +77,8 @@ export function createAcademySharedAtlas({ graph, seed = "ba-labs-academy-shared
   const coreTree = makeRoot(core, "myco");
   const roots = [coreTree];
   for (const department of universes) {
-    const root = makeRoot(department, LAYOUT[department.entity_key]);
+    const source = universeSources.find((item) => item.code === department.entity_key);
+    const root = makeRoot(department, source.layoutId);
     const attachedPathways = pathwayRoots.filter((pathway) => pathwayTargets.get(pathway.id)?.[0] === department.rootId);
     for (const pathway of attachedPathways) root.children.push(toTreeNode(pathway, department.id));
     roots.push(root);
@@ -109,7 +107,7 @@ export function createAcademySharedAtlas({ graph, seed = "ba-labs-academy-shared
   for (const root of roots) root.relations = relationsByRoot.get(root.id) || [];
 
   const network = createVernpixiNetwork(roots, {
-    rootLayoutIds: ["myco", ...ORDER.map((code) => LAYOUT[code])],
+    rootLayoutIds: ["myco", ...universeSources.map((source) => source.layoutId)],
     rootAnchors: ANCHORS,
     fixedRootIds: [core.id]
   });
@@ -126,6 +124,8 @@ export function createAcademySharedAtlas({ graph, seed = "ba-labs-academy-shared
     canonicalNodeCount: graph.nodes.length,
     renderedNodeCount: network.nodes.length,
     universeCount: 8,
+    sourceCount: universeSources.length,
+    sourceIds: Object.freeze(universeSources.map((source) => source.sourceId)),
     coreCount: 1,
     edgeCount: network.edges.length,
     crossUniverseConnections: network.stats.crossUniverseConnections,
