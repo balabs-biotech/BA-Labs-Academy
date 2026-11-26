@@ -7,6 +7,7 @@ on:
       - "src/features/atlas/engine/**"
       - "src/features/atlas/shared/**"
       - "src/features/atlas/ACADEMY-SHARED-ENGINE-ARCHITECTURE.md"
+      - "src/features/atlas/CONSTELLATION-ARCHITECTURE.md"
       - "src/features/atlas/adapters/**"
       - "src/features/atlas/atlas-v2-view.js"
       - "src/main.js"
