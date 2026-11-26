@@ -31,12 +31,17 @@ export async function mountAcademySharedAtlas({
   const render = () => {
     if (destroyed) return false;
     const state = camera.getSnapshot();
-    return renderer.render({
+    const rendered = renderer.render({
       nodes: composition.nodes, edges: composition.edges, selected,
       scale: state.scale,
       offset: { x: state.x - state.viewport.width / 2, y: state.y - state.viewport.height / 2 },
       width: state.viewport.width, height: state.viewport.height, reduced, lang: "fr"
     });
+    canvas.dataset.sceneNodeCount = String(composition.nodes.length);
+    canvas.dataset.secondaryHyphaCount = String(composition.edges.filter((edge) => !edge.cross).length);
+    canvas.dataset.visibleLabelCount = canvas.dataset.labelLiveCount || "0";
+    canvas.dataset.hiddenLabelCount = String(Math.max(0, composition.nodes.length - Number(canvas.dataset.visibleLabelCount)));
+    return rendered;
   };
   let selected = null;
   const selectAt = (point, event) => {
