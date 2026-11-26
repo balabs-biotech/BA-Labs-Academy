@@ -1,7 +1,7 @@
 import { Application, Container, Graphics, Text, TextStyle } from "pixi.js";
 
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const PALETTE={bio:0x79a991,myco:0xc88773,soil:0xc19b73,lab:0x80aeb8,products:0xc88773,iot:0x7eaaa3,work:0xaa9cbb,evidence:0xb5b58d,microbiology:0x80aeb8,plants:0x79a991,ecology:0xc19b73,bioprocesses:0xd4a36f,biomaterials:0xb18a83,instrumentation:0x7eaaa3,digital:0x8da8b5,physical:0xb5b58d};
+const PALETTE={bio:0x79a991,myco:0xb18fc2,soil:0xc19b73,lab:0x80aeb8,products:0xc88773,iot:0x7eaaa3,work:0xaa9cbb,evidence:0xb5b58d};
 const hash=s=>{let n=2166136261;for(let i=0;i<s.length;i++)n=Math.imul(n^s.charCodeAt(i),16777619);return n>>>0};
 
 export async function createPixiRenderer(canvas){
