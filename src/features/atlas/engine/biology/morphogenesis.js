@@ -302,13 +302,42 @@ export function createRhizomorphicMorphology({
   const totalFronts = Math.max(16, territoryAxes.length * frontsPerTerritory);
   const sectorWidth = TAU / territoryAxes.length;
   const firstSectorStart = territoryAxes[0].angle - sectorWidth / 2;
+  const reservedFronts = new Map();
+  const frontAngles = Array.from({ length: totalFronts }, (_, index) =>
+    firstSectorStart + (index + 0.5) * TAU / totalFronts
+  );
+  // Give every territory one nearby exploratory front, then distribute its
+  // remaining fronts around the whole colony. This keeps local continuity
+  // without reverting to four adjacent, same-colour radial spokes.
+  for (let sectorIndex = 0; sectorIndex < territoryAxes.length; sectorIndex += 1) {
+    const axis = territoryAxes[sectorIndex].angle;
+    let nearestIndex = 0;
+    let nearestGap = Infinity;
+    for (let index = 0; index < frontAngles.length; index += 1) {
+      const delta = Math.atan2(
+        Math.sin(frontAngles[index] - axis),
+        Math.cos(frontAngles[index] - axis)
+      );
+      if (Math.abs(delta) < nearestGap) {
+        nearestGap = Math.abs(delta);
+        nearestIndex = index;
+      }
+    }
+    reservedFronts.set(nearestIndex, sectorIndex);
+  }
+  const frontOwners = new Map(reservedFronts);
+  let remainingOwner = 0;
+  for (let index = 0; index < totalFronts; index += 1) {
+    if (frontOwners.has(index)) continue;
+    frontOwners.set(index, remainingOwner % territoryAxes.length);
+    remainingOwner += 1;
+  }
   for (let frontIndex = 0; frontIndex < totalFronts; frontIndex += 1) {
     const frontId = "colony-front:global:" + frontIndex;
     const localSeed = seed + "|" + frontId;
-    // Interleave territory ownership around the entire colony instead of
-    // painting four adjacent fronts as one isolated radial bouquet.
-    const sectorIndex = frontIndex % territoryAxes.length;
-    const territoryMatch = territoryAxes[sectorIndex];
+    // Ownership is balanced across the full lattice, with one local front
+    // retained near each territory anchor to bridge the inner radial gap.
+    const territoryMatch = territoryAxes[frontOwners.get(frontIndex)];
     // Fronts occupy one continuous angular lattice. Sector ownership only
     // assigns biological identity and colour; it no longer creates a local fan.
     const baseAngle = firstSectorStart
