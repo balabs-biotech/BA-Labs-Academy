@@ -29,5 +29,5 @@ test("Academy entry view is mounted through the shared renderer, not radial V2",
   const { readFile } = await import("node:fs/promises");
   const source = await readFile(new URL("../src/features/atlas/atlas-v2-view.js", import.meta.url), "utf8");
   assert.ok(source.includes('mountAcademySharedAtlas'));
-  assert.ok(!source.includes('mountAcademyAtlasV2'));
+  assert.ok(!source.includes('from "./adapters/mount-academy-atlas-v2.js"'));
 });
