@@ -21,7 +21,7 @@ export function renderAcademyAtlasV2(graph) {
     <section class="academy-atlas academy-atlas-v2" id="academy-atlas">
       <div class="atlas-topline">
         <div class="atlas-topline-copy">
-          <span class="eyebrow">BA LABS ACADEMY · MOTEUR MYCÉLIEN 2D</span>
+          <span class="eyebrow">BA LABS ACADEMY · MOTEUR BIOLOGIQUE PARTAGÉ</span>
           <strong>${departments} départements · ${domains} domaines · ${pathways} parcours · ${sections} sections · ${modules} modules</strong>
         </div>
         <span class="atlas-engine-state" id="atlas-v2-state">Initialisation du moteur V2…</span>
@@ -29,7 +29,7 @@ export function renderAcademyAtlasV2(graph) {
       <div class="atlas-stage" id="academy-atlas-v2-stage">
         <canvas id="academy-atlas-v2-canvas" aria-label="Réseau mycélien interactif des connaissances de BA Labs Academy"></canvas>
         <div class="atlas-stage-heading">
-          <span class="eyebrow">RÉSEAU RHIZOMORPHIQUE · MORPHOGENÈSE V2</span>
+          <span class="eyebrow">RÉSEAU RHIZOMORPHIQUE · MOTEUR COMMUN BA LABS</span>
           <p>Branches primaires, hyphes secondaires et anastomoses · Déplacer et zoomer pour explorer</p>
         </div>
         <nav class="atlas-controls" aria-label="Contrôles du réseau">
@@ -55,7 +55,7 @@ export function renderAcademyAtlasV2(graph) {
     <section class="page-intro atlas-page-intro">
       <span class="eyebrow">BA LABS ACADEMY · CARTOGRAPHIE VIVANTE</span>
       <h1>Réseau des connaissances</h1>
-      <p>Une morphologie mycélienne unique organise les disciplines, domaines, sections, modules et parcours. Les liens pédagogiques restent distincts des connexions biologiques décoratives.</p>
+      <p>Le même moteur biologique que le site BA Labs organise les huit univers autour du noyau mycologique. Les ramifications représentent la structure pédagogique et les liens documentés.</p>
     </section>`;
 }
 
