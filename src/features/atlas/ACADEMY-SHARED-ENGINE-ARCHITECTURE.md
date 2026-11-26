@@ -28,7 +28,7 @@ MYC is not a ninth universe. It is the central biological core, fixed at the ori
 
 The canonical Academy catalogue remains the source of truth for the content currently integrated. Each of the eight universes is a separate logical data branch with its own stable department key, hierarchy, modules and routes. The adapter preserves every canonical node ID and record, including departments, domains, sections, modules and pathways.
 
-The current seed catalogue is stored centrally in `src/catalogue-map.js`; the architecture separates universe-level source adapters so individual information sources can be connected or migrated independently without changing the geometry engine. Do not claim eight physically independent repositories until those connectors or source files are actually provisioned.
+The eight logical source bindings are declared independently in `src/features/atlas/adapters/academy-universe-sources.js` (MIC, BIO, AGR, BPR, BMT, GEN, INF, PHY). Each has a stable source ID and its own hierarchy, modules and routes. The current seed records still live in `src/catalogue-map.js`; the manifest is the adapter boundary for connecting or migrating each universe to a separate Notion tree, file or database. The eight bindings are independent contracts, not eight physically separate repositories yet.
 
 Each node retains its canonical `data` record and route. Selection opens the Academy information panel; the explicit route link opens the corresponding Academy page. Pathways are placed once in their primary disciplinary territory. Additional pathway links become evidence-bearing cross-universe relations.
 
