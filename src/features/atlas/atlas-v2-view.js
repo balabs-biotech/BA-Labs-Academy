@@ -1,4 +1,4 @@
-import { mountAcademyAtlasV2 } from "./adapters/mount-academy-atlas-v2.js";
+import { mountAcademySharedAtlas } from "./adapters/mount-academy-shared-atlas.js";
 
 const escapeText = (value = "") => String(value).replace(/[&<>"']/g, (char) => ({
   "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -91,20 +91,10 @@ export async function mountAcademyAtlasV2View(container, graph) {
     }
   };
   try {
-    mounted = await mountAcademyAtlasV2({
+    mounted = await mountAcademySharedAtlas({
       canvas,
       graph,
-      compositionOptions: {
-        seed: "ba-labs-academy-main-v2",
-        universeRadius: 1050,
-        pathwayOrbitRadius: 1650
-      },
-      cameraOptions: {
-        minScale: 0.035,
-        maxScale: 3.5,
-        fitPadding: window.innerWidth < 700 ? 0.03 : 0.03,
-        minVisibleRatio: 0.08
-      },
+      seed: "ba-labs-academy-main-shared",
       onSelect: showSelection,
       onError: (error) => {
         state.textContent = "Moteur V2 indisponible";
@@ -114,7 +104,7 @@ export async function mountAcademyAtlasV2View(container, graph) {
     });
     if (destroyed) { mounted.destroy(); return () => {}; }
     loading.hidden = true;
-    state.textContent = "Moteur mycélien V2 actif · " + mounted.composition.metrics.renderedNodeCount + " nœuds · " + mounted.composition.metrics.visualOnlyPathCount + " structures biologiques";
+    state.textContent = "Moteur biologique partagé actif · " + mounted.composition.metrics.renderedNodeCount + " nœuds · " + mounted.composition.metrics.localAnastomoses + " anastomoses locales";
     status.textContent = "BA Labs Academy · Vue générale";
     const onControls = (event) => {
       const action = event.target.closest("[data-v2-action]")?.dataset.v2Action;
@@ -129,8 +119,7 @@ export async function mountAcademyAtlasV2View(container, graph) {
     const onRoot = (event) => {
       const id = event.target.closest("[data-v2-focus]")?.dataset.v2Focus;
       if (!id) return;
-      const node = mounted.scene.nodes.find((item) => item.id === id);
-      if (node) showSelection(node);
+      if (mounted.select(id)) showSelection(mounted.scene.nodes.find((item) => item.id === id));
     };
     container.addEventListener("click", onControls);
     container.addEventListener("click", onRoot);
