@@ -1,14 +1,7 @@
-export { createAtlasTopology } from "./core/topology.js";
-export { createRadialTopology } from "./spatial/radial-topology.js";
-export { createRhizomorphicMorphology } from "./biology/morphogenesis.js";
-export { createCurveSpatialIndex, getConservativeBezierBounds } from "./spatial/collision-index.js";
-export { createVisualAnastomoses } from "./biology/visual-anastomoses.js";
-export { createGeometryTransaction } from "./spatial/geometry-transaction.js";
-export { createAtlasScene } from "./rendering/scene-model.js";
-export { resolveNodeOverlaps } from "./spatial/node-collision-solver.js";
-export { createAtlasRendererSupervisor } from "./rendering/renderer-supervisor.js";
-export { createPixiSceneAdapter } from "./rendering/pixi-adapter.js";
-export { createAcademyAtlasV2 } from "../adapters/academy-graph-v2.js";
+// Stable public API for the shared BA Labs biological engine and Academy adapters.
+export { createVernpixiNetwork } from "../shared/explorer-2d-network.js";
+export { createPixiRenderer } from "../shared/explorer-2d-pixi.js";
+export { createAcademySharedAtlas } from "../adapters/academy-shared-graph.js";
+export { mountAcademySharedAtlas } from "../adapters/mount-academy-shared-atlas.js";
 export { createAtlasCameraController } from "./presentation/camera-controller.js";
 export { attachAtlasPointerInteractions } from "./presentation/pointer-interactions.js";
-export { buildAcademyCatalogueGraph } from "../adapters/academy-catalogue-graph.js";

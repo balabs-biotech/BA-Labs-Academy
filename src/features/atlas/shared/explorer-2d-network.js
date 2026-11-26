@@ -1,6 +1,6 @@
 // Shared graph geometry for the BA Labs Academy and public Notion explorers.
-// Both spaces use the same eight root anchors, branching field and anastomosis rules;
-// only their Notion trees and optional root layout aliases differ.
+// Both spaces share branching, relaxation and anastomosis rules. Root anchor
+// fields and territory mass are configurable for graphs with different root counts.
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const hash=s=>{let n=2166136261;for(let i=0;i<s.length;i++)n=Math.imul(n^s.charCodeAt(i),16777619);return n>>>0};
 
@@ -9,11 +9,15 @@ const hash=s=>{let n=2166136261;for(let i=0;i<s.length;i++)n=Math.imul(n^s.charC
  * Organic territory packing + local collision relaxation.
  * The knowledge graph is immutable here: only visual coordinates are adjusted.
  */
-function packRootTerritories(nodes,tree){
- const roots=nodes.filter(n=>n.level===0);
+function packRootTerritories(nodes,tree,options={}){
+ const fixedRootIds=new Set(options.fixedRootIds||[]);
+ const roots=nodes.filter(n=>n.level===0&&!fixedRootIds.has(n.id));
  if(roots.length<2)return;
  const original=new Map(roots.map(r=>[r.id,{x:r.x,y:r.y}]));
- const mass=new Map(tree.map(root=>[root.id,countTree(root)]));
+ // Keep root territories identical across the public and Academy trees.
+ // Content depth must not move the eight shared universe anchors.
+ const territoryMass=Number.isFinite(options.rootTerritoryMass)?Math.max(1,options.rootTerritoryMass):144;
+ const mass=new Map(tree.map(root=>[root.id,territoryMass]));
  const radius=r=>92+Math.sqrt(mass.get(r.id)||1)*8.5;
  for(let pass=0;pass<34;pass++){
   const shifts=new Map(roots.map(r=>[r.id,{x:0,y:0}]));
@@ -38,7 +42,6 @@ function packRootTerritories(nodes,tree){
   for(const n of nodes)if(n.rootId===root.id){n.x+=dx;n.y+=dy;}
  }
 }
-function countTree(node){return 1+(node.children||[]).reduce((sum,child)=>sum+countTree(child),0);}
 function relaxBiologicalMorphology(nodes,edges){
  const parentPairs=new Set(edges.filter(e=>!e.cross).map(e=>[e.a.id,e.b.id].sort().join("|")));
  const branchParents=new Set(edges.filter(e=>!e.cross).map(e=>e.a.id));
@@ -104,13 +107,15 @@ export function createVernpixiNetwork(tree,options={}){
   const rootLayoutIds=options.rootLayoutIds||tree.map(root=>root.id);
   // Uneven biological field anchors: deliberately not an eight-spoke radial layout.
   // Stable per-universe jitter keeps positions deterministic across reloads.
-  const anchors=[[-.62,-.34],[-.17,-.62],[.39,-.48],[.68,.08],[.24,.53],[-.34,.57],[-.70,.19],[.02,-.02]];
+  const anchors=options.rootAnchors||[[-.62,-.34],[-.17,-.62],[.39,-.48],[.68,.08],[.24,.53],[-.34,.57],[-.70,.19],[.02,-.02]];
+  const fixedRootIds=new Set(options.fixedRootIds||[]);
   tree.forEach((root,i)=>{
-   const anchor=anchors[i%anchors.length],layoutId=rootLayoutIds[i%rootLayoutIds.length],seed=hash(layoutId);
-   const rx=anchor[0]*510+((seed&255)/255-.5)*58;
-   const ry=anchor[1]*430+(((seed>>>8)&255)/255-.5)*54;
-   const angle=Math.atan2(ry,rx)+(((seed>>>16)&255)/255-.5)*.34;
-   const rootNode={id:root.id,title:root.title,x:rx,y:ry,r:12,level:0,data:root,rootId:root.id,colorKey:layoutId,parent:null,angle};
+   const anchor=anchors[i%anchors.length],layoutId=rootLayoutIds[i%rootLayoutIds.length],seed=hash(layoutId),fixed=fixedRootIds.has(root.id);
+   const rx=anchor[0]*510+(fixed?0:((seed&255)/255-.5)*58);
+   const ry=anchor[1]*430+(fixed?0:(((seed>>>8)&255)/255-.5)*54);
+   const angle=fixed?0:Math.atan2(ry,rx)+(((seed>>>16)&255)/255-.5)*.34;
+   const rootRadius=Number.isFinite(root.data?.r)?Math.max(12,root.data.r):Number.isFinite(root.r)?Math.max(12,root.r):12;
+   const rootNode={id:root.id,title:root.title,x:rx,y:ry,r:rootRadius,level:0,data:root,rootId:root.id,colorKey:layoutId,parent:null,angle};
    nodes.push(rootNode);byId.set(root.id,rootNode);
    const walk=(data,parent,depth,branchAngle,path)=>{
     const kids=data.children||[];if(!kids.length)return;
@@ -139,7 +144,7 @@ export function createVernpixiNetwork(tree,options={}){
   });
   // Rebalance root territories, then relax local crowding. Leaf tips stay present
   // in the topology but receive a stronger minimum separation in visual space.
-  packRootTerritories(nodes,tree);
+  packRootTerritories(nodes,tree,options);
   relaxBiologicalMorphology(nodes,edges);
   // Cross-universe connections come only from the Notion relation manifest.
   // page-content links are explicitly distinguished from direct Notion hyperlinks.
