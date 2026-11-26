@@ -49,7 +49,8 @@ try {
       sceneNodes: Number(element.dataset.sceneNodeCount || 0),
       secondaryHyphae: Number(element.dataset.secondaryHyphaCount || 0),
       visibleLabels: Number(element.dataset.visibleLabelCount || 0),
-      hiddenLabels: Number(element.dataset.hiddenLabelCount || 0)
+      hiddenLabels: Number(element.dataset.hiddenLabelCount || 0),
+      labelBoxes: JSON.parse(element.dataset.visibleNodeHitBoxes || "{}")
     }));
     assert.equal(surface.renderer, "pixijs-webgl");
     assert.ok(surface.width > 0 && surface.height > 0, "V2 must create a real WebGL drawing surface");
@@ -58,6 +59,10 @@ try {
     assert.equal(surface.sceneNodes, 330, "All canonical Academy nodes must be represented");
     assert.ok(surface.secondaryHyphae > 0, "The biological engine must render secondary hyphae");
     assert.ok(surface.visibleLabels > 0, "The label layout must expose readable labels");
+    for (const [id, box] of Object.entries(surface.labelBoxes)) {
+      assert.ok(box.left >= 0 && box.right <= surface.rect.width, `Label ${id} must remain inside the horizontal viewport`);
+      assert.ok(box.top >= 0 && box.bottom <= surface.rect.height, `Label ${id} must remain inside the vertical viewport`);
+    }
     assert.equal(await page.locator(".atlas-root-chip").count(), 19, "All nine departments and ten pathways remain navigable");
     assert.match(await page.locator(".atlas-topline-copy strong").innerText(), /9 départements/);
     assert.match(await page.locator(".atlas-topline-copy strong").innerText(), /10 parcours/);
