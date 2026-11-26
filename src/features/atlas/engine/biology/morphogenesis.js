@@ -94,36 +94,110 @@ function pointOnCurve(curve, t) {
   };
 }
 
+function tangentOnCurve(curve, t) {
+  const inverse = 1 - t;
+  const dx = 3 * inverse ** 2 * (curve.c1.x - curve.a.x)
+    + 6 * inverse * t * (curve.c2.x - curve.c1.x)
+    + 3 * t ** 2 * (curve.b.x - curve.c2.x);
+  const dy = 3 * inverse ** 2 * (curve.c1.y - curve.a.y)
+    + 6 * inverse * t * (curve.c2.y - curve.c1.y)
+    + 3 * t ** 2 * (curve.b.y - curve.c2.y);
+  return Math.atan2(dy, dx);
+}
+
 function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
   const hyphae = [];
+  const queue = [];
+  // Reserve enough first-generation capacity for every territory trunk when
+  // the total budget allows it, while keeping tight test/runtime budgets recursive.
+  const primaryBudget = Math.floor(limit * 0.4);
+
+  // Allocate first-generation growth round-robin across territories. This
+  // prevents early sectors from consuming the hypha budget before later ones
+  // have a visible presence in the colony.
+  const colonyGroups = new Map();
   for (const branch of branches) {
-    if (hyphae.length >= limit) break;
+    if (branch.style === "semantic-connector") continue;
+    if (branch.style !== "colony-front") continue;
+    if (!colonyGroups.has(branch.territoryId)) colonyGroups.set(branch.territoryId, []);
+    colonyGroups.get(branch.territoryId).push(branch);
+  }
+  const growthOrder = [];
+  const groups = [...colonyGroups.values()];
+  const maxGroupLength = Math.max(0, ...groups.map((group) => group.length));
+  for (let index = 0; index < maxGroupLength; index += 1) {
+    for (const group of groups) if (group[index]) growthOrder.push(group[index]);
+  }
+  growthOrder.push(...branches.filter((branch) => branch.style !== "colony-front" && branch.style !== "semantic-connector"));
+  for (const branch of growthOrder) {
+    if (queue.length >= primaryBudget) break;
     const dx = branch.target.x - branch.source.x;
     const dy = branch.target.y - branch.source.y;
     const length = Math.hypot(dx, dy);
     if (length < 58) continue;
-    const desired = branch.style === "emblem-stem" ? 5 : branch.style?.startsWith("emblem-arm-") ? 4 : branch.style === "universe-spoke" ? 4 : branch.style === "primary-spine" ? 3 : branch.style === "lateral-hypha" ? 1 : branch.generation <= 3 ? 3 : stableUnit(seed + "|density|" + branch.id) > 0.55 ? 2 : 1;
-    const normal = { x: -dy / length, y: dx / length };
-    const tangent = { x: dx / length, y: dy / length };
-    for (let index = 0; index < desired && hyphae.length < limit; index += 1) {
+    const density = stableUnit(seed + "|density|" + branch.id);
+    const count = branch.style === "colony-front" ? 4 + Math.floor(density * 3)
+      : branch.style === "mycelial-trunk" ? 18 + Math.floor(density * 9)
+      : branch.style === "primary-spine" ? 4 + Math.floor(density * 4)
+      : branch.generation <= 3 ? (density > 0.3 ? 3 : 2)
+      : density > 0.56 ? 3 : 2;
+    for (let index = 0; index < count && queue.length < primaryBudget; index += 1) {
       const id = "hypha:" + branch.id + ":" + index;
       const localSeed = seed + "|" + id;
-      const t = 0.28 + stableUnit(localSeed + "|position") * 0.44;
+      const t = 0.06 + stableUnit(localSeed + "|position") * 0.88;
       const origin = pointOnCurve(branch.curve, t);
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
-      const branchLength = length * (0.12 + stableUnit(localSeed + "|length") * 0.1);
-      const drift = branchLength * 0.28;
+      const baseAngle = tangentOnCurve(branch.curve, t);
+      const angle = baseAngle + side * (0.72 + stableUnit(localSeed + "|angle") * 1.38);
+      const branchLength = length * (branch.style === "colony-front"
+        ? 0.62 + stableUnit(localSeed + "|length") * 0.32
+        : 0.24 + stableUnit(localSeed + "|length") * 0.14);
       const endpoint = {
-        x: origin.x + normal.x * branchLength * side + tangent.x * drift,
-        y: origin.y + normal.y * branchLength * side + tangent.y * drift
+        x: origin.x + Math.cos(angle) * branchLength,
+        y: origin.y + Math.sin(angle) * branchLength
       };
       const color = territories.get(branch.territoryId)?.color
         ?? branch.target.universeColor ?? branch.target.color ?? branch.source.universeColor ?? null;
-      hyphae.push({
-        id, territoryId: branch.territoryId, color,
-        style: "secondary-hypha",
-        width: 0.9 + stableUnit(localSeed + "|width") * 0.5,
-        curve: createCurve(origin, endpoint, localSeed, 0.28)
+      const item = {
+        id, parentBranchId: branch.id, originT: t, territoryId: branch.territoryId, color,
+        style: "secondary-hypha", generation: 1,
+        width: 1.35 + stableUnit(localSeed + "|width") * 0.75,
+        curve: createCurve(origin, endpoint, localSeed, 0.18)
+      };
+      queue.push({ item, endpoint, angle, length: branchLength, color, territoryId: branch.territoryId, seed: localSeed });
+    }
+  }
+
+  // Subsequent generations branch from the previous hyphae, with decreasing
+  // length and caliber. This produces a deterministic fractal exploration
+  // instead of isolated decorative hairs attached only to the main branches.
+  for (let cursor = 0; cursor < queue.length && hyphae.length < limit; cursor += 1) {
+    const parent = queue[cursor];
+    hyphae.push(parent.item);
+    if (parent.item.generation >= 3 || parent.length < 4 || hyphae.length + queue.length - cursor >= limit) continue;
+    const count = parent.item.generation === 1
+      ? (stableUnit(parent.seed + "|fork") > 0.65 ? 2 : 1)
+      : 1;
+    for (let index = 0; index < count && hyphae.length + queue.length - cursor < limit; index += 1) {
+      const id = parent.item.id + ":fork:" + index;
+      const localSeed = seed + "|" + id;
+      const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
+      const parentTangent = tangentOnCurve(parent.item.curve, 1);
+      const angle = parentTangent + side * (0.35 + stableUnit(localSeed + "|angle") * 0.45);
+      const length = parent.length * (0.48 + stableUnit(localSeed + "|length") * 0.2);
+      const endpoint = {
+        x: parent.endpoint.x + Math.cos(angle) * length,
+        y: parent.endpoint.y + Math.sin(angle) * length
+      };
+      queue.push({
+        item: {
+          id, parentHyphaId: parent.item.id, territoryId: parent.territoryId, color: parent.color,
+          style: "secondary-hypha", generation: parent.item.generation + 1,
+          width: Math.max(0.38, parent.item.width * 0.62),
+          curve: createCurve(parent.endpoint, endpoint, localSeed, 0.18)
+        },
+        endpoint, angle, length, color: parent.color,
+        territoryId: parent.territoryId, seed: localSeed
       });
     }
   }
@@ -212,100 +286,134 @@ export function createRhizomorphicMorphology({
     roots.push(node);
   }
 
-  // Emblem architecture: one central trunk rises from MYC and divides into
-  // two continuous arms. Each arm follows a curved arc and emits four terminal
-  // cords toward the eight universes distributed around the radial wheel.
-  // All split points are derived geometry; none becomes a pedagogical node.
-  const splitAngle = -Math.PI / 2;
-  const splitRadius = Math.min(420, coreBranchLength * 2.3);
-  const splitPoint = {
-    id: "emblem-split",
-    canonicalId: null,
-    x: core.x + Math.cos(splitAngle) * splitRadius,
-    y: core.y + Math.sin(splitAngle) * splitRadius,
-    angle: splitAngle,
-    generation: 1,
-    territoryId: coreId
-  };
-  addBranch(core, splitPoint, {
-    id: "emblem-stem",
-    territoryId: coreId,
-    generation: 1,
-    visualOnly: true,
-    style: "emblem-stem",
-    sourceId: core.id,
-    targetId: null,
-    width: 10,
-    curve: createCurve(core, splitPoint, seed + "|emblem-stem", curveBend * 0.2)
-  });
-
-  const signedDelta = (angle) => Math.atan2(
-    Math.sin(angle - splitAngle), Math.cos(angle - splitAngle)
+  // Seed a colony-wide set of exploratory fronts around the inoculation core.
+  // Territory ownership is assigned after angular placement; fronts are not
+  // aimed at eight sector anchors, which would recreate isolated radial fans.
+  const frontsPerTerritory = 4;
+  const segmentsPerFront = 4;
+  const territoryAxes = spatialTopology.territories.map((territory) => {
+    const anchor = positioned.get(territory.nodeId || territory.id);
+    return {
+      territory,
+      angle: Math.atan2(anchor.y - core.y, anchor.x - core.x),
+      distance: Math.hypot(anchor.x - core.x, anchor.y - core.y) || 1
+    };
+  }).sort((a, b) => a.angle - b.angle);
+  const totalFronts = Math.max(16, territoryAxes.length * frontsPerTerritory);
+  const sectorWidth = TAU / territoryAxes.length;
+  const firstSectorStart = territoryAxes[0].angle - sectorWidth / 2;
+  const reservedFronts = new Map();
+  const frontAngles = Array.from({ length: totalFronts }, (_, index) =>
+    firstSectorStart + (index + 0.5) * TAU / totalFronts
   );
-  const armBoundaryEpsilon = 1e-8;
-  const rightArm = spatialTopology.territories
-    .filter((territory) => {
-      const delta = signedDelta(territory.angle);
-      return delta >= -armBoundaryEpsilon && delta < Math.PI - armBoundaryEpsilon;
-    })
-    .sort((a, b) => signedDelta(a.angle) - signedDelta(b.angle));
-  const leftArm = spatialTopology.territories
-    .filter((territory) => {
-      const delta = signedDelta(territory.angle);
-      return delta < -armBoundaryEpsilon || delta >= Math.PI - armBoundaryEpsilon;
-    })
-    .sort((a, b) => Math.abs(signedDelta(a.angle)) - Math.abs(signedDelta(b.angle)));
+  // Give every territory one nearby exploratory front, then distribute its
+  // remaining fronts around the whole colony. This keeps local continuity
+  // without reverting to four adjacent, same-colour radial spokes.
+  for (let sectorIndex = 0; sectorIndex < territoryAxes.length; sectorIndex += 1) {
+    const axis = territoryAxes[sectorIndex].angle;
+    let nearestIndex = 0;
+    let nearestGap = Infinity;
+    for (let index = 0; index < frontAngles.length; index += 1) {
+      const delta = Math.atan2(
+        Math.sin(frontAngles[index] - axis),
+        Math.cos(frontAngles[index] - axis)
+      );
+      if (Math.abs(delta) < nearestGap) {
+        nearestGap = Math.abs(delta);
+        nearestIndex = index;
+      }
+    }
+    reservedFronts.set(nearestIndex, sectorIndex);
+  }
+  const frontOwners = new Map(reservedFronts);
+  let remainingOwner = 0;
+  for (let index = 0; index < totalFronts; index += 1) {
+    if (frontOwners.has(index)) continue;
+    frontOwners.set(index, remainingOwner % territoryAxes.length);
+    remainingOwner += 1;
+  }
+  for (let frontIndex = 0; frontIndex < totalFronts; frontIndex += 1) {
+    const frontId = "colony-front:global:" + frontIndex;
+    const localSeed = seed + "|" + frontId;
+    // Ownership is balanced across the full lattice, with one local front
+    // retained near each territory anchor to bridge the inner radial gap.
+    const territoryMatch = territoryAxes[frontOwners.get(frontIndex)];
+    // Fronts occupy one continuous angular lattice. Sector ownership only
+    // assigns biological identity and colour; it no longer creates a local fan.
+    const baseAngle = firstSectorStart
+      + (frontIndex + 0.5) * TAU / totalFronts
+      + (stableUnit(localSeed + "|global-angle") - 0.5) * 0.005;
+    const startAngle = baseAngle + (stableUnit(localSeed + "|start-angle") - 0.5) * 0.12;
+    const originRadius = 14 + stableUnit(localSeed + "|origin") * 34;
+    const origin = {
+      id: frontId + ":origin",
+      x: core.x + Math.cos(startAngle) * originRadius,
+      y: core.y + Math.sin(startAngle) * originRadius
+    };
+    // Let the shared frontier advance at genuinely different radial depths;
+    // a narrow common radius makes the colony read as eight terminal fans.
+    const isAnchorFront = reservedFronts.has(frontIndex);
+    // Keep one trajectory close to each territory anchor for continuity;
+    // let the remaining fronts explore a much wider radial band instead of
+    // terminating together on a shared circular rim.
+    const radialReach = isAnchorFront
+      ? 0.94 + stableUnit(localSeed + "|reach") * 0.12
+      : 0.56 + stableUnit(localSeed + "|reach") * 0.76;
+    const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 16;
+    const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.008;
+    const territory = territoryMatch.territory;
+    const reach = Math.max(250, territoryMatch.distance * radialReach);
+    const rawFrontier = {
+      x: core.x + Math.cos(axis) * reach - Math.sin(axis) * lateralTip,
+      y: core.y + Math.sin(axis) * reach + Math.cos(axis) * lateralTip
+    };
+    const frontier = {
+      id: frontId + ":tip",
+      x: rawFrontier.x,
+      y: rawFrontier.y
+    };
+    const pathDx = frontier.x - origin.x;
+    const pathDy = frontier.y - origin.y;
+    const pathLength = Math.hypot(pathDx, pathDy) || 1;
+    const normal = { x: -pathDy / pathLength, y: pathDx / pathLength };
+    let previous = origin;
 
-  const growEmblemArm = (territories, side) => {
-    let previousPoint = splitPoint;
-    territories.forEach((territory, index) => {
-      const target = positioned.get(territory.nodeId || territory.id);
-      const delta = signedDelta(territory.angle);
-      const branchAngle = splitAngle + delta * 0.66;
-      const targetRadius = Math.hypot(target.x - core.x, target.y - core.y);
-      const branchRadius = splitRadius + (targetRadius - splitRadius) * 0.56;
-      const branchPoint = {
-        id: "emblem-arm-point:" + side + ":" + index,
-        canonicalId: null,
-        x: core.x + Math.cos(branchAngle) * branchRadius,
-        y: core.y + Math.sin(branchAngle) * branchRadius,
-        angle: branchAngle,
-        generation: 1,
-        territoryId: target.territoryId
-      };
-      addBranch(previousPoint, branchPoint, {
-        id: "emblem-arm-" + side + ":" + index,
-        territoryId: target.territoryId,
+    for (let segmentIndex = 1; segmentIndex <= segmentsPerFront; segmentIndex += 1) {
+      const t = segmentIndex / segmentsPerFront;
+      const envelope = Math.sin(Math.PI * t);
+      const lateralDrift = (stableUnit(localSeed + "|drift|" + segmentIndex) - 0.5)
+        * 520 * envelope;
+      const radialDrift = (stableUnit(localSeed + "|radial|" + segmentIndex) - 0.5)
+        * 220 * envelope;
+      const target = segmentIndex === segmentsPerFront
+        ? frontier
+        : {
+            id: frontId + ":segment:" + segmentIndex,
+            x: origin.x + pathDx * t + normal.x * lateralDrift
+              + Math.cos(axis) * radialDrift,
+            y: origin.y + pathDy * t + normal.y * lateralDrift
+              + Math.sin(axis) * radialDrift
+          };
+      const segmentSeed = localSeed + "|segment|" + segmentIndex;
+      addBranch(previous, target, {
+        id: frontId + ":segment:" + segmentIndex,
+        territoryId: territory.id,
         generation: 1,
         visualOnly: true,
-        style: "emblem-arm-" + side,
+        style: "colony-front",
         sourceId: null,
         targetId: null,
-        width: 7.5,
-        curve: createCurve(previousPoint, branchPoint,
-          seed + "|emblem-arm|" + side + "|" + index, curveBend * 1.2)
+        width: 2.7 - segmentIndex * 0.12
+          + stableUnit(segmentSeed + "|width") * 0.45,
+        curve: createCurve(previous, target, segmentSeed,
+          0.2 + stableUnit(segmentSeed + "|bend") * 0.24)
       });
-      addBranch(branchPoint, target, {
-        id: "universe-spoke:" + target.id,
-        territoryId: target.territoryId,
-        generation: 1,
-        visualOnly: true,
-        style: "universe-spoke",
-        sourceId: null,
-        targetId: target.id,
-        width: 5.5,
-        curve: createCurve(branchPoint, target,
-          seed + "|universe-spoke|" + target.id, curveBend * 1.15)
-      });
-      previousPoint = branchPoint;
-    });
-  };
-
-  growEmblemArm(rightArm, "right");
-  growEmblemArm(leftArm, "left");
+      previous = target;
+    }
+  }
 
   // MYC's own taxonomy occupies a compact complete inner ring around the
-  // central nucleus; the outer Y arms carry four universes each.
+  // central nucleus; peripheral territories form the outer radial colony.
 
   for (const root of roots) {
     const isCore = root.id === coreId;
@@ -390,7 +498,7 @@ export function createRhizomorphicMorphology({
         territoryId: current.territoryId,
         generation,
         visualOnly: growsAlongSpine,
-        style: growsAlongSpine ? "lateral-hypha" : null,
+        style: current.node.id === coreId ? "semantic-connector" : growsAlongSpine ? "lateral-hypha" : null,
         sourceId: growsAlongSpine ? null : current.node.id,
         targetId: node.id,
         width: growsAlongSpine ? Math.max(1.6, 3.4 / Math.sqrt(generation)) : null,

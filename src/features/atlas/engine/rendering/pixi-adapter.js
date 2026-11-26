@@ -108,17 +108,24 @@ export async function createPixiSceneAdapter(canvas, {
         curve.c2.x, curve.c2.y,
         curve.b.x, curve.b.y
       );
+      // Fine biological filaments must survive the fit-to-view transform.
+      // Keep hyphae and anastomoses at a minimum screen-space stroke width;
+      // otherwise the colony mesh collapses into hairlines at overview scale.
+      const baseWidth = path.width ?? (path.type === "universe-trunk" ? 5 : path.type === "anastomosis" ? 2.1 : path.type === "hypha" ? 0.8 : decorative ? 1.2 : 2);
+      const visibleWidth = path.type === "anastomosis"
+        ? Math.max(baseWidth, 1.4 / scale)
+        : path.type === "hypha" ? Math.max(baseWidth, 0.85 / scale) : baseWidth;
       paths.stroke({
         color: colorValue(path.color ?? target?.color ?? source?.color),
-        width: path.width ?? (path.type === "universe-trunk" ? 5 : path.type === "anastomosis" ? 2.1 : path.type === "hypha" ? 0.8 : decorative ? 1.2 : 2),
-        alpha: path.type === "hypha" ? 0.58 : path.type === "anastomosis" ? 0.62 : path.type === "universe-trunk" ? 0.72 : 0.9
+        width: visibleWidth,
+        alpha: path.type === "hypha" ? 0.84 : path.type === "anastomosis" ? 0.96 : path.type === "universe-trunk" ? 0.72 : 0.9
       });
     }
 
     const labelObjects = [];
     for (const node of scene.nodes) {
-      // Pathway anchors occupy a separate outer orbit. Keep the eight-universe
-      // emblem clean at overview scale and reveal pathways only on exploration.
+      // Pathway anchors occupy a separate outer orbit. Keep the radial colony
+      // legible at overview scale and reveal pathways only on exploration.
       if (node.kind === "pathway" && scale < 0.28) continue;
       const fill = colorValue(node.color, node.kind === "core" ? 0xe5b85c : 0x718491);
       nodes.circle(node.x, node.y, node.radius).fill({ color: fill, alpha: node.kind === "core" ? 1 : 0.9 });

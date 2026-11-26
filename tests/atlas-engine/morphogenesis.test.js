@@ -28,7 +28,7 @@ function fixture() {
   return { topology, radialTopology };
 }
 
-test("morphogenesis builds a central core, radial trunks and recursive territory branches", () => {
+test("morphogenesis builds a central core, sector anchors and recursive territory branches", () => {
   const { topology, radialTopology } = fixture();
   const model = createRhizomorphicMorphology({ topology, radialTopology });
   assert.equal(model.byId.get("MYC").x, 0);
@@ -36,9 +36,10 @@ test("morphogenesis builds a central core, radial trunks and recursive territory
   assert.equal(model.byId.get("BIO").y, radialTopology.byId.get("BIO").y);
   assert.equal(model.territories.size, 2);
   assert.equal(model.metrics.nodeCount, 9);
-  assert.ok(model.branches.some((branch) => branch.id === "emblem-stem" && branch.visualOnly));
-  assert.ok(model.branches.some((branch) => branch.id === "emblem-arm-right:0" && branch.visualOnly));
-  assert.ok(model.branches.some((branch) => branch.id === "universe-spoke:BIO" && branch.visualOnly));
+  assert.equal(model.branches.some((branch) => branch.style === "mycelial-trunk"), false,
+    "universe anchors must not be connected by eight dominant radial trunks");
+  assert.ok(model.branches.filter((branch) => branch.style === "colony-front").length >= 16,
+    "the colony must expand through multiple distributed growth fronts");
   assert.equal(model.byId.get("bio-module-a").territoryId, "BIO");
   assert.ok(model.byId.get("bio-module-a").generation > model.byId.get("BIO").generation);
   const mycChildren = topology.childrenByParent.get("MYC").map((node) => model.byId.get(node.id));
@@ -157,7 +158,27 @@ test("morphogenesis creates asymmetric primary cords and bounded secondary hypha
   assert.ok(first.hyphae.length > 0);
   assert.ok(first.hyphae.length <= 1200);
   assert.equal(new Set(first.hyphae.map((hypha) => hypha.id)).size, first.hyphae.length);
-  assert.ok(first.hyphae.every((hypha) => hypha.style === "secondary-hypha" && hypha.width < 1.5));
+  assert.ok(first.hyphae.every((hypha) => hypha.style === "secondary-hypha" && hypha.width < 2.2));
+  assert.ok(first.hyphae.some((hypha) => hypha.generation === 2),
+    "secondary hyphae must themselves produce daughter branches");
+  assert.ok(first.hyphae.some((hypha) => hypha.generation === 3),
+    "the colony must retain a tertiary fractal generation");
+  const branchIds = new Set(first.branches.map((branch) => branch.id));
+  assert.ok(first.hyphae.filter((hypha) => hypha.generation === 1)
+    .every((hypha) => branchIds.has(hypha.parentBranchId)),
+  "first-generation hyphae must originate on a primary colony branch");
+  const hyphaIds = new Set(first.hyphae.map((hypha) => hypha.id));
+  assert.ok(first.hyphae.filter((hypha) => hypha.generation > 1)
+    .every((hypha) => hyphaIds.has(hypha.parentHyphaId)),
+  "daughter hyphae must retain their biological parent identity");
+  const constrained = createRhizomorphicMorphology({
+    ...input, maximumSecondaryHyphae: 120
+  });
+  assert.ok(constrained.hyphae.length <= 120);
+  assert.ok(constrained.hyphae.some((hypha) => hypha.generation === 2),
+    "a constrained hypha budget must still reserve space for daughter branches");
+  assert.ok(constrained.hyphae.some((hypha) => hypha.generation === 3),
+    "a constrained hypha budget must still reserve space for tertiary growth");
   assert.ok(first.hyphae.every((hypha) => Object.values(hypha.curve).every((point) =>
     Number.isFinite(point.x) && Number.isFinite(point.y))));
   assert.deepEqual(first.hyphae, second.hyphae);
@@ -190,4 +211,54 @@ test("morphogenesis honors a validated secondary hypha budget", () => {
   const input = fixture();
   assert.equal(createRhizomorphicMorphology({ ...input, maximumSecondaryHyphae: 0 }).hyphae.length, 0);
   assert.throws(() => createRhizomorphicMorphology({ ...input, maximumSecondaryHyphae: 3001 }), /maximumSecondaryHyphae/);
+});
+
+
+test("morphogenesis grows a distributed colony rather than eight spokes", () => {
+  const { topology, radialTopology } = fixture();
+  const model = createRhizomorphicMorphology({ topology, radialTopology });
+  assert.equal(model.branches.some((branch) => branch.style.startsWith("emblem-")), false);
+  assert.equal(model.branches.some((branch) => branch.style === "mycelial-trunk"), false);
+  const fronts = model.branches.filter((branch) => branch.style === "colony-front");
+  assert.equal(fronts.length, Math.max(16, radialTopology.universes.length * 4) * 4,
+    "every continuous front must retain four connected geometric segments");
+  assert.ok(fronts.every((branch) => branch.visualOnly && branch.sourceId === null && branch.targetId === null));
+  assert.ok(new Set(fronts.map((branch) => branch.territoryId)).size >= radialTopology.universes.length);
+  assert.ok(fronts.some((branch) => Math.hypot(branch.target.x, branch.target.y) > 500));
+});
+
+
+test("eight territories are embedded in a shared radial fractal colony", () => {
+  const departments = Array.from({ length: 8 }, (_, index) => ({
+    id: "U" + index, parent: null, title: "Territory " + index
+  }));
+  const nodes = [
+    { id: "MYC", parent: null, title: "Mycology" },
+    ...departments,
+    ...departments.map((department) => ({ id: department.id + "-section", parent: department.id }))
+  ];
+  const topology = createAtlasTopology({ nodes });
+  const radialTopology = createRadialTopology({
+    core: { id: "MYC" },
+    universes: departments.map((department) => ({ id: department.id, nodeId: department.id })),
+    radius: 900
+  });
+  const model = createRhizomorphicMorphology({ topology, radialTopology });
+  const fronts = model.branches.filter((branch) => branch.style === "colony-front");
+
+  assert.ok(fronts.length >= 96 && fronts.length <= 160);
+  assert.equal(model.branches.some((branch) => branch.style === "mycelial-trunk"), false);
+  assert.ok(new Set(fronts.map((branch) => branch.territoryId)).size === 8,
+    "all eight angular sectors must receive colony growth");
+  assert.ok(fronts.every((branch) => branch.width >= 2 && branch.width <= 4.5));
+  assert.ok(fronts.every((branch) => {
+    const dx = branch.target.x - branch.source.x;
+    const dy = branch.target.y - branch.source.y;
+    const cross = dx * (branch.curve.c1.y - branch.source.y)
+      - dy * (branch.curve.c1.x - branch.source.x);
+    return Math.abs(cross) > 1;
+  }), "growth fronts must be curved, not straight radial spokes");
+  assert.ok(model.hyphae.some((hypha) => hypha.generation === 1));
+  assert.ok(model.hyphae.some((hypha) => hypha.generation === 2));
+  assert.ok(model.hyphae.some((hypha) => hypha.generation === 3));
 });

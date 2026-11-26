@@ -23,8 +23,8 @@ function fixture() {
     universes: [{ id: "BIO", nodeId: "BIO" }, { id: "AGR", nodeId: "AGR" }],
     radius: 100
   });
-  const morphology = createRhizomorphicMorphology({ topology, radialTopology, branchLength: 80 });
-  const anastomoses = createVisualAnastomoses(morphology, { maxDistance: 500 }).links;
+  const morphology = createRhizomorphicMorphology({ topology, radialTopology, branchLength: 480 });
+  const anastomoses = createVisualAnastomoses(morphology, { maxDistance: 1500 }).links;
   return { topology, morphology, anastomoses };
 }
 
@@ -72,7 +72,42 @@ test("scene model includes secondary hyphae as decorative paths, never pedagogy"
   const scene = createAtlasScene({ topology, morphology });
   const hyphaPaths = scene.paths.filter((path) => path.type === "hypha");
   assert.ok(hyphaPaths.length > 0);
-  assert.ok(hyphaPaths.every((path) => path.visualOnly && path.width < 1.5));
+  assert.ok(hyphaPaths.every((path) => path.visualOnly && path.width < 2.2));
+  assert.ok(hyphaPaths.some((path) => path.generation === 3));
+  const hyphaIds = new Set(hyphaPaths.map((path) => path.id));
+  assert.ok(hyphaPaths.filter((path) => path.generation > 1)
+    .every((path) => hyphaIds.has(path.parentHyphaId)),
+  "the scene must preserve parent-child lineage between hyphal generations");
   assert.equal(scene.relationships.length, topology.edges.length);
   assert.equal(scene.nodes.length, topology.nodes.length);
+});
+
+
+test("scene model preserves anastomoses between hyphal tips as visual-only paths", () => {
+  const { topology, morphology } = fixture();
+  const anastomoses = [{
+    id: "hyphal-tip-link",
+    sourceId: null,
+    targetId: null,
+    sourceHyphaId: "hypha-a",
+    targetHyphaId: "hypha-b",
+    territoryIds: ["BIO", "AGR"],
+    visualOnly: true,
+    relationshipType: "anastomosis",
+    curve: {
+      a: { x: 0, y: 0 },
+      c1: { x: 10, y: 2 },
+      c2: { x: 18, y: 8 },
+      b: { x: 24, y: 12 }
+    }
+  }];
+  const scene = createAtlasScene({ topology, morphology, anastomoses });
+  const link = scene.paths.find((path) => path.id === "hyphal-tip-link");
+  assert.ok(link);
+  assert.equal(link.type, "anastomosis");
+  assert.equal(link.visualOnly, true);
+  assert.equal(link.sourceHyphaId, "hypha-a");
+  assert.equal(link.targetHyphaId, "hypha-b");
+  assert.equal(link.sourceId, null);
+  assert.equal(link.targetId, null);
 });

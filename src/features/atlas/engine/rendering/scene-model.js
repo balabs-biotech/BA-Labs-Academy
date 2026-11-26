@@ -84,6 +84,8 @@ export function createAtlasScene({
       id: path.id,
       sourceId: path.sourceId,
       targetId: path.targetId,
+      sourceHyphaId: path.sourceHyphaId ?? null,
+      targetHyphaId: path.targetHyphaId ?? null,
       type,
       visualOnly: Boolean(path.visualOnly) || type === "anastomosis",
       territoryId: path.territoryId ?? null,
@@ -96,7 +98,8 @@ export function createAtlasScene({
   };
 
   for (const branch of morphology.branches) {
-    const type = ["emblem-stem", "universe-spoke", "primary-spine"].includes(branch.style) || branch.style?.startsWith("emblem-arm-")
+    if (branch.style === "semantic-connector") continue;
+    const type = ["emblem-stem", "universe-spoke", "primary-spine", "mycelial-trunk"].includes(branch.style) || branch.style?.startsWith("emblem-arm-")
       ? "universe-trunk"
       : branch.style === "lateral-hypha" ? "hypha"
       : branch.visualOnly ? "universe-trunk" : "hierarchy";
@@ -122,6 +125,9 @@ export function createAtlasScene({
       territoryId: hypha.territoryId ?? null,
       territoryIds: null,
       style: hypha.style ?? "secondary-hypha",
+      generation: hypha.generation ?? 1,
+      parentBranchId: hypha.parentBranchId ?? null,
+      parentHyphaId: hypha.parentHyphaId ?? null,
       width: hypha.width,
       color: hypha.color ?? null,
       curve: copyCurve(hypha.curve, hypha.id)

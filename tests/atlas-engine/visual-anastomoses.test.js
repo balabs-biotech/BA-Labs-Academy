@@ -80,3 +80,92 @@ test("intra-territory anastomoses create local loops without joining direct pare
   }), "anastomoses must not duplicate direct hierarchy edges");
   assert.ok(result.links.every((link) => link.territoryIds.length <= 2));
 });
+
+
+test("anastomoses connect every peripheral territory into one mycelial network", () => {
+  const territories = new Map(Array.from({ length: 8 }, (_, index) => [
+    "zone-" + index, { id: "zone-" + index, nodeId: "zone-" + index }
+  ]));
+  const nodes = [...territories.keys()].map((territoryId, index) => ({
+    id: "hypha-" + index,
+    territoryId,
+    generation: 2,
+    x: Math.cos(index * Math.PI / 4) * 100,
+    y: Math.sin(index * Math.PI / 4) * 100
+  }));
+  const result = createVisualAnastomoses({ nodes, branches: [], territories }, {
+    maxDistance: 1000,
+    maxLinks: 7,
+    maxDegree: 1,
+    cellSize: 300
+  });
+  const adjacency = new Map([...territories.keys()].map((id) => [id, new Set()]));
+  for (const link of result.links) {
+    const [a, b] = link.territoryIds;
+    adjacency.get(a).add(b);
+    adjacency.get(b).add(a);
+  }
+  const visited = new Set();
+  const queue = ["zone-0"];
+  while (queue.length) {
+    const current = queue.shift();
+    if (visited.has(current)) continue;
+    visited.add(current);
+    queue.push(...adjacency.get(current));
+  }
+  assert.equal(result.links.length, 7, "eight zones need at least seven bridges");
+  assert.equal(visited.size, 8, "all peripheral zones must belong to one connected network");
+});
+
+
+test("hyphal anastomoses join nearby filament tips without inventing node relationships", () => {
+  const territories = new Map([
+    ["BIO", { id: "BIO", nodeId: "BIO" }],
+    ["AGR", { id: "AGR", nodeId: "AGR" }]
+  ]);
+  const morphology = {
+    nodes: [],
+    branches: [],
+    territories,
+    hyphae: [
+      { id: "bio-tip", territoryId: "BIO", generation: 2, parentHyphaId: "bio-parent", curve: { b: { x: 0, y: 0 } } },
+      { id: "agr-tip", territoryId: "AGR", generation: 2, parentHyphaId: "agr-parent", curve: { b: { x: 24, y: 12 } } }
+    ]
+  };
+  const result = createVisualAnastomoses(morphology, {
+    includeHyphae: true, maxDistance: 100, maxLinks: 1
+  });
+  assert.equal(result.links.length, 1);
+  assert.equal(result.links[0].sourceId, null);
+  assert.equal(result.links[0].targetId, null);
+  assert.ok(result.links[0].sourceHyphaId);
+  assert.ok(result.links[0].targetHyphaId);
+  assert.equal(result.links[0].visualOnly, true);
+  assert.equal(result.links[0].relationshipType, "anastomosis");
+});
+
+
+test("hyphal anastomoses can bridge nearby filament bodies, not only their tips", () => {
+  const territories = new Map([
+    ["BIO", { id: "BIO", nodeId: "BIO" }],
+    ["AGR", { id: "AGR", nodeId: "AGR" }]
+  ]);
+  const morphology = {
+    nodes: [], branches: [], territories,
+    hyphae: [
+      { id: "bio-filament", territoryId: "BIO", generation: 2, parentHyphaId: null, color: "#88aacc", curve: {
+        a: { x: 0, y: 0 }, c1: { x: 30, y: 0 }, c2: { x: 70, y: 0 }, b: { x: 100, y: 0 }
+      } },
+      { id: "agr-filament", territoryId: "AGR", generation: 2, parentHyphaId: null, color: "#aacc88", curve: {
+        a: { x: 50, y: -100 }, c1: { x: 50, y: -30 }, c2: { x: 50, y: 30 }, b: { x: 50, y: 100 }
+      } }
+    ]
+  };
+  const result = createVisualAnastomoses(morphology, {
+    includeHyphae: true, maxDistance: 25, maxLinks: 1, cellSize: 25
+  });
+  assert.equal(result.links.length, 1, "crossing filament bodies should connect even when their tips are distant");
+  assert.equal(result.links[0].sourceId, null);
+  assert.equal(result.links[0].targetId, null);
+  assert.deepEqual(new Set([result.links[0].sourceHyphaId, result.links[0].targetHyphaId]), new Set(["bio-filament", "agr-filament"]));
+});

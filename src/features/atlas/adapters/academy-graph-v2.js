@@ -27,8 +27,8 @@ export function createAcademyAtlasV2({
   universeStartAngle = -Math.PI / 2 + Math.PI / 8,
   universeDirection = 1,
   universeColors = {},
-  morphologyOptions = { branchLength: 280, universeSpread: 0.76, curveBend: 0.28, maximumSecondaryHyphae: 720 },
-  anastomosisOptions = { maxDistance: 1000, maxLinks: 4, maxDegree: 1, cellSize: 300, includeSameTerritory: false }
+  morphologyOptions = { branchLength: 280, universeSpread: 1.45, curveBend: 0.28, maximumSecondaryHyphae: 600 },
+  anastomosisOptions = { maxDistance: 980, maxLinks: 240, maxDegree: 6, cellSize: 320, includeSameTerritory: true, frontierBias: 0.56 }
 } = {}) {
   if (!graph || !Array.isArray(graph.nodes) || !Array.isArray(graph.edges)) {
     throw new TypeError("Academy Atlas V2 requires a canonical Academy graph");
@@ -122,11 +122,13 @@ export function createAcademyAtlasV2({
   }
 
   const anastomoses = createVisualAnastomoses(morphology, {
-    maxDistance: 300,
-    maxLinks: 80,
-    maxDegree: 2,
-    cellSize: 180,
+    maxDistance: 980,
+    maxLinks: 240,
+    maxDegree: 6,
+    cellSize: 320,
+    frontierBias: 0.88,
     includeSameTerritory: true,
+    includeHyphae: true,
     ...anastomosisOptions
   });
   const scene = createAtlasScene({

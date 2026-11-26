@@ -54,23 +54,35 @@ test("Academy composition is a radial fractal wheel with MYC at the center", () 
     return Math.abs(Math.atan2(Math.sin(delta), Math.cos(delta))) < 1e-6;
   }), "each department must retain its radial axis for label placement");
 
-  const stems = result.scene.paths.filter((path) => path.style === "emblem-stem");
-  const armsRight = result.scene.paths.filter((path) => path.style === "emblem-arm-right");
-  const armsLeft = result.scene.paths.filter((path) => path.style === "emblem-arm-left");
-  const spokes = result.scene.paths.filter((path) => path.style === "universe-spoke");
-  assert.equal(stems.length, 1, "one central trunk must rise from the MYC nucleus");
-  assert.equal(armsRight.length, 4, "the right Y arm must carry four terminal universes");
-  assert.equal(armsLeft.length, 4, "the left Y arm must carry four terminal universes");
-  assert.equal(spokes.length, 8, "the two arms must divide into eight universe cords");
-  assert.ok(stems.every((path) => path.sourceId === core.id && path.targetId === null),
-    "the central trunk must emerge from the MYC nucleus");
-  assert.ok([...armsRight, ...armsLeft].every((path) => path.sourceId === null && path.targetId === null),
-    "the two continuous arms must use derived split geometry, not artificial pedagogical nodes");
-  assert.ok(spokes.every((path) => path.sourceId === null && path.targetId?.startsWith("department:")),
-    "eight terminal cords must connect the Y arms to the eight universe anchors");
-  const stemAxis = Math.atan2(stems[0].curve.c1.y, stems[0].curve.c1.x);
-  assert.ok(Math.abs(Math.atan2(Math.sin(stemAxis + Math.PI / 2), Math.cos(stemAxis + Math.PI / 2))) < 0.15,
-    "the central trunk must preserve the vertical Y orientation");
+  const fronts = result.scene.paths.filter((path) => path.style === "colony-front");
+  assert.ok(fronts.length >= 96 && fronts.length <= 160,
+    "the shared colony must have many independent growth fronts, not eight spokes");
+  assert.equal(new Set(fronts.map((path) => path.territoryId)).size, 8,
+    "all eight sectors must be represented in the common growth field");
+  assert.ok(fronts.every((path) => path.sourceId === null && path.targetId === null && path.visualOnly),
+    "colony fronts are biological geometry, not pedagogical relationships");
+  assert.equal(result.scene.paths.some((path) => path.style === "mycelial-trunk"), false);
+  assert.equal(result.scene.paths.some((path) => path.style?.startsWith("emblem-")), false,
+    "the biological colony must not retain fixed Y-emblem geometry");
+
+  for (const department of departments) {
+    const lateralHyphae = result.morphology.hyphae.filter((hypha) =>
+      hypha.territoryId === department.id && hypha.generation === 1 &&
+      hypha.parentBranchId?.startsWith("colony-front:")
+    );
+    assert.ok(lateralHyphae.length >= 3,
+      department.id + " must have multiple lateral explorers in the shared colony");
+    const anchor = result.morphology.byId.get(department.id);
+    const nearestFront = fronts
+      .filter((path) => path.territoryId === department.id)
+      .map((path) => result.morphology.branches.find((branch) => branch.id === path.id))
+      .sort((a, b) =>
+        Math.hypot(a.target.x - anchor.x, a.target.y - anchor.y)
+        - Math.hypot(b.target.x - anchor.x, b.target.y - anchor.y)
+      )[0];
+    assert.ok(Math.hypot(nearestFront.target.x - anchor.x, nearestFront.target.y - anchor.y) < 360,
+      department.id + " must meet the shared colony frontier instead of floating beyond a gap");
+  }
 
   const spines = result.scene.paths.filter((path) => path.style === "primary-spine");
   const lateralBranches = result.scene.paths.filter((path) => path.style === "lateral-hypha");
@@ -122,7 +134,7 @@ test("V2 catalogue adapter is spatially neutral and does not depend on the legac
 
 
 
-test("the eight Academy spokes open into a reticulate mycelial silhouette", () => {
+test("the eight radial Academy territories share continuous segmented hyphal paths", () => {
   const graph = buildAcademyCatalogueGraph(catalogueMap, [], cataloguePathways);
   const result = createAcademyAtlasV2({ graph, seed: "open-mycelial-logo" });
   const coreId = result.topology.roots.find((node) => node.entity_key === "MYC").id;
@@ -134,6 +146,19 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
   assert.ok(departments.every((node) => Math.abs(Math.hypot(node.x, node.y) - 1050) < 1e-6),
     "the eight radial universes must sit on the wider inner orbit");
 
+  const frontTips = result.morphology.branches.filter((branch) =>
+    branch.style === "colony-front" && branch.id.endsWith(":segment:4")
+  );
+  const frontAngles = frontTips.map((branch) => Math.atan2(branch.target.y, branch.target.x)).sort((a, b) => a - b);
+  const frontGaps = frontAngles.map((angle, index) => {
+    const next = frontAngles[(index + 1) % frontAngles.length] + (index === frontAngles.length - 1 ? Math.PI * 2 : 0);
+    return next - angle;
+  });
+  assert.equal(frontTips.length, 32, "the colony must distribute 32 independent fronts around the full inoculation perimeter");
+  const maximumFrontGap = Math.max(...frontGaps);
+  assert.ok(maximumFrontGap < 0.25,
+    "front tips must form a near-uniform colony-wide field, not eight separated bouquets; max gap: " + maximumFrontGap.toFixed(4) + " rad");
+
   for (const department of departments) {
     const children = result.topology.childrenByParent.get(department.id) || [];
     const angles = children.map((child) => result.morphology.byId.get(child.id).angle);
@@ -144,18 +169,44 @@ test("the eight Academy spokes open into a reticulate mycelial silhouette", () =
       assert.ok(Math.max(...offsets) - Math.min(...offsets)  >= 0.56,
         "each department must use a broad radial sector, not a narrow terminal fan");
     }
-    const trunkId = "universe-spoke:" + department.id;
-    const lateralHyphae = result.morphology.hyphae.filter((hypha) =>
-      hypha.id.startsWith("hypha:" + trunkId + ":")
+    const territoryFronts = result.morphology.branches.filter((branch) =>
+      branch.style === "colony-front" && branch.territoryId === department.id
     );
-    assert.ok(lateralHyphae.length >= 4,
-      "each primary spoke must grow lateral hyphae along its length");
+    const trajectories = new Map();
+    for (const branch of territoryFronts) {
+      const prefix = branch.id.slice(0, branch.id.lastIndexOf(":segment:"));
+      if (!trajectories.has(prefix)) trajectories.set(prefix, []);
+      trajectories.get(prefix).push(branch);
+    }
+    assert.equal(trajectories.size, 4,
+      "each sector must receive four independent exploratory trajectories");
+    const anchor = result.morphology.byId.get(department.id);
+    const endRadii = [];
+    for (const trajectory of trajectories.values()) {
+      trajectory.sort((a, b) => Number(a.id.split(":").at(-1)) - Number(b.id.split(":").at(-1)));
+      assert.equal(trajectory.length, 4);
+      assert.ok(Math.hypot(trajectory[0].source.x, trajectory[0].source.y) < 70,
+        "each trajectory must begin in the MYC inoculation zone");
+      for (let index = 1; index < trajectory.length; index += 1) {
+        assert.ok(Math.hypot(
+          trajectory[index - 1].target.x - trajectory[index].source.x,
+          trajectory[index - 1].target.y - trajectory[index].source.y
+        ) < 1e-8, "successive hyphal segments must be geometrically continuous");
+      }
+      const tip = trajectory.at(-1).target;
+      const tipRadius = Math.hypot(tip.x, tip.y);
+      assert.ok(tipRadius > 400 && tipRadius < 1450,
+        "exploratory tips must remain on the shared radial growth band");
+      endRadii.push(tipRadius);
+    }
+    assert.ok(new Set(endRadii.map((radius) => Math.round(radius / 20))).size > 1,
+      "fronts in one territory must explore different radial depths");
   }
 
-  assert.equal(result.anastomoses.links.length, 4,
-    "the logo uses four deliberate secondary bridges, not a closed polygon ring");
-  assert.ok(result.anastomoses.links.every((link) => link.territoryIds.length === 2),
-    "decorative anastomoses must connect distinct radial universes");
+  assert.ok(result.anastomoses.links.length > 0,
+    "nearby filaments should form proximity-based anastomoses");
+  assert.ok(result.anastomoses.links.every((link) => link.visualOnly),
+    "anastomoses must remain decorative and never mutate pedagogy");
 
   const staggeredTerritories = departments.filter((department) => {
     const children = result.topology.childrenByParent.get(department.id) || [];
