@@ -64,7 +64,8 @@ try {
       assert.ok(box.top >= 0 && box.bottom <= surface.rect.height, `Label ${id} must remain inside the vertical viewport`);
     }
     assert.equal(await page.locator(".atlas-root-chip").count(), 19, "All nine departments and ten pathways remain navigable");
-    assert.match(await page.locator(".atlas-topline-copy strong").innerText(), /9 départements/);
+    assert.match(await page.locator(".atlas-topline-copy strong").innerText(), /8 univers/);
+    assert.match(await page.locator(".atlas-topline-copy strong").innerText(), /1 noyau MYC/);
     assert.match(await page.locator(".atlas-topline-copy strong").innerText(), /10 parcours/);
     await page.screenshot({ path: `artifacts/atlas-${viewport.name}.png`, fullPage: false });
 
