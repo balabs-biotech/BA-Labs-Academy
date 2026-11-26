@@ -81,9 +81,13 @@ export function createAcademySharedAtlas({ graph, seed = "ba-labs-academy-shared
   const roots = [coreTree];
   for (const department of universes) {
     const root = makeRoot(department, LAYOUT[department.entity_key]);
-    const attachedPathways = pathwayRoots.filter((pathway) => (pathwayTargets.get(pathway.id)?.[0] || core.rootId) === department.rootId);
+    const attachedPathways = pathwayRoots.filter((pathway) => pathwayTargets.get(pathway.id)?.[0] === department.rootId);
     for (const pathway of attachedPathways) root.children.push(toTreeNode(pathway, department.id));
     roots.push(root);
+  }
+
+  for (const pathway of pathwayRoots.filter((item) => !(pathwayTargets.get(item.id) || []).length)) {
+    coreTree.children.push(toTreeNode(pathway, core.id));
   }
 
   const rootByDepartment = new Map(universes.map((node) => [node.rootId, node]));
