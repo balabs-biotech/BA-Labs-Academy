@@ -14,7 +14,6 @@ on:
       - "tests/atlas-browser-smoke.mjs"
       - "tests/atlas-pixi.test.js"
       - "src/catalogue-*.js"
-      - "atlas-v2-preview.html"
       - "scripts/build.mjs"
       - "tests/atlas-engine/**"
       - "package.json"
@@ -36,7 +35,7 @@ jobs:
           node-version: 22
       - name: Run complete test suite
         run: npm test
-      - name: Benchmark current Atlas baseline
+      - name: Benchmark shared biological geometry
         run: npm run benchmark:atlas
       - name: Verify source syntax and public bundle
         run: npm run build
@@ -53,9 +52,9 @@ jobs:
           done
           cat /tmp/academy-http.log
           exit 1
-      - name: Verify production mycelial Atlas V2 on desktop and mobile
+      - name: Verify shared biological Atlas on desktop and mobile
         run: node tests/atlas-browser-smoke.mjs
-      - name: Upload V2 browser screenshots
+      - name: Upload shared Atlas browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
