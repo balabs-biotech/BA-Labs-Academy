@@ -12,6 +12,8 @@ test("Academy adapter uses the shared biological engine with one MYC core and ei
   assert.equal(atlas.byId.get("department:MYC").r, 42, "MYC keeps its enlarged central-core radius");
   assert.equal(atlas.edges.filter((edge) => edge.academyCoreTrunk).length, 0, "MYC must not create eight artificial radial spokes");
   assert.equal(atlas.metrics.universeCount, 8);
+  assert.equal(atlas.metrics.sourceCount, 8);
+  assert.equal(new Set(atlas.metrics.sourceIds).size, 8);
   assert.equal(atlas.metrics.canonicalNodeCount, graph.nodes.length);
   assert.equal(atlas.metrics.renderedNodeCount, graph.nodes.length);
 });
