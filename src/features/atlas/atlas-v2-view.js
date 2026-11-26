@@ -9,6 +9,8 @@ export function renderAcademyAtlasV2(graph) {
   const roots = graph.nodes.filter((node) => node.level === 0);
   const departmentRoots = roots.filter((node) => node.entity_type === "DEPARTMENT");
   const pathwayRoots = roots.filter((node) => node.entity_type === "PATHWAY");
+  const mycologyCore = departmentRoots.find((node) => node.entity_key === "MYC");
+  const universeRoots = departmentRoots.filter((node) => node.entity_key !== "MYC");
   const rootChips = (items, label, kind) => `
     <div class="atlas-root-group atlas-root-group--${kind}">
       <span class="atlas-root-label">${label}</span>
@@ -22,7 +24,7 @@ export function renderAcademyAtlasV2(graph) {
       <div class="atlas-topline">
         <div class="atlas-topline-copy">
           <span class="eyebrow">BA LABS ACADEMY · MOTEUR BIOLOGIQUE PARTAGÉ</span>
-          <strong>${departments} départements · ${domains} domaines · ${pathways} parcours · ${sections} sections · ${modules} modules</strong>
+          <strong>${universeRoots.length} univers · 1 noyau MYC · ${pathways} parcours · ${sections} sections · ${modules} modules</strong>
         </div>
         <span class="atlas-engine-state" id="atlas-v2-state">Initialisation du moteur V2…</span>
       </div>
@@ -42,7 +44,8 @@ export function renderAcademyAtlasV2(graph) {
         <div class="atlas-loading" id="atlas-v2-loading"><span class="atlas-loading-pulse"></span><p>Construction du réseau mycélien…</p></div>
       </div>
       <nav class="atlas-root-navigation" aria-label="Accès direct aux territoires">
-        ${rootChips(departmentRoots, "DÉPARTEMENTS", "departments")}
+        ${mycologyCore ? rootChips([mycologyCore], "NOYAU CENTRAL", "core") : ""}
+        ${rootChips(universeRoots, "HUIT UNIVERS SCIENTIFIQUES", "departments")}
         ${rootChips(pathwayRoots, "PARCOURS", "pathways")}
       </nav>
       <div class="atlas-legend">
