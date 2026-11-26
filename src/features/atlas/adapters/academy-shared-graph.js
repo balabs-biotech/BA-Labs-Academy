@@ -106,7 +106,8 @@ export function createAcademySharedAtlas({ graph, seed = "ba-labs-academy-shared
 
   const network = createVernpixiNetwork(roots, {
     rootLayoutIds: ["myc", ...ORDER.map((code) => LAYOUT[code])],
-    rootAnchors: ANCHORS
+    rootAnchors: ANCHORS,
+    fixedRootIds: [core.id]
   });
   const coreNode = network.byId.get(core.id);
   for (const department of universes) {
