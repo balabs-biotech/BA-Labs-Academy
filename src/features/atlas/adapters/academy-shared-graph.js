@@ -77,7 +77,7 @@ export function createAcademySharedAtlas({ graph, seed = "ba-labs-academy-shared
     treeNode.layoutId = layoutId;
     return treeNode;
   };
-  const coreTree = makeRoot(core, "myc");
+  const coreTree = makeRoot(core, "myco");
   const roots = [coreTree];
   for (const department of universes) {
     const root = makeRoot(department, LAYOUT[department.entity_key]);
@@ -109,19 +109,11 @@ export function createAcademySharedAtlas({ graph, seed = "ba-labs-academy-shared
   for (const root of roots) root.relations = relationsByRoot.get(root.id) || [];
 
   const network = createVernpixiNetwork(roots, {
-    rootLayoutIds: ["myc", ...ORDER.map((code) => LAYOUT[code])],
+    rootLayoutIds: ["myco", ...ORDER.map((code) => LAYOUT[code])],
     rootAnchors: ANCHORS,
     fixedRootIds: [core.id]
   });
-  const coreNode = network.byId.get(core.id);
-  for (const department of universes) {
-    const target = network.byId.get(department.id);
-    if (!coreNode || !target) continue;
-    network.edges.push({
-      a: coreNode, b: target, depth: 1, cross: false,
-      seed: hash("academy-core:" + department.id), academyCoreTrunk: true
-    });
-  }
+
 
   const expectedIds = graph.nodes.map((node) => node.id);
   const represented = new Set(network.nodes.map((node) => node.id));
