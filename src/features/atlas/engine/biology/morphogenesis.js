@@ -148,9 +148,9 @@ function createSecondaryHyphae(branches, territories, seed, limit = 1200) {
       const origin = pointOnCurve(branch.curve, t);
       const side = stableUnit(localSeed + "|side") > 0.5 ? 1 : -1;
       const baseAngle = tangentOnCurve(branch.curve, t);
-      const angle = baseAngle + side * (0.42 + stableUnit(localSeed + "|angle") * 0.92);
+      const angle = baseAngle + side * (0.72 + stableUnit(localSeed + "|angle") * 1.38);
       const branchLength = length * (branch.style === "colony-front"
-        ? 0.58 + stableUnit(localSeed + "|length") * 0.28
+        ? 0.62 + stableUnit(localSeed + "|length") * 0.32
         : 0.24 + stableUnit(localSeed + "|length") * 0.14);
       const endpoint = {
         x: origin.x + Math.cos(angle) * branchLength,
@@ -382,9 +382,9 @@ export function createRhizomorphicMorphology({
       const t = segmentIndex / segmentsPerFront;
       const envelope = Math.sin(Math.PI * t);
       const lateralDrift = (stableUnit(localSeed + "|drift|" + segmentIndex) - 0.5)
-        * 360 * envelope;
+        * 520 * envelope;
       const radialDrift = (stableUnit(localSeed + "|radial|" + segmentIndex) - 0.5)
-        * 160 * envelope;
+        * 220 * envelope;
       const target = segmentIndex === segmentsPerFront
         ? frontier
         : {
