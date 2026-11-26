@@ -352,7 +352,13 @@ export function createRhizomorphicMorphology({
     };
     // Let the shared frontier advance at genuinely different radial depths;
     // a narrow common radius makes the colony read as eight terminal fans.
-    const radialReach = 0.88 + stableUnit(localSeed + "|reach") * 0.22;
+    const isAnchorFront = reservedFronts.has(frontIndex);
+    // Keep one trajectory close to each territory anchor for continuity;
+    // let the remaining fronts explore a much wider radial band instead of
+    // terminating together on a shared circular rim.
+    const radialReach = isAnchorFront
+      ? 0.94 + stableUnit(localSeed + "|reach") * 0.12
+      : 0.56 + stableUnit(localSeed + "|reach") * 0.76;
     const lateralTip = (stableUnit(localSeed + "|tip-lateral") - 0.5) * 16;
     const axis = baseAngle + (stableUnit(localSeed + "|axis-wander") - 0.5) * 0.008;
     const territory = territoryMatch.territory;
