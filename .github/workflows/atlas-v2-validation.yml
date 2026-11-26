@@ -1,6 +1,8 @@
 name: Validate Academy Shared 2D Engine
 
 on:
+  push:
+    branches: [rebuild/academy-shared-organic-engine]
   pull_request:
     branches: [main]
     paths:
